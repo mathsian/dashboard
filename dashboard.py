@@ -33,6 +33,7 @@ app.layout = html.Div([
     ])
 ])
 
+
 # A quick callback to make sure the dropdown is working
 @app.callback(
     Output('output-container', 'children'),
@@ -40,35 +41,36 @@ app.layout = html.Div([
 def update_output(value):
     return 'You selected cohort {}'.format(value)
 
+
 # When the cohort dropdown changes, reload the graph
 @app.callback(
-    Output('cohort-graph','figure'),
-    [Input('cohort-dropdown','value')])
+    Output('cohort-graph', 'figure'),
+    [Input('cohort-dropdown', 'value')])
 def update_figure(value):
     cohort_data = df[df.Cohort == value]
     return {
         'data': [
-            go.Scatter(
-            x = cohort_data.GCSE_APS,
-            y = cohort_data.AS_Marks,
-            mode = 'markers',
-            marker = dict(color = cohort_data.GCSE_Maths)
-            )
+            go.Scatter(x=cohort_data.GCSE_APS,
+                       y=cohort_data.AS_Marks,
+                       mode='markers',
+                       marker=dict(color=cohort_data.GCSE_Maths))
             ],
-        'layout': 
+        'layout':
             go.Layout(
-            title = value,
-            yaxis = {"range": [0,240]}
+            title=value,
+            yaxis={"range": [0, 240]}
             )
         }
+
+
 # When the cohort dropdown changes, reload the table
 @app.callback(
-    Output('cohort-table','data'),
-    [Input('cohort-dropdown','value')])
+    Output('cohort-table', 'data'),
+    [Input('cohort-dropdown', 'value')])
 def update_table(value):
     cohort_data = df[df.Cohort == value]
     return cohort_data.to_dict("rows")
 
+
 if __name__ == '__main__':
     app.run_server(debug=True)
-
