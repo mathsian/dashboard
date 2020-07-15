@@ -1,76 +1,23 @@
 import dash
-from dash.dependencies import Input, Output
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.graph_objs as go
+from configparser import ConfigParser
+import couchdb
 import pandas as pd
-import dash_table
 
-# Load once outside of any callbacks
-df = pd.read_csv("All.csv")
-
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
-# The layout of the dashboard
-app.layout = html.Div([
-    html.Div([
-        dcc.Dropdown(
-            id='cohort-dropdown',
-            options=[
-                {'label': 'Cohort 1618', 'value': 1},
-                {'label': 'Cohort 1719', 'value': 2},
-                {'label': 'Cohort 1820', 'value': 3},
-            ],
-            value=1),
-        html.Div(id='output-container'),
-        html.Div([dcc.Graph(id='cohort-graph')]),
-        dash_table.DataTable(
-            id='cohort-table',
-            columns=[
-                {"name": c, "id": c} for c in df.columns
-            ]),
-    ])
-])
+config_object = ConfigParser()
+config_object.read("config.ini")
 
+couchdb_config = config_object["COUCHDB"]
+couchdb_user = couchdb_config["user"]
+couchdb_pwd = couchdb_config["pwd"]
+couchdb_ip = couchdb_config["ip"]
+couchdb_port = couchdb_config["port"]
 
-# A quick callback to make sure the dropdown is working
-@app.callback(
-    Output('output-container', 'children'),
-    [Input('cohort-dropdown', 'value')])
-def update_output(value):
-    return 'You selected cohort {}'.format(value)
+couchserver = couchdb.Server(f'http://{couchdb_user}:{couchdb_pwd}@{couchdb_ip}:{couchdb_port}')
+db = couchserver['ada']
 
-
-# When the cohort dropdown changes, reload the graph
-@app.callback(
-    Output('cohort-graph', 'figure'),
-    [Input('cohort-dropdown', 'value')])
-def update_figure(value):
-    cohort_data = df[df.Cohort == value]
-    return {
-        'data': [
-            go.Scatter(x=cohort_data.GCSE_APS,
-                       y=cohort_data.AS_Marks,
-                       mode='markers',
-                       marker=dict(color=cohort_data.GCSE_Maths))
-            ],
-        'layout':
-            go.Layout(
-            title=value,
-            yaxis={"range": [0, 240]}
-            )
-        }
-
-
-# When the cohort dropdown changes, reload the table
-@app.callback(
-    Output('cohort-table', 'data'),
-    [Input('cohort-dropdown', 'value')])
-def update_table(value):
-    cohort_data = df[df.Cohort == value]
-    return cohort_data.to_dict("rows")
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
+students_df = pd.DataFrame.from_records(db.view('enrolments/enrolment-view', wrapper=lambda row: row['value']).rows)
+students_df["full_name"] = students_df.given_name.str.cat(students_df.family_name, sep=' ')
+assessments_df = pd.DataFrame.from_records(db.view('assessments/assessment-view', wrapper=lambda row: row['value']).rows)
