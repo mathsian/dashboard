@@ -50,7 +50,7 @@ students = [{'type': 'enrolment',
 
 assessments = [{'type': 'assessment',
                 'subject': sub,
-                'student_id': stu['id'],
+                'student_id': stu['student_id'],
                 'point': poi,
                 'date': get_assessment_date(poi, stu['cohort']),
                 'grade': random.choice(grade_names)}
@@ -60,7 +60,7 @@ assessments = [{'type': 'assessment',
 
 kudos = [
     {'type': 'kudos',
-     'student_id': stu['id'],
+     'student_id': stu['student_id'],
      'date': get_random_date(stu['cohort']),
      'ada_value': random.choice(value_names),
      'points': random.randint(1, 5)}
@@ -69,7 +69,7 @@ kudos = [
 
 concerns = [
     {'type': 'concern',
-     'student_id': stu['id'],
+     'student_id': stu['student_id'],
      'date': get_random_date(stu['cohort']),
      'category': random.choice(concern_names),
      'comment': lorem.get_sentence()}
