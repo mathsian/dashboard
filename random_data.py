@@ -4,18 +4,21 @@ import logging
 import names
 import random
 from itertools import product
-from cloudant.client import Cloudant
+from cloudant.client import CouchDB
+from cloudant.error import CloudantClientException
 from configparser import ConfigParser
 
-logging.basicConfig(filename = 'random_data.log',
+logging.basicConfig(filename='random_data.log',
                     level=logging.DEBUG)
 
 cohort_names = ['1618', '1719', '1820', '1921']
 subject_names = ['Maths', 'Business', 'Graphics']
 grade_names = ['S', 'A', 'B', 'C', 'D', 'E', 'U']
 assessment_names = ['12.1', '12.2', '12.3', '13.1', '13.2', '13.3']
-value_names = ["Curiosity", "Creativity", "Rigour", "Resilience", "Collaboration"]
+value_names = ["Curiosity", "Creativity",
+               "Rigour", "Resilience", "Collaboration"]
 concern_names = ["Conduct", "Academic", "Attendance"]
+
 
 def get_random_date(cohort):
     start_date = datetime.date(year=2000+int(cohort[:2]),
@@ -34,10 +37,11 @@ def get_assessment_date(point, cohort):
     assessment_date = start_date + offset
     return assessment_date.isoformat()
 
+
 students = [{'type': 'enrolment',
              'given_name': names.get_first_name(),
              'family_name': names.get_last_name(),
-             'id': n,
+             'student_id': n,
              'cohort': random.choice(cohort_names),
              'prior': [{'subject': 'Maths', 'grade': random.randint(4, 9)},
                        {'subject': 'English', 'grade': random.randint(4, 9)},
@@ -81,11 +85,16 @@ couchdb_pwd = couchdb_config["pwd"]
 couchdb_ip = couchdb_config["ip"]
 couchdb_port = couchdb_config["port"]
 
-client = Cloudant(couchdb_user,
-                  couchdb_pwd,
-                  url=f'http://{couchdb_ip}:{couchdb_port}',
-                  connect=True,
-                  autorenew=True)
+client = CouchDB(couchdb_user,
+                 couchdb_pwd,
+                 url=f'http://{couchdb_ip}:{couchdb_port}',
+                 connect=True,
+                 autorenew=True)
+
+try:
+    client.delete_database("testing")
+except CloudantClientException:
+    logging.debug("Didn't exist")
 
 db = client.create_database("testing")
 for (success, doc_id, rev) in db.bulk_docs(students):
