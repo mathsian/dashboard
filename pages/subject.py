@@ -4,7 +4,7 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 import dash_table
-from dashboard import app, students_df, assessments_df
+from dashboard import app, db
 
 layout = html.Div([
     html.Div([
@@ -59,16 +59,11 @@ def update_output(cohort_value, subject_value, point_value):
      Input('subject-dropdown', 'value'),
      Input('point-dropdown', 'value')])
 def update_figure(cohort_value, subject_value, point_value):
-    filtered_ass_df = assessments_df.loc[(assessments_df.point == point_value) & (assessments_df.subject == subject_value)]
-    graph_data = filtered_ass_df.join(students_df[students_df.cohort == cohort_value],
-                                      on='id', how='inner',
-                                      lsuffix='_assessments',
-                                      rsuffix='_students')
     return {
         'data': [
-            go.Scatter(x=graph_data.aps,
-                       y=graph_data.grade,
-                       text=graph_data.full_name,
+            go.Scatter(x=[5,6],
+                       y=["A","B"],
+                       text=["a","b"],
                        mode='markers')
         ],
         'layout':

@@ -1,5 +1,4 @@
 from configparser import ConfigParser
-
 from cloudant.client import CouchDB
 from cloudant.error import CloudantClientException
 
@@ -26,14 +25,14 @@ enrolment_ddoc = db.get_design_document("enrolment")
 enrolment_ddoc.add_view('student_id',
                         '''function(doc){
                 if(doc.type==="enrolment"){
-                    emit(doc.student_id, doc.given_name+" "+doc.family_name);
+                    emit(doc._id, doc.given_name+" "+doc.family_name);
                 }
                 }''')
 # Index by cohort
 enrolment_ddoc.add_view('cohort',
                         '''function(doc){
                 if(doc.type==="enrolment"){
-                    emit(doc.cohort, 1);
+                    emit(doc.cohort, doc.given_name+" "+doc.family_name);
                 }
                 }''')
 enrolment_ddoc.save()
@@ -54,13 +53,6 @@ assessment_ddoc.add_view('subject',
                     emit(doc.subject, 1);
                 }
                 }''')
-# Index by cohort
-assessment_ddoc.add_view('cohort',
-                         '''function(doc){
-                if(doc.type==="assessment"){
-                    emit(doc.cohort, doc.subject);
-                }
-                }''')
 assessment_ddoc.save()
 
 # Views for querying kudos documents
@@ -72,13 +64,6 @@ kudos_ddoc.add_view('student_id',
                     emit(doc.student_id, doc.ada_value);
                 }
                 }''')
-# Index by cohort
-kudos_ddoc.add_view('cohort',
-                    '''function(doc){
-                if(doc.type==="kudos"){
-                    emit(doc.cohort, doc.ada_value);
-                }
-                }''')
 kudos_ddoc.save()
 
 # Views for querying concern documents
@@ -88,13 +73,6 @@ concern_ddoc.add_view('student_id',
                     '''function(doc){
                 if(doc.type==="concern"){
                     emit(doc.student_id, doc.category);
-                }
-                }''')
-# Index by cohort
-concern_ddoc.add_view('cohort',
-                    '''function(doc){
-                if(doc.type==="concern"){
-                    emit(doc.cohort, doc.category);
                 }
                 }''')
 concern_ddoc.save()
