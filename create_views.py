@@ -20,16 +20,83 @@ client = CouchDB(couchdb_user,
 
 db = client['testing']
 
-ddoc = db.get_design_doc("enrolment")
-ddoc.add_view('student_id',
-              '''function(doc){{
-                if(doc.type==="enrolment"){{
+# Views for querying enrolment documents
+enrolment_ddoc = db.get_design_document("enrolment")
+# Index by student_id
+enrolment_ddoc.add_view('student_id',
+                        '''function(doc){
+                if(doc.type==="enrolment"){
                     emit(doc.student_id, doc.given_name+" "+doc.family_name);
-                }}
-                }}''')
-ddoc.add_view('cohort',
-              '''function(doc){{
-                if(doc.type==="enrolment"){{
+                }
+                }''')
+# Index by cohort
+enrolment_ddoc.add_view('cohort',
+                        '''function(doc){
+                if(doc.type==="enrolment"){
                     emit(doc.cohort, 1);
-                }}
-                }}''')
+                }
+                }''')
+enrolment_ddoc.save()
+
+# Views for querying assessment documents
+assessment_ddoc = db.get_design_document("assessment")
+# Index by student_id
+assessment_ddoc.add_view('student_id',
+                         '''function(doc){
+                if(doc.type==="assessment"){
+                    emit(doc.student_id, doc.subject);
+                }
+                }''')
+# Index by subject
+assessment_ddoc.add_view('subject',
+                         '''function(doc){
+                if(doc.type==="assessment"){
+                    emit(doc.subject, 1);
+                }
+                }''')
+# Index by cohort
+assessment_ddoc.add_view('cohort',
+                         '''function(doc){
+                if(doc.type==="assessment"){
+                    emit(doc.cohort, doc.subject);
+                }
+                }''')
+assessment_ddoc.save()
+
+# Views for querying kudos documents
+kudos_ddoc = db.get_design_document("kudos")
+# Index by student_id
+kudos_ddoc.add_view('student_id',
+                    '''function(doc){
+                if(doc.type==="kudos"){
+                    emit(doc.student_id, doc.ada_value);
+                }
+                }''')
+# Index by cohort
+kudos_ddoc.add_view('cohort',
+                    '''function(doc){
+                if(doc.type==="kudos"){
+                    emit(doc.cohort, doc.ada_value);
+                }
+                }''')
+kudos_ddoc.save()
+
+# Views for querying concern documents
+concern_ddoc = db.get_design_document("concern")
+# Index by student_id
+concern_ddoc.add_view('student_id',
+                    '''function(doc){
+                if(doc.type==="concern"){
+                    emit(doc.student_id, doc.category);
+                }
+                }''')
+# Index by cohort
+concern_ddoc.add_view('cohort',
+                    '''function(doc){
+                if(doc.type==="concern"){
+                    emit(doc.cohort, doc.category);
+                }
+                }''')
+concern_ddoc.save()
+
+client.disconnect()
