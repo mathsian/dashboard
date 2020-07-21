@@ -1,7 +1,5 @@
 """
-Starts the database connection and contains the top level layout.
-
-Content is then grabbed from page layouts based on the pathname of the current url.
+Starts the database connection and contains the dash app definition 
 """
 # dash
 import dash
@@ -13,8 +11,6 @@ from configparser import ConfigParser
 # couchdb
 from cloudant.client import CouchDB
 from cloudant.error import CloudantClientException
-# internal
-from pages import student, subject, top, report
 
 # read the config
 config_object = ConfigParser()
@@ -34,30 +30,6 @@ client = CouchDB(couchdb_user,
 # and select database
 db = client['testing']
 
-
 # create dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
-
-# Top level container
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=True),
-    html.Div(id='page-content')
-])
-
-# Only one callback required. When the url changes, replace the layout
-@app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
-def display_page(pathname):
-    response = html.Div([f'404 I guess on {pathname}'])
-    if pathname == '/pages/student':
-        response = student.layout
-    elif pathname == '/pages/subject':
-        response = subject.layout
-    elif pathname == '/pages/top':
-        response = top.layout
-    elif pathname == '/pages/report':
-        response = report.layout
-    return response
-
-if __name__ == '__main__':
-    app.run_server(debug=True)

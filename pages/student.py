@@ -1,5 +1,5 @@
 """
-Layout and callbacks for student oriented data
+Layout and callbacks for student lists
 """
 import dash_core_components as dcc
 import dash_html_components as html

@@ -4,7 +4,7 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 import dash_table
-from dashboard import app, db
+from dashboard import db, app
 
 layout = html.Div([
     html.Div([

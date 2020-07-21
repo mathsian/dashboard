@@ -59,6 +59,10 @@ def generate_report(search):
     for subject in assessment_df['subject'].unique():
         results = assessment_df.query(
             f'subject == "{subject}"').sort_values(by='date')
+        if subject == 'Computing':
+            grade_array = ['U', 'N', 'P', 'M', 'D', 'S']
+        else:
+            grade_array = ['U', 'E', 'D', 'C', 'B', 'A', 'S']
         assessment_layout.append(
             dcc.Graph(figure={
                 'data': [go.Scatter(x=results['date'],
@@ -66,11 +70,14 @@ def generate_report(search):
                 'layout': go.Layout(
                     title=subject,
                     yaxis={'categoryorder': "array",
-                           'categoryarray': ['U', 'E', 'D', 'C', 'B', 'A', 'S']})
+                           'categoryarray': grade_array})
             }))
     # Kudos
     kudos_df = get_as_df("kudos", "student_id", student_id)
-    kudos_layout = html.H4("Values circle goes here")
+    kudos_layout = dash_table.DataTable(
+        columns=[{'name': "Value", 'id': 'ada_value'},
+                 {'name': "Total", 'id': 'key'}],
+        data=kudos_df.groupby('ada_value').sum().to_dict(orient='records'))
 
     # Concerns
     concerns_df = get_as_df("concern", "student_id", student_id)
