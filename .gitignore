@@ -2,3 +2,4 @@
 *.org
 *.ini
 *.log
+__pycache__
