@@ -1,0 +1,5 @@
+[COUCHDB]
+user = username
+pwd = password
+ip = address
+port = port
