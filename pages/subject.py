@@ -4,7 +4,7 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 import dash_table
-from dashboard import db, app
+from dashboard import get_db, app
 
 layout = html.Div([
     html.Div([
@@ -13,7 +13,8 @@ layout = html.Div([
             options=[
                 {'label': 'Maths', 'value': 'Maths'},
                 {'label': 'Business', 'value': 'Business'},
-                {'label': 'Graphics', 'value': 'Graphics'}
+                {'label': 'Graphics', 'value': 'Graphics'},
+                {'label': 'Computing', 'value': 'Computing'}
             ],
             value='Maths'),
         dcc.Dropdown(
@@ -42,28 +43,23 @@ layout = html.Div([
 ])
 
 
-# A quick callback to make sure the dropdown is working
-@app.callback(
-    Output('output-container', 'children'),
-    [Input('cohort-dropdown', 'value'),
-     Input('subject-dropdown', 'value'),
-     Input('point-dropdown', 'value')])
-def update_output(cohort_value, subject_value, point_value):
-    return 'You selected {}, subject {}, cohort {}'.format(
-        point_value, subject_value, cohort_value)
-
-
 @app.callback(
     Output('cohort-graph', 'figure'),
     [Input('cohort-dropdown', 'value'),
      Input('subject-dropdown', 'value'),
      Input('point-dropdown', 'value')])
 def update_figure(cohort_value, subject_value, point_value):
+    db = get_db()
+    assessments = [r['doc'] for r in db.get_view_result('assessment', 'subject', key=subject_value, include_docs=True).all()]
+    assessments_df = pd.DataFrame.from_records(assessments)
+    students = [r['doc'] for r in db.get_view_result('enrolment', 'cohort', key=cohort_value, include_docs=True).all()]
+    students_df = pd.DataFrame.from_records(students)
+    df = assessments_df.merge(students_df, how='left', left_on='student_id', right_on='_id')
     return {
         'data': [
-            go.Scatter(x=[5,6],
-                       y=["A","B"],
-                       text=["a","b"],
+            go.Scatter(x=df['aps'],
+                       y=df['grade'],
+                       text=df['given_name'],
                        mode='markers')
         ],
         'layout':

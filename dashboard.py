@@ -1,5 +1,5 @@
 """
-Starts the database connection and contains the dash app definition 
+Gives out database connections and contains the dash app definition 
 """
 # dash
 import dash
@@ -12,23 +12,27 @@ from configparser import ConfigParser
 from cloudant.client import CouchDB
 from cloudant.error import CloudantClientException
 
-# read the config
-config_object = ConfigParser()
-config_object.read("config.ini")
-# and get couchdb settings
-couchdb_config = config_object["COUCHDB"]
-couchdb_user = couchdb_config["user"]
-couchdb_pwd = couchdb_config["pwd"]
-couchdb_ip = couchdb_config["ip"]
-couchdb_port = couchdb_config["port"]
-# create connection
-client = CouchDB(couchdb_user,
-                 couchdb_pwd,
-                 url=f'http://{couchdb_ip}:{couchdb_port}',
-                 connect=True,
-                 autorenew=True)
-# and select database
-db = client['testing']
+
+def get_db():
+    # read the config
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    # and get couchdb settings
+    couchdb_config = config_object["COUCHDB"]
+    couchdb_user = couchdb_config["user"]
+    couchdb_pwd = couchdb_config["pwd"]
+    couchdb_ip = couchdb_config["ip"]
+    couchdb_port = couchdb_config["port"]
+    # create connection
+    client = CouchDB(couchdb_user,
+                    couchdb_pwd,
+                    url=f'http://{couchdb_ip}:{couchdb_port}',
+                    connect=True,
+                    autorenew=True)
+    # and select database
+    db = client['testing']
+    return db
+
 
 # create dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)

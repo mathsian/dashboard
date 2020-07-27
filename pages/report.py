@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-from dashboard import app, db
+from dashboard import app, get_db
 
 layout = html.Div([
     # We need the id of the student from the url
@@ -40,6 +40,7 @@ layout = html.Div([
               [Input('report-url', 'search')]
               )
 def generate_report(search):
+    db = get_db()
     # search captures url parameters, including leading ?
     query_dict = parse_qs(search[1:])
     if not 'id' in query_dict.keys():

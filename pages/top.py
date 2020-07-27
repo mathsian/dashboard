@@ -3,7 +3,7 @@ import dash_html_components as html
 import dash_table
 import pandas as pd
 
-from dashboard import app, db
+from dashboard import app, get_db
 
 layout = html.Div([
     html.P("Not yet")

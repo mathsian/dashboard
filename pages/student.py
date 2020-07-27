@@ -6,7 +6,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_table
 from urllib.parse import parse_qs
-from dashboard import app, db
+from dashboard import app, get_db
 
 layout = html.Div([
     # The url at which the page is being served. Useful to pick up parameters
@@ -61,6 +61,7 @@ def display_student_list(search, value):
 
 def get_students_by_id_list(id_list):
     """Get student enrolment docs for ids in list"""
+    db = get_db()
     selected_students = db.get_view_result(
         'enrolment',
         'student_id',
@@ -70,6 +71,7 @@ def get_students_by_id_list(id_list):
 
 def get_all_students(cohort_list):
     """Get all student enrolment docs"""
+    db = get_db()
     return db.get_view_result(
         'enrolment',
         'cohort',
