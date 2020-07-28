@@ -54,7 +54,7 @@ def update_figure(cohort_value, subject_value, point_value):
     assessments_df = pd.DataFrame.from_records(assessments)
     students = [r['doc'] for r in db.get_view_result('enrolment', 'cohort', key=cohort_value, include_docs=True).all()]
     students_df = pd.DataFrame.from_records(students)
-    df = assessments_df.merge(students_df, how='left', left_on='student_id', right_on='_id')
+    df = assessments_df.merge(students_df, how='left', left_on='student_id', right_on='_id').query(f'point == "{point_value}"')
     return {
         'data': [
             go.Scatter(x=df['aps'],
