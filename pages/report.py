@@ -35,7 +35,7 @@ layout = html.Div([
                Output("report-academic", "children"),
                Output("report-kudos", "children"),
                Output("report-concerns", "children")],
-              [Input('current-focus', 'data')]
+              [Input('current-student', 'data')]
               )
 def generate_report(data):
     if 'student_id' not in data.keys():
