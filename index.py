@@ -1,28 +1,38 @@
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Output, Input
+from dash.dependencies import Input, Output
+
 from dashboard import app
-from pages import student, subject, report, top
+from pages import report, student, subject, top
 
 # Top level container
 app.layout = html.Div([
-    dcc.Location(id='url', refresh=True),
-    html.Div(id='page-content')
+    dcc.Store(id='current-focus', storage_type='memory', data={}),
+    html.Div(id='heading-content'),
+    dcc.Tabs(id='top-tabs', value='cohort-tab',
+             children=[
+                 dcc.Tab(value='cohort-tab', label="Cohort"),
+                 dcc.Tab(value='team-tab', label="Team"),
+                 dcc.Tab(value='subject-tab', label="Subject"),
+                 dcc.Tab(value='student-tab', label="Student")
+             ]),
+    html.Div(id='top-tab-content')
 ])
 
-# Only one callback required. When the url changes, replace the layout
-@app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
-def display_page(pathname):
-    response = html.Div([f'404 I guess on {pathname}'])
-    if pathname == '/pages/student':
+
+@app.callback(Output('top-tab-content', 'children'), [Input('top-tabs', 'value')])
+def display_page(tab):
+    response = top.layout
+    if tab == 'student-tab':
         response = student.layout
-    elif pathname == '/pages/subject':
+    elif tab == 'subject-tab':
         response = subject.layout
-    elif pathname == '/pages/top':
+    elif tab == 'top-tab':
         response = top.layout
-    elif pathname == '/pages/report':
-        response = report.layout
+    elif tab == 'team-tab':
+        response = top.layout
     return response
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
