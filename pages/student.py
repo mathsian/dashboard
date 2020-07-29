@@ -5,22 +5,24 @@ from urllib.parse import parse_qs
 
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 import dash_table
 from dash.dependencies import Input, Output, State
 
 from dashboard import app, get_db
 from pages import report
 
-layout = html.Div([
-    html.Div(id='student-list-content',
+layout = [
+    dbc.Col(id='student-list-div',
              children=[
                  dash_table.DataTable(id='student-list-student-table',
                                       columns=[
                                                {'name': 'Name', 'id': 'value'}],
                                       row_selectable='single',
-                                      )]),
-    html.Div(id='student-list-student-report', children=report.layout)
-])
+                                      )], width=2),
+    dbc.Col(id='student-list-student-report',
+            children=report.layout, width=True)
+]
 
 
 @app.callback(Output('student-list-student-table', 'data'),

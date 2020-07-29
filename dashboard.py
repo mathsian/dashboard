@@ -5,6 +5,7 @@ Gives out database connections and contains the dash app definition
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 # config
 from configparser import ConfigParser
@@ -35,5 +36,5 @@ def get_db():
 
 
 # create dash app
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server

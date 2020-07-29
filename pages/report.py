@@ -7,14 +7,15 @@ from urllib.parse import parse_qs
 
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 import dash_table
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
-
+import curriculum
 from dashboard import app, get_db
 
-layout = html.Div([
+layout = [
     html.Div(id="report-heading"),
     html.Div(id="report-subheading"),
     html.H3("Attendance"),
@@ -26,8 +27,7 @@ layout = html.Div([
     html.Div(id="report-kudos"),
     html.H4("Concerns"),
     html.Div(id="report-concerns"),
-])
-
+]
 
 @app.callback([Output('report-heading', 'children'),
                Output("report-subheading", "children"),
@@ -53,10 +53,7 @@ def generate_report(data):
     for subject in assessment_df['subject'].unique():
         results = assessment_df.query(
             f'subject == "{subject}"').sort_values(by='date')
-        if subject == 'Computing':
-            grade_array = ['U', 'N', 'P', 'M', 'D', 'S']
-        else:
-            grade_array = ['U', 'E', 'D', 'C', 'B', 'A', 'S']
+        grade_array = curriculum.scales[subject]
         assessment_layout.append(
             dcc.Graph(figure={
                 'data': [go.Scatter(x=results['date'],
