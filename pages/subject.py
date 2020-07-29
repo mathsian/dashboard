@@ -1,61 +1,47 @@
-from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objs as go
-import pandas as pd
+import dash_bootstrap_components as dbc
 import dash_table
-from dashboard import get_db, app
+import pandas as pd
+import plotly.graph_objs as go
+from dash.dependencies import Input, Output, State
+import curriculum
+from dashboard import app, get_db
 
-layout = html.Div([
-    html.Div([
-        dcc.Dropdown(
-            id='subject-dropdown',
-            options=[
-                {'label': 'Maths', 'value': 'Maths'},
-                {'label': 'Business', 'value': 'Business'},
-                {'label': 'Graphics', 'value': 'Graphics'},
-                {'label': 'Computing', 'value': 'Computing'}
-            ],
-            value='Maths'),
-        dcc.Dropdown(
-            id='point-dropdown',
-            options=[
-                {'label': '12.1', 'value': '12.1'},
-                {'label': '12.2', 'value': '12.2'},
-                {'label': '12.3', 'value': '12.3'},
-                {'label': '13.1', 'value': '13.1'},
-                {'label': '13.2', 'value': '13.2'},
-                {'label': '13.3', 'value': '13.3'},
-            ],
-            value='13.3'),
-        dcc.Dropdown(
-            id='cohort-dropdown',
-            options=[
-                {'label': 'Cohort 1618', 'value': '1618'},
-                {'label': 'Cohort 1719', 'value': '1719'},
-                {'label': 'Cohort 1820', 'value': '1820'},
-                {'label': 'Cohort 1921', 'value': '1921'},
-            ],
-            value='1921'),
-        html.Div(id='output-container'),
-        html.Div([dcc.Graph(id='cohort-graph')]),
-        ])
-])
+subtabs = dcc.Tabs(id='subject-tabs', value='view',
+             children=[dcc.Tab(value='view', label='View'),
+                       dcc.Tab(value='edit', label='Edit')])
+subject_graph_div = dbc.Container(id='subject-graph-div', children=[dcc.Graph(id='subject-graph')])
+subject_table_div = dbc.Container(id='subject-table-div',
+             children=[dash_table.DataTable(id='subject-table',
+                                            columns=[{'name': 'Given name', 'id': 'given_name'},
+                                                     {'name': 'Family name', 'id': 'family_name'},
+                                                     {'name': 'Grade', 'id': 'grade'}])])
 
+layout = dbc.Col([
+    dbc.Row([dbc.Col(subject_table_div, width=2),
+             dbc.Col(dbc.Container(subject_graph_div))])
+    ])
 
 @app.callback(
-    Output('cohort-graph', 'figure'),
+    [Output('subject-graph', 'figure'),
+     Output('subject-table', 'data')],
     [Input('cohort-dropdown', 'value'),
      Input('subject-dropdown', 'value'),
      Input('point-dropdown', 'value')])
-def update_figure(cohort_value, subject_value, point_value):
+def update_figure(cohort_values, subject_value, point_value):
     db = get_db()
-    assessments = [r['doc'] for r in db.get_view_result('assessment', 'subject', key=subject_value, include_docs=True).all()]
+    if type(cohort_values) != list:
+        cohort_values = [cohort_values]
+    assessments = [r['doc'] for r in db.get_view_result(
+        'assessment', 'subject', key=subject_value, include_docs=True).all()]
     assessments_df = pd.DataFrame.from_records(assessments)
-    students = [r['doc'] for r in db.get_view_result('enrolment', 'cohort', key=cohort_value, include_docs=True).all()]
+    students = [r['doc'] for r in db.get_view_result(
+        'enrolment', 'cohort', keys=cohort_values, include_docs=True).all()]
     students_df = pd.DataFrame.from_records(students)
-    df = assessments_df.merge(students_df, how='left', left_on='student_id', right_on='_id').query(f'point == "{point_value}"')
-    return {
+    df = assessments_df.merge(students_df, how='inner', left_on='student_id',
+                              right_on='_id').query(f'point == "{point_value}"')
+    figure = {
         'data': [
             go.Scatter(x=df['aps'],
                        y=df['grade'],
@@ -64,8 +50,20 @@ def update_figure(cohort_value, subject_value, point_value):
         ],
         'layout':
             go.Layout(
-                yaxis={'categoryorder': "array", 'categoryarray': ['U','E','D','C','B','A','S']},
+                yaxis={'categoryorder': "array", 'categoryarray': curriculum.scales[subject_value]},
                 hovermode='closest',
-                title=f'Cohort {cohort_value} | {subject_value} | {point_value}'
-            )
-        }
+                title=f'Cohort {cohort_values} | {subject_value} | {point_value}'
+        )
+    }
+    return figure, df.to_dict(orient='records')
+
+
+@app.callback(
+[Output('subject-table-div', 'hidden'),
+ Output('subject-graph-div', 'hidden')],
+[Input('subject-tabs', 'value')])
+def show_subject_divs(value):
+    if value == 'edit':
+        return False, True
+    else:
+        return True, False
