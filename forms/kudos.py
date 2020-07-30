@@ -49,13 +49,14 @@ def confirm_kudos(n_submit, description, value, points):
      State('kudos-points-dropdown', 'value'),
      State('current-student', 'data')]
 )
-def submit_kudos(clicks, description, value, points, student_id):
-    if clicks and student_id:
+def submit_kudos(clicks, description, value, points, student):
+    if clicks and student:
         date = datetime.datetime.today().strftime('%Y-%m-%d')
         doc = {'type': 'kudos',
-               'student_id': student_id,
+               'student_id': student['student_id'],
                'ada_value': value,
                'points': points,
+               'description': description,
                'date': date}
         result = save_docs([doc])
         return str(result)
