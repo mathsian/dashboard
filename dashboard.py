@@ -29,10 +29,19 @@ def get_db():
                     couchdb_pwd,
                     url=f'http://{couchdb_ip}:{couchdb_port}',
                     connect=True,
-                    autorenew=True)
+                    autorenew=False)
     # and select database
     db = client['testing']
     return db
+
+
+def save_docs(docs):
+    """
+    Does no error checking here
+    """
+    db = get_db()
+    results = db.bulk_docs(docs)
+    return results
 
 
 # create dash app

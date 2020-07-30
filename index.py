@@ -35,6 +35,7 @@ top_tabs = dcc.Tabs(id='top-tabs', value='cohort-tab',
                         dcc.Tab(value='student-tab', label="Student")
                     ])
 
+
 # Top level container
 app.layout = dbc.Container([
     dcc.Store(id='current-student', storage_type='memory', data={}),
@@ -65,7 +66,7 @@ def update_selected_student(row_ids, data):
 def display_page(tab):
     response = top.layout, [], True, True
     if tab == 'student-tab':
-        response = student.layout, [], True, True
+        response = student.layout, student.subtabs, True, True
     elif tab == 'subject-tab':
         response = subject.layout, subject.subtabs, False, False
     elif tab == 'top-tab':

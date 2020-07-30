@@ -11,6 +11,7 @@ from dash.dependencies import Input, Output, State
 
 from dashboard import app, get_db
 from pages import report
+from forms import kudos
 
 layout = [
     dbc.Col(id='student-list-div',
@@ -20,9 +21,16 @@ layout = [
                                                {'name': 'Name', 'id': 'value'}],
                                       row_selectable='single',
                                       )], width=2),
-    dbc.Col(id='student-list-student-report',
-            children=report.layout, width=True)
+dbc.Col([
+    html.Div(id='student-list-student-report',
+            children=report.layout),
+    html.Div(id='student-list-kudos-form',
+             children=kudos.layout)], width=True)
 ]
+
+subtabs = dcc.Tabs(id='student-tabs', value='report',
+                   children=[dcc.Tab(value='report', label='Report'),
+                             dcc.Tab(value='kudos', label='Kudos')])
 
 
 @app.callback(Output('student-list-student-table', 'data'),
@@ -42,3 +50,13 @@ def get_cohort_students(cohort_list):
         'cohort',
         keys=cohort_list,
         include_docs=True).all()
+
+
+@app.callback([Output('student-list-student-report', 'hidden'),
+               Output('student-list-kudos-form', 'hidden')],
+[Input('student-tabs', 'value')])
+def show_student_divs(value):
+    if value =='report':
+        return False, True
+    else:
+        return True, False
