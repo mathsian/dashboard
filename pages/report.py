@@ -35,10 +35,11 @@ layout = [
                Output("report-academic", "children"),
                Output("report-kudos", "children"),
                Output("report-concerns", "children")],
-              [Input('current-student', 'data')]
+              [Input('current-student', 'data'),
+               Input('student-tabs', 'value')]
               )
-def generate_report(data):
-    if 'student_id' not in data.keys():
+def generate_report(data, tab):
+    if tab != 'report' or 'student_id' not in data.keys():
         return [html.P("No student selected")], [], [], [], [], []
     db = get_db()
     student_id = data['student_id']
@@ -67,8 +68,10 @@ def generate_report(data):
     kudos_df = get_as_df(db, "kudos", "student_id", student_id)
     kudos_layout = dash_table.DataTable(
         columns=[{'name': "Value", 'id': 'ada_value'},
-                 {'name': "Total", 'id': 'key'}],
-        data=kudos_df.groupby('ada_value').sum().to_dict(orient='records'))
+                 {'name': "Points", 'id': 'points'},
+                 {'name': "For", 'id': 'description'},
+                 {'name': "Date", 'id': 'date'}],
+        data=kudos_df.to_dict(orient='records'))
 
     # Concerns
     concerns_df = get_as_df(db, "concern", "student_id", student_id)
