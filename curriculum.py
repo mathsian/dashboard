@@ -1,18 +1,25 @@
 """
 Static info
 """
-
-values = {
-    "options": [
-        {"label": "Curiosity", "value": "Curiosity"},
-        {"label": "Creativity", "value": "Creativity"},
-        {"label": "Collaboration", "value": "Collaboration"},
-        {"label": "Rigour", "value": "Rigour"},
-        {"label": "Resilience", "value": "Resilience"},
-    ],
-    "default": "Curiosity",
+concern_categories = ["Conduct", "Academic"]
+concern_categories_dropdown = {
+    "options": [{"label": s, "value": s} for s in concern_categories],
+    "default": concern_categories[0],
 }
-kudos_points = {
+
+values = [
+    "Curiosity",
+    "Creativity",
+    "Collaboration",
+    "Rigour",
+    "Resilience",
+]
+values_dropdown = {
+    "options": [{"label": s, "value": s} for s in values],
+    "default": values[0],
+}
+
+kudos_points_dropdown = {
     "options": [
         {"label": "1", "value": 1},
         {"label": "3", "value": 3},
@@ -20,24 +27,20 @@ kudos_points = {
     ],
     "default": 1,
 }
-
-cohorts = {
-    "options": [
-        {"label": "Cohort 1618", "value": "1618"},
-        {"label": "Cohort 1719", "value": "1719"},
-        {"label": "Cohort 1820", "value": "1820"},
-        {"label": "Cohort 1921", "value": "1921"},
-    ],
-    "default": "1921",
+cohorts = ["1618", "1719", "1820", "1921"]
+cohorts_dropdown = {
+    "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
+    "default": cohorts[-1],
 }
-subjects = {
-    "options": [
-        {"label": "Maths", "value": "Maths"},
-        {"label": "Business", "value": "Business"},
-        {"label": "Graphics", "value": "Graphics"},
-        {"label": "Computing", "value": "Computing"},
-    ],
-    "default": "Computing",
+subjects = [
+    "Maths",
+    "Business",
+    "Graphics",
+    "Computing",
+]
+subjects_dropdown = {
+    "options": [{"label": s, "value": s} for s in subjects],
+    "default": subjects[-1],
 }
 scales = {
     "A-Level": ["U", "E", "D", "C", "B", "A", "S"],
@@ -63,15 +66,8 @@ scales = {
     ],
     "Expectations": ["Not meeting", "Meeting", "Exceeding"],
 }
-
-points = {
-    "options": [
-        {"label": "12.1", "value": "12.1"},
-        {"label": "12.2", "value": "12.2"},
-        {"label": "12.3", "value": "12.3"},
-        {"label": "13.1", "value": "13.1"},
-        {"label": "13.2", "value": "13.2"},
-        {"label": "13.3", "value": "13.3"},
-    ],
-    "default": "13.3",
+assessments = [f"{y}.{p}" for y in [12, 13] for p in [1, 2, 3]]
+assessments_dropdown = {
+    "options": [{"label": s, "value": s} for s in assessments],
+    "default": assessments[-1],
 }
