@@ -6,7 +6,11 @@ concern_categories_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_categories],
     "default": concern_categories[0],
 }
-
+teams = ["A", "B", "C", "D"]
+teams_dropdown = {
+    "options": [{"label": s, "value": s} for s in teams],
+    "default": teams
+}
 values = [
     "Curiosity",
     "Creativity",
@@ -43,11 +47,13 @@ subjects_dropdown = {
     "default": subjects[-1],
 }
 scales = {
+    "alevel": ["U", "E", "D", "C", "B", "A", "S"],
     "A-Level": ["U", "E", "D", "C", "B", "A", "S"],
     "AS-Level": ["U", "E", "D", "C", "B", "A"],
     "Level3": ["U", "E", "D", "C", "B", "A"],
     "GCSE-Letter": ["U", "G", "F", "E", "D", "C", "B", "A", "S"],
     "GCSE-Number": [str(i) for i in range(10)],
+    "btec": ["U", "N", "P", "M", "D", "S"],
     "BTEC-Single": ["U", "N", "P", "M", "D", "S"],
     "BTEC-Double": ["U", "N", "PP", "MP", "MM", "DM", "DD", "SD", "SS"],
     "BTEC-Triple": [
@@ -66,6 +72,13 @@ scales = {
     ],
     "Expectations": ["Not meeting", "Meeting", "Exceeding"],
 }
+subject_scales = {
+    "Maths": "A-Level",
+    "Business": "A-Level",
+    "Graphics": "A-Level",
+    "Computing": "BTEC-Single"
+}
+
 assessments = [f"{y}.{p}" for y in [12, 13] for p in [1, 2, 3]]
 assessments_dropdown = {
     "options": [{"label": s, "value": s} for s in assessments],

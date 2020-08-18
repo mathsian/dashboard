@@ -23,25 +23,25 @@ class Connection(object):
             autorenew=False,
         )
         self.client = client
+        self.db = client[db_name]
 
     def __enter__(self):
-        return self.client
+        return self.db
 
     def __exit__(self, type, value, traceback):
         self.client.disconnect()
 
 
-def save_docs(db_name, docs):
+def save_docs(docs, db_name="testing"):
     """
     Does no error checking here
     """
-    with Connection(db_name) as c:
-        db = c[db_name]
+    with Connection(db_name) as db:
         result = db.bulk_docs(docs)
     return result
 
 
-def get_data(db_name, doc_type, key_field, key_list):
+def get_data(doc_type, key_field, key_list, db_name="testing"):
     """
     Get all docs of given data_type for a list of keys key_list
 
@@ -49,15 +49,26 @@ def get_data(db_name, doc_type, key_field, key_list):
     """
     if not isinstance(key_list, list):
         key_list = [key_list]
-    with Connection(db_name) as c:
-        db = c[db_name]
+    with Connection(db_name) as db:
         result = db.get_view_result(
             doc_type, key_field, keys=key_list, include_docs=True
         ).all()
     return list(map(lambda r: r["doc"], result))
 
 
-def get_df(db_name, doc_type, key_field, key_list):
+def get_student(student_id, db_name="testing"):
+    with Connection(db_name) as db:
+        result = db[student_id]
+    return result
+
+
+def get_students(student_id_list, db_name="testing"):
+    with Connection(db_name) as db:
+        result = [db[student_id] for student_id in student_id_list]
+    return result
+
+
+def get_df(doc_type, key_field, key_list, db_name="testing"):
     """Get all docs of given data_type for a list of keys as a pandas DataFrame"""
-    records = get_data(db_name, doc_type, key_field, key_list)
+    records = get_data(name, doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)

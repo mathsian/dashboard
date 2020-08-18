@@ -11,8 +11,8 @@ layout = [
         children=[
             dcc.Dropdown(
                 id="dropdown-concern-category",
-                options=curriculum.concern_categories["options"],
-                value=curriculum.concern_categories["default"],
+                options=curriculum.concern_categories_dropdown["options"],
+                value=curriculum.concern_categories_dropdown["default"],
             ),
             dcc.Input(id="input-concern-description", type="text", debounce=False),
             dcc.ConfirmDialog(id="dialog-concern-confirm"),

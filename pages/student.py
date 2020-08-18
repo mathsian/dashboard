@@ -4,31 +4,157 @@ Layout for student-focused data
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
-
+from dash.dependencies import Input, Output, State
 from pages import report
 from forms import kudos, concern
+import pandas as pd
+import curriculum
+import plotly.graph_objects as go
 
-subtabs = [
-    dcc.Tab(value="tab-student-report", label="Report"),
-    dcc.Tab(value="tab-student-kudos", label="Kudos"),
-    dcc.Tab(value="tab-student-concern", label="Concern"),
-]
-content = {
-    "tab-student-report": [report.layout],
-    "tab-student-kudos": [kudos.layout],
-    "tab-student-concern": [concern.layout],
-}
-student_list = dash_table.DataTable(
-    id="sidebar-student-table",
-    columns=[{"name": "Name", "id": "value"}],
-    row_selectable="single",
+subtabs = html.Div(
+    id="div-subtabs-student",
+    children=dcc.Tabs(
+        id={"type": "tabs-sub", "id": "student"},
+        children=[
+            dcc.Tab(value="tab-student-report", label="Report"),
+            dcc.Tab(value="tab-student-kudos", label="Kudos"),
+            dcc.Tab(value="tab-student-concern", label="Concern"),
+        ],
+        value="tab-student-report",
+    ),
 )
-sidebar = {
-    "tab-student-report": [student_list],
-    "tab-student-kudos": [student_list],
-    "tab-student-concern": [student_list],
-}
 
-panel = {"tab-student-report": [],
-         "tab-student-kudos": [],
-         "tab-student-concern": []}
+student_list = (
+    dash_table.DataTable(
+        id="sidebar-student-table",
+        columns=[
+            {"name": "Given Name", "id": "given_name"},
+            {"name": "Family Name", "id": "family_name"},
+        ],
+        style_cell={"textAlign": "left"},
+        row_selectable="single",
+    ),
+)
+
+content = [
+    html.Div(id="content-student-report", children=report.layout,),
+    html.Div(id="content-student-kudos", children=kudos.layout,),
+    html.Div(id="content-student-concern", children=concern.layout,),
+]
+sidebar = [
+    html.Div(id="sidebar-student", children=student_list,),
+]
+panel = [html.Div()]
+
+
+def register_callbacks(app):
+    @app.callback(
+        Output("div-subtabs-student", "hidden"), [Input("tabs-main", "value")]
+    )
+    def student_hide_subtabs(value):
+        return value != "tab-main-student"
+
+    @app.callback(
+        [
+            Output("content-student-report", "hidden"),
+            Output("content-student-kudos", "hidden"),
+            Output("content-student-concern", "hidden"),
+            Output("sidebar-student", "hidden"),
+        ],
+        [
+            Input("tabs-main", "value"),
+            Input({"type": "tabs-sub", "id": "student"}, "value"),
+        ],
+    )
+    def student_hide_content(main_value, sub_value):
+        if main_value != "tab-main-student":
+            return True, True, True, True
+        else:
+            return (
+                sub_value != "tab-student-report",
+                sub_value != "tab-student-kudos",
+                sub_value != "tab-student-concern",
+                False,
+            )
+
+    @app.callback(
+        [
+            Output("report-heading", "children"),
+            Output("report-subheading", "children"),
+            Output("report-attendance", "children"),
+            Output("report-academic", "children"),
+            Output("report-kudos", "data"),
+            Output("report-concerns", "data"),
+        ],
+        [Input("store-student", "data")],
+        [
+            State("store-data", "data"),
+        ],
+    )
+    def generate_report(
+        store_student,
+        store_data,
+    ):
+        if "_id" not in store_student.keys():
+            return "Select a student from the list", "", "", "", [], []
+        student_id = store_student.get("_id")
+        heading_layout = (
+            f"{store_student.get('given_name')} {store_student.get('family_name')}"
+        )
+        # Assessment
+        assessment_df = pd.DataFrame.from_records(store_data.get("assessment")).query(
+            f'student_id=="{student_id}"'
+        )
+        assessment_layout = []
+        # For each subject, graph grades against time
+        for sbj in assessment_df["subject"].unique():
+            results = assessment_df.query(f'subject == "{sbj}"').sort_values(
+                by="date"
+            )
+            subtype = results.iloc[0].subtype
+            grade_array = curriculum.scales[subtype]
+            assessment_layout.append(
+                dcc.Graph(
+                    figure={
+                        "data": [go.Scatter(x=results["date"], y=results["grade"])],
+                        "layout": go.Layout(
+                            title=sbj,
+                            yaxis={
+                                "type": "category",
+                                "range": [0, len(grade_array)],
+                                "categoryorder": "array",
+                                "categoryarray": grade_array,
+                            },
+                        ),
+                    }
+                )
+            )
+        # Kudos
+        kudos_df = pd.DataFrame.from_records(store_data.get('kudos')).query(
+            f'student_id=="{student_id}"'
+        )
+        kudos_data = kudos_df.to_dict(orient="records")
+
+        # Concerns
+        concerns_df = pd.DataFrame.from_records(store_data.get('concern')).query(
+            f'student_id=="{student_id}"'
+        )
+        concerns_data = concerns_df.to_dict(orient="records")
+
+        return heading_layout, "", "", assessment_layout, kudos_data, concerns_data
+
+    @app.callback(
+        Output("sidebar-student-table", "data"),
+        [Input("store-data", "data"), Input({"type": "filter-dropdown", "id": "team"}, "value")],
+    )
+    def update_sidebar_student_table(store_data, team_value):
+        student_df = pd.DataFrame.from_records(store_data.get('student')).rename(
+            columns={"_id": "id"}
+        )
+        if team_value:
+            if isinstance(team_value, list):
+                student_df = student_df[student_df.team.isin(team_value)]
+            else:
+                student_df = student_df[student_df.team == team_value]
+        return student_df.to_dict(orient="records")
+

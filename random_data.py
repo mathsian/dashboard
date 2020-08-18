@@ -53,19 +53,19 @@ students = [
     for n in range(200) 
 ]
 # Save enrolment docs
-student_bulk_result = data.save_docs("testing", students)
+student_bulk_result = data.save_docs(students)
 
 # For each student now in the db, create their A Level data
 # Result is a triple including doc id
 for student in students:
-    subject = random.choice(curriculum.subjects)
+    subject = random.choice(curriculum.subjects[:-1])
 
     # Create assessment records
     # An A Level each
     assessments = [
         {
             "type": "assessment",
-            "subtype": "alevel",
+            "subtype": "A-Level",
             "subject": subject,
             "student_id": student['_id'],
             "assessment": assessment,
@@ -76,12 +76,12 @@ for student in students:
         for assessment in curriculum.assessments
     ]
     # Save
-    data.save_docs("testing", assessments)
+    data.save_docs(assessments)
     # And then computing
     assessments = [
         {
             "type": "assessment",
-            "subtype": "btec",
+            "subtype": "BTEC-Single",
             "subject": "Computing",
             "student_id": student['_id'],
             "cohort": student["cohort"],
@@ -92,7 +92,7 @@ for student in students:
         for assessment in curriculum.assessments
     ]
     # Save
-    data.save_docs("testing", assessments)
+    data.save_docs(assessments)
 
     # Create attendance records
     # Use assessment point dates for now
@@ -108,7 +108,7 @@ for student in students:
         for assessment in curriculum.assessments
     ]
     # Save
-    data.save_docs("testing", attendance)
+    data.save_docs(attendance)
 
     # Create some kudos records
     kudos = [
@@ -124,7 +124,7 @@ for student in students:
         for _ in range(random.randint(1, 10))
     ]
     # Save them
-    data.save_docs("testing", kudos)
+    data.save_docs(kudos)
 
     # Create some concern records
     concerns = [
@@ -139,5 +139,5 @@ for student in students:
         for _ in range(random.randint(1, 5))
     ]
     # Save them
-    data.save_docs("testing", concerns)
+    data.save_docs(concerns)
 
