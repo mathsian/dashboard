@@ -8,6 +8,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import data
 import plotly.graph_objects as go
+import curriculum
 
 subject_graph = html.Div(
     id="content-subject-view", children=dcc.Graph(id="subject-graph"),
@@ -86,10 +87,11 @@ def register_callbacks(app):
         merged_df = pd.merge(
             subject_df, student_df, how="left", left_on="student_id", right_on="_id"
         )
-        grade_array = curriculum.subject_scales.get(subject_value)
+        grade_array = curriculum.scales.get(curriculum.subject_scales.get(subject_value))
         figure = {
             "data": [
-                go.Scatter(x=merged_df["aps"], y=merged_df["grade"])
+                go.Scatter(x=merged_df["aps"], y=merged_df["grade"],
+                mode='markers', text=merged_df["given_name"])
             ],
             "layout": go.Layout(
                 title=f"{cohort_value}:{subject_value}:{assessment_value}",

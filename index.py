@@ -50,6 +50,7 @@ sidebar = [
             )
         ],
     ),
+    html.Br(),
     html.Div(
         id="div-sidebar-content",
         children=cohort.sidebar + team.sidebar + subject.sidebar + student.sidebar,
@@ -78,12 +79,14 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         dbc.Row(dbc.Col(html.Div(tabs_main), width=9)),
+                        html.Br(),
                         dbc.Row(
                             dbc.Col(
                                 [cohort.subtabs, team.subtabs, subject.subtabs, student.subtabs],
                                 width=9,
                             )
                         ),
+                        html.Br(),
                         dbc.Row(
                             [
                                 dbc.Col(
