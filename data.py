@@ -70,5 +70,5 @@ def get_students(student_id_list, db_name="testing"):
 
 def get_df(doc_type, key_field, key_list, db_name="testing"):
     """Get all docs of given data_type for a list of keys as a pandas DataFrame"""
-    records = get_data(name, doc_type, key_field, key_list, db_name)
+    records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)

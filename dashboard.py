@@ -13,7 +13,7 @@ from pages import cohort, team, subject, student
 # create dash app
 app = dash.Dash(
     __name__,
-    suppress_callback_exceptions=True,
+    suppress_callback_exceptions=False,
     #    external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
     external_stylesheets=[dbc.themes.LUX],
 )
