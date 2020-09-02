@@ -20,7 +20,7 @@ kudos_table = dash_table.DataTable(
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
     ]
-    + [{"name": v, "id": v.lower()} for v in curriculum.values],
+    + [{"name": v, "id": v} for v in curriculum.values],
 )
 content = [
     html.Div(id="content-team-attendance"),
@@ -119,8 +119,9 @@ def register_callbacks(app):
         pivot_table_df = pd.pivot_table(
             student_kudos_df,
             values="points",
-            index="_id",
+            index=["student_id", "given_name", "family_name"],
             columns="ada_value",
             aggfunc=sum,
         )
-        return pivot_table_df.to_dict(orient="records")
+        # need to reset index otherwise indices are not provided by to_dict
+        return pivot_table_df.reset_index().to_dict(orient="records")
