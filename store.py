@@ -1,3 +1,4 @@
+from dash import callback_context
 from dash.dependencies import Input, Output, State
 import data
 
@@ -5,9 +6,29 @@ import data
 def register_callbacks(app):
     @app.callback(
         Output("store-data", "data"),
-        [Input({"type": "filter-dropdown", "id": "cohort"}, "value")],
+        [Input({"type": "filter-dropdown", "id": "cohort"}, "value"),
+         Input("subject-save-button", "n_clicks")],
+        [State("subject-table", "data")],
     )
-    def store_student_data(cohort_value):
+    def store_student_data(cohort_value, n_clicks, subject_table_data):
+        if callback_context.triggered:
+            if callback_context.triggered[0]['prop_id'] == "subject-save-button.n_clicks":
+                # subject table data is based on a pandas join so
+                # we need to parse it remembering that the left (x) was assessments
+                assessments = [
+                {
+                    "_id": row.get("_id_x"),
+                    "_rev": row.get("_rev_x"),
+                    "type": "assessment",
+                    "subtype": row.get("subtype"),
+                    "subject": row.get("subject"),
+                    "student_id": row.get("student_id"),
+                    "cohort": row.get("cohort_x"),
+                    "assessment": row.get("assessment"),
+                    "date": row.get("date"),
+                    "grade": row.get("grade"),
+                }
+                    for row in subject_table_data]
         result = {
             "student": data.get_data("enrolment", "cohort", cohort_value),
             "attendance": data.get_data("attendance", "cohort", cohort_value),

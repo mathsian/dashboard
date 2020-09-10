@@ -20,7 +20,7 @@ subject_table = html.Div(
         columns=[
             {"name": "Given name", "id": "given_name"},
             {"name": "Family name", "id": "family_name"},
-            {"name": "Grade", "id": "grade"},
+            {"name": "Grade", "id": "grade", "editable": True},
         ],
     ),
 )
@@ -38,7 +38,14 @@ subtabs = html.Div(
 
 content = [subject_graph, subject_table]
 sidebar = [html.Div()]
-panel = [html.Div()]
+panel = [html.Div(
+    id="div-panel-subject",
+    children=html.Button(
+        "Save",
+        id="subject-save-button",
+        n_clicks=0
+        ),
+    )]
 
 
 def register_callbacks(app):
@@ -52,6 +59,7 @@ def register_callbacks(app):
         [
             Output("content-subject-view", "hidden"),
             Output("content-subject-edit", "hidden"),
+            Output("div-panel-subject", "hidden")
         ],
         [
             Input("tabs-main", "value"),
@@ -60,9 +68,11 @@ def register_callbacks(app):
     )
     def subject_hide_content(main_value, sub_value):
         if main_value != "tab-main-subject":
-            return True, True
+            return True, True, True
         else:
-            return (sub_value != "tab-subject-view", sub_value != "tab-subject-edit")
+            return (sub_value != "tab-subject-view",
+                    sub_value != "tab-subject-edit",
+                    sub_value != "tab-subject-edit")
 
     @app.callback(
         [Output("subject-graph", "figure"), Output("subject-table", "data")],
