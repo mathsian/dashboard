@@ -3,3 +3,7 @@ user = username
 pwd = password
 ip = address
 port = port
+[OAUTH]
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
+flask_secret_key = FLASK_SECRET_KEY
