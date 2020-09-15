@@ -2,6 +2,26 @@ from configparser import ConfigParser
 from cloudant.client import CouchDB
 import pandas as pd
 
+def create_db(name):
+    # read the config
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    # and get couchdb settings
+    couchdb_config = config_object["COUCHDB"]
+    couchdb_user = couchdb_config["user"]
+    couchdb_pwd = couchdb_config["pwd"]
+    couchdb_ip = couchdb_config["ip"]
+    couchdb_port = couchdb_config["port"]
+    # create connection
+    client = CouchDB(
+        couchdb_user,
+        couchdb_pwd,
+        url=f"http://{couchdb_ip}:{couchdb_port}",
+        connect=True,
+        autorenew=False,
+    )
+    db = client.create_database(name)
+    return db.exists()
 
 class Connection(object):
     def __init__(self, db_name):
