@@ -4,6 +4,8 @@ Owns top level tabs, dropdowns, container and storage
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
+import pandas as pd
 import curriculum
 from pages import cohort, team, subject, student
 
@@ -15,7 +17,7 @@ sidebar = [
                 id={"type": "filter-dropdown", "id": "cohort"},
                 options=curriculum.cohorts_dropdown["options"],
                 value=curriculum.cohorts_dropdown["default"],
-                multi=True,
+                multi=False,
             )
         ],
     ),
@@ -112,3 +114,15 @@ layout = dbc.Container(
     ],
     fluid=True,
 )
+def register_callbacks(app):
+
+    @app.callback(
+        [Output({"type": "filter-dropdown", "id": "team"}, "options"),
+         Output({"type": "filter-dropdown", "id": "subject"}, "options"),
+         Output({"type": "filter-dropdown", "id": "assessment"}, "options")],
+    [Input("store-data", "data")])
+    def update_dropdowns(store_data):
+        teams = pd.DataFrame.from_records(store_data.get("student"), columns=["team"])["team"].unique()
+        groups = pd.DataFrame.from_records(store_data.get("group"), columns=["name"])["name"].unique()
+        assessments = pd.DataFrame.from_records(store_data.get("assessment"), columns=["assessment"])["assessment"].unique()
+        return [{"label": t, "value": t} for t in teams], [{"label": g, "value": g} for g in groups], [{"label": a, "value": a} for a in assessments]
