@@ -31,7 +31,7 @@ kudos_points_dropdown = {
     ],
     "default": 1,
 }
-cohorts = ["1618", "1719", "1820", "1921"]
+cohorts = ["1921", "2022"]
 cohorts_dropdown = {
     "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
     "default": cohorts[-1],
@@ -70,7 +70,11 @@ scales = {
         "SSD",
         "SSS",
     ],
-    "Expectations": ["Not meeting", "Meeting", "Exceeding"],
+    "Expectations": ["Insufficient evidence", "Not meeting", "Meeting", "Exceeding"],
+}
+scales_dropdown = {
+    "options": [{"label": s, "value": s} for s in list(scales.keys())],
+    "default": "Expectations"
 }
 subject_scales = {
     "Maths": "A-Level",
