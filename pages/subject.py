@@ -20,7 +20,7 @@ subject_table = html.Div(
         columns=[
             {"name": "Given name", "id": "given_name"},
             {"name": "Family name", "id": "family_name"},
-            {"name": "Grade", "id": "grade", "editable": True},
+            {"name": "Grade", "id": "grade", "presentation": "dropdown", "editable": True},
         ],
     ),
 )
@@ -59,7 +59,7 @@ def register_callbacks(app):
         [
             Output("content-subject-view", "hidden"),
             Output("content-subject-edit", "hidden"),
-            Output("div-panel-subject", "hidden")
+            Output("div-panel-subject", "hidden"),
         ],
         [
             Input("tabs-main", "value"),
@@ -71,40 +71,38 @@ def register_callbacks(app):
             return True, True, True
         else:
             return (sub_value != "tab-subject-view",
-                    sub_value != "tab-subject-edit",
-                    sub_value != "tab-subject-edit")
+                    sub_value == "tab-subject-view",
+                    sub_value == "tab-subject-view",)
 
     @app.callback(
-        [Output("subject-graph", "figure"), Output("subject-table", "data")],
+        [Output("subject-graph", "figure"),Output("subject-table", "data"), Output("subject-table", "dropdown")],
         [
-            Input({"type": "filter-dropdown", "id": "cohort"}, "value"),
             Input({"type": "filter-dropdown", "id": "subject"}, "value"),
             Input({"type": "filter-dropdown", "id": "assessment"}, "value"),
             Input("store-data", "data"),
         ],
     )
-    def update_subject(
-        cohort_value, subject_value, assessment_value, store_data,
+    def update_subject_graph(
+        subject_value, assessment_value, store_data,
     ):
-        if not isinstance(cohort_value, list):
-            cohort_value = [cohort_value]
 
-        subject_df = pd.DataFrame.from_records(store_data.get("assessment")).query(
-            "(subject==@subject_value) and (cohort.isin(@cohort_value)) and (assessment==@assessment_value)"
+        subject_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["subtype", "subject", "student_id", "assessment", "grade", "date"]).query(
+            "(subject==@subject_value) and (assessment==@assessment_value)"
         )
+        subtype = subject_df.iloc[0]["subtype"]
         student_id_list = subject_df.student_id.unique()
-        student_df = pd.DataFrame.from_records(data.get_students(student_id_list))
+        student_df = pd.DataFrame.from_records(data.get_students(student_id_list), columns=["_id", "given_name", "family_name", "aps"])
         merged_df = pd.merge(
             subject_df, student_df, how="left", left_on="student_id", right_on="_id"
         )
-        grade_array = curriculum.scales.get(curriculum.subject_scales.get(subject_value))
+        grade_array = curriculum.scales.get(subtype)
         figure = {
             "data": [
                 go.Scatter(x=merged_df["aps"], y=merged_df["grade"],
                 mode='markers', text=merged_df["given_name"])
             ],
             "layout": go.Layout(
-                title=f"{cohort_value}:{subject_value}:{assessment_value}",
+                title=f"{subject_value}:{assessment_value}",
                 yaxis={
                     "type": "category",
                     "range": [0, len(grade_array)],
@@ -112,4 +110,4 @@ def register_callbacks(app):
                     "categoryarray": grade_array
                 })
         }
-        return figure, merged_df.to_dict(orient="records")
+        return figure, merged_df.to_dict(orient="records"), {"grade": {"options": [{"label": g, "value": g} for g in grade_array]}}

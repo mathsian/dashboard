@@ -106,7 +106,7 @@ def register_callbacks(app):
     )
     def update_team_kudos_table(store_data, team_value):
         kudos_data = store_data.get("kudos")
-        kudos_df = pd.DataFrame.from_records(kudos_data)
+        kudos_df = pd.DataFrame.from_records(kudos_data, columns=["student_id", "cohort", "date", "ada_value", "description", "points"])
         student_data = store_data.get("student")
         if not isinstance(team_value, list):
             team_value = [team_value]
