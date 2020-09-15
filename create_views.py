@@ -46,4 +46,6 @@ function (doc){{
     ddoc.add_view('cohort', js_fun)
     ddoc.save()
 # no need to do enrolment as that's literally _id
+#### TODO ####
+## group views ##
 client.disconnect()
