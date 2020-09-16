@@ -47,3 +47,19 @@ def create_assessment_all(cohort, name, date, scale_name):
             "grade": curriculum.scales.get(scale_name)[0]} for g in groups]
     #print(data.save_docs(assessments))
 
+def get_weekly_attendance(wb):
+    conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=172.26.11.131;DATABASE=Reports;UID=Reader;PWD=Reader1')
+    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] = '{wb} 00:00:00.000';"
+    df = pd.read_sql(sql, conn).groupby('REGD_Student_ID').agg({'REGD_Attendance_Mark': ''.join})
+    df['possible'] = df['REGD_Attendance_Mark'].apply(len)
+    df['late'] = df['REGD_Attendance_Mark'].str.count('L')
+    df['unauthorised'] = df['REGD_Attendance_Mark'].str.count('N')
+    df['actual'] = df['REGD_Attendance_Mark'].str.count('/') + df['late']
+    df['type'] = 'attendance'
+    df['date'] = wb
+    # bring index back as column and rename to fit conventions
+    # print(data.save_docs(df.reset_index().rename(columns={'REGD_Attendance_Mark': 'marks', 'REGD_Student_ID': 'student_id'}).to_dict(orient='records')))
+
+if __name__ == "__main__":
+#    get_weekly_attendance('2020-08-31')
+#    get_weekly_attendance('2020-09-07')
