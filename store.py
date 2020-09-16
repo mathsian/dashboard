@@ -32,9 +32,10 @@ def register_callbacks(app):
         student_data = data.get_data("enrolment", "cohort", cohort_value)
         student_ids = [s.get("_id") for s in student_data]
         groups = data.get_data("group", "student_id", student_ids)
+        attendance_data = data.get_data("attendance", "student_id", student_ids)
         result = {
             "student": student_data,
-            "attendance": data.get_data("attendance", "cohort", cohort_value),
+            "attendance": attendance_data,
             "assessment": data.get_data("assessment", "cohort", cohort_value),
             "kudos": data.get_data("kudos", "cohort", cohort_value),
             "concern": data.get_data("concern", "cohort", cohort_value),

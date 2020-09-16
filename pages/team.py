@@ -22,8 +22,14 @@ kudos_table = dash_table.DataTable(
     ]
     + [{"name": v, "id": v} for v in curriculum.values],
 )
+attendance_table = dash_table.DataTable(
+    id="team-attendance-table",
+    columns=[
+        {"name": "Given name", "id": "given_name"},
+        {"name": "Family name", "id": "family_name"},
+    ])
 content = [
-    html.Div(id="content-team-attendance"),
+    html.Div(id="content-team-attendance", children=attendance_table),
     html.Div(id="content-team-kudos", children=kudos_table),
     html.Div(id="content-team-concern"),
 ]
@@ -108,6 +114,7 @@ def register_callbacks(app):
         kudos_data = store_data.get("kudos")
         kudos_df = pd.DataFrame.from_records(kudos_data, columns=["student_id", "cohort", "date", "ada_value", "description", "points"])
         student_data = store_data.get("student")
+        ## this is no longer necessary if we only have single selection for teams
         if not isinstance(team_value, list):
             team_value = [team_value]
         student_df = pd.DataFrame.from_records(student_data).query(
@@ -125,3 +132,20 @@ def register_callbacks(app):
         )
         # need to reset index otherwise indices are not provided by to_dict
         return pivot_table_df.reset_index().to_dict(orient="records")
+
+    @app.callback(
+        [Output("team-attendance-table", "data"), Output("team-attendance-table", "columns")],
+        [Input("store-data", "data"), Input({"type": "filter-dropdown", "id": "team"}, "value")])
+    def update_team_attendance_table(store_data, team_value):
+        attendance_data = store_data.get("attendance")
+        attendance_df = pd.DataFrame.from_records(attendance_data)
+        ## this is no longer necessary if we only have single selection for teams
+        if not isinstance(team_value, list):
+            team_value = [team_value]
+        student_data = store_data.get("student")
+        student_df = pd.DataFrame.from_records(student_data).query("team.isin(@team_value)")
+        merged_df = pd.merge(student_df, attendance_df, how="left", left_on="_id", right_on="student_id")
+        merged_df['percent_present'] = round(100*merged_df['actual']/merged_df['possible'])
+        # merged_pivot = merged_df.pivot(index=["student_id", "given_name", "family_name"], columns="date", values="percent_present").reset_index()
+        merged_pivot = merged_df.set_index(["student_id", "given_name", "family_name", "date"])["percent_present"].unstack().reset_index()
+        return merged_pivot.to_dict(orient="records"), [{"name": c, "id": c} for c in merged_pivot.columns]
