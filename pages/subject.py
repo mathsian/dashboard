@@ -96,7 +96,7 @@ def register_callbacks(app):
             subject_df, student_df, how="left", left_on="student_id", right_on="_id"
         )
         grade_array = curriculum.scales.get(subtype)
-        figure = {
+        figure_scatter = {
             "data": [
                 go.Scatter(x=merged_df["aps"], y=merged_df["grade"],
                 mode='markers', text=merged_df["given_name"])
@@ -110,4 +110,9 @@ def register_callbacks(app):
                     "categoryarray": grade_array
                 })
         }
-        return figure, merged_df.to_dict(orient="records"), {"grade": {"options": [{"label": g, "value": g} for g in grade_array]}}
+        figure_bar = {
+            "data": [
+go.Bar(x=grade_array, y=merged_df["grade"].value_counts())
+            ]
+        }
+        return figure_bar, merged_df.to_dict(orient="records"), {"grade": {"options": [{"label": g, "value": g} for g in grade_array]}}
