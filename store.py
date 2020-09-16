@@ -15,15 +15,15 @@ def register_callbacks(app):
             if callback_context.triggered[0]['prop_id'] == "subject-save-button.n_clicks":
                 # subject table data is based on a pandas join so
                 # we need to parse it remembering that the left (x) was assessments
+                # be sure to compare this to the column headings from pages/subject.py
                 assessments = [
                 {
                     "_id": row.get("_id_x"),
-                    "_rev": row.get("_rev_x"),
+                    "_rev": row.get("_rev"),
                     "type": "assessment",
                     "subtype": row.get("subtype"),
                     "subject": row.get("subject"),
                     "student_id": row.get("student_id"),
-                    "cohort": row.get("cohort_x"),
                     "assessment": row.get("assessment"),
                     "date": row.get("date"),
                     "grade": row.get("grade"),
@@ -33,10 +33,11 @@ def register_callbacks(app):
         student_ids = [s.get("_id") for s in student_data]
         groups = data.get_data("group", "student_id", student_ids)
         attendance_data = data.get_data("attendance", "student_id", student_ids)
+        assessment_data = data.get_data("assessment", "student_id", student_ids)
         result = {
             "student": student_data,
             "attendance": attendance_data,
-            "assessment": data.get_data("assessment", "cohort", cohort_value),
+            "assessment": assessment_data,
             "kudos": data.get_data("kudos", "cohort", cohort_value),
             "concern": data.get_data("concern", "cohort", cohort_value),
             "group": groups

@@ -86,7 +86,7 @@ def register_callbacks(app):
         subject_value, assessment_value, store_data,
     ):
 
-        subject_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["subtype", "subject", "student_id", "assessment", "grade", "date"]).query(
+        subject_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["_id", "_rev", "subtype", "subject", "student_id", "assessment", "grade", "date"]).query(
             "(subject==@subject_value) and (assessment==@assessment_value)"
         )
         subtype = subject_df.iloc[0]["subtype"]
@@ -112,7 +112,16 @@ def register_callbacks(app):
         }
         figure_bar = {
             "data": [
-go.Bar(x=grade_array, y=merged_df["grade"].value_counts())
-            ]
+go.Histogram(x=merged_df["grade"], histfunc="count")
+            ],
+            "layout": go.Layout(
+                title=f"{subject_value}:{assessment_value}",
+                xaxis={
+                    "type": "category",
+                    "range": [0, len(grade_array)],
+                    "categoryorder": "array",
+                    "categoryarray": grade_array
+                }
+            )
         }
         return figure_bar, merged_df.to_dict(orient="records"), {"grade": {"options": [{"label": g, "value": g} for g in grade_array]}}
