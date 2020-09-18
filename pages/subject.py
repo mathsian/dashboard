@@ -89,6 +89,8 @@ def register_callbacks(app):
         subject_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["_id", "_rev", "subtype", "subject", "student_id", "assessment", "grade", "date"]).query(
             "(subject==@subject_value) and (assessment==@assessment_value)"
         )
+        if len(subject_df) < 1:
+            return {}, [], {} 
         subtype = subject_df.iloc[0]["subtype"]
         student_id_list = subject_df.student_id.unique()
         student_df = pd.DataFrame.from_records(data.get_students(student_id_list), columns=["_id", "given_name", "family_name", "aps"])
