@@ -40,7 +40,7 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
 )
 
-auth = GoogleOAuth(app, authorized_emails, ['openid'], redirect_url="/")
+auth = GoogleOAuth(app, authorized_emails, ['openid'])
 
 app.layout = index.layout
 index.register_callbacks(app)
