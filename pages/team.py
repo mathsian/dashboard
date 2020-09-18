@@ -21,9 +21,11 @@ kudos_table = dash_table.DataTable(
         {"name": "Family name", "id": "family_name"},
     ]
     + [{"name": v, "id": v} for v in curriculum.values],
+    sort_action="native",
 )
 team_attendance_table = dash_table.DataTable(
     id="team-attendance-table",
+    sort_action="native",
     columns=[
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
@@ -107,12 +109,12 @@ def register_callbacks(app):
 
     @app.callback(
         Output("team-kudos-table", "data"),
-        [Input("store-data", "data"),],
-        [State({"type": "filter-dropdown", "id": "team"}, "value")],
+        [Input("store-data", "data"),
+        Input({"type": "filter-dropdown", "id": "team"}, "value")],
     )
     def update_team_kudos_table(store_data, team_value):
         kudos_data = store_data.get("kudos")
-        kudos_df = pd.DataFrame.from_records(kudos_data, columns=["student_id", "cohort", "date", "ada_value", "description", "points"])
+        kudos_df = pd.DataFrame.from_records(kudos_data, columns=["student_id", "date", "ada_value", "description", "points"])
         student_data = store_data.get("student")
         ## this is no longer necessary if we only have single selection for teams
         if not isinstance(team_value, list):
@@ -148,4 +150,4 @@ def register_callbacks(app):
         merged_df['percent_present'] = round(100*merged_df['actual']/merged_df['possible'])
         # merged_pivot = merged_df.pivot(index=["student_id", "given_name", "family_name"], columns="date", values="percent_present").reset_index()
         merged_pivot = merged_df.set_index(["student_id", "given_name", "family_name", "date"])["percent_present"].unstack().reset_index()
-        return merged_pivot.to_dict(orient="records"), [{"name": c, "id": c} for c in merged_pivot.columns]
+        return merged_pivot.to_dict(orient="records"), [{"name": "Given name", "id": "given_name"}, {"name": "Family name", "id": "family_name"}] + [{"name": c, "id": c} for c in merged_pivot.columns[3:]]

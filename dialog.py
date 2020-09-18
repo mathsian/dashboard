@@ -31,9 +31,9 @@ def register_callbacks(app):
         Output("div-kudos-message", "children"),
         [
             Input("dialog-kudos-confirm", "submit_n_clicks"),
-            Input("store-student", "data"),
         ],
         [
+            State("store-student", "data"),
             State("input-kudos-description", "value"),
             State("dropdown-kudos-value", "value"),
             State("dropdown-kudos-points", "value"),
@@ -44,7 +44,7 @@ def register_callbacks(app):
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             doc = {
                 "type": "kudos",
-                "student_id": store_student["student_id"],
+                "student_id": store_student["_id"],
                 "ada_value": value,
                 "points": points,
                 "description": description,

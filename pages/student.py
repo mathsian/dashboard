@@ -33,6 +33,7 @@ student_list = (
         ],
         style_cell={"textAlign": "left"},
         row_selectable="single",
+        sort_action="native",
     ),
 )
 
@@ -130,7 +131,7 @@ def register_callbacks(app):
                 )
             )
         # Kudos
-        kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "cohort", "date", "ada_value", "description", "points"]).query(
+        kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points"]).query(
             f'student_id=="{student_id}"'
         )
         kudos_data = kudos_df.to_dict(orient="records")
