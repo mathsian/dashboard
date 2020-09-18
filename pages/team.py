@@ -22,14 +22,14 @@ kudos_table = dash_table.DataTable(
     ]
     + [{"name": v, "id": v} for v in curriculum.values],
 )
-attendance_table = dash_table.DataTable(
+team_attendance_table = dash_table.DataTable(
     id="team-attendance-table",
     columns=[
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
     ])
 content = [
-    html.Div(id="content-team-attendance", children=attendance_table),
+    html.Div(id="content-team-attendance", children=team_attendance_table),
     html.Div(id="content-team-kudos", children=kudos_table),
     html.Div(id="content-team-concern"),
 ]
