@@ -58,8 +58,10 @@ def get_weekly_attendance(wb):
     df['type'] = 'attendance'
     df['date'] = wb
     # bring index back as column and rename to fit conventions
-    # print(data.save_docs(df.reset_index().rename(columns={'REGD_Attendance_Mark': 'marks', 'REGD_Student_ID': 'student_id'}).to_dict(orient='records')))
+    print(data.save_docs(df.reset_index().rename(columns={'REGD_Attendance_Mark': 'marks', 'REGD_Student_ID': 'student_id'}).to_dict(orient='records')))
 
 if __name__ == "__main__":
 #    get_weekly_attendance('2020-08-31')
 #    get_weekly_attendance('2020-09-07')
+
+     get_weekly_attendance('2020-09-14')
