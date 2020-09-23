@@ -3,6 +3,7 @@ Layout for subject-focused data
 """
 import dash_core_components as dcc
 import dash_table
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
@@ -22,6 +23,10 @@ subject_table = html.Div(
             {"name": "Family name", "id": "family_name"},
             {"name": "Grade", "id": "grade", "presentation": "dropdown", "editable": True},
         ],
+        sort_action='native',
+        sort_by=[{"column_id": "given_name", "direction": "asc"}],
+        filter_action='native',
+        style_cell={'textAlign': 'left'},
     ),
 )
 subtabs = html.Div(
@@ -40,7 +45,7 @@ content = [subject_graph, subject_table]
 sidebar = [html.Div()]
 panel = [html.Div(
     id="div-panel-subject",
-    children=html.Button(
+    children=dbc.Button(
         "Save",
         id="subject-save-button",
         n_clicks=0

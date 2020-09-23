@@ -63,3 +63,4 @@ def get_weekly_attendance(wb):
 if __name__ == "__main__":
 #    get_weekly_attendance('2020-08-31')
 #    get_weekly_attendance('2020-09-07')
+     get_weekly_attendance('2020-09-14')
