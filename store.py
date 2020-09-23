@@ -1,7 +1,7 @@
 from dash import callback_context
 from dash.dependencies import Input, Output, State
 import data
-
+from flask_dance.contrib.google import google
 
 def register_callbacks(app):
     @app.callback(
@@ -43,7 +43,7 @@ def register_callbacks(app):
             "assessment": assessment_data,
             "kudos": kudos_data,
             "concern": concern_data,
-            "group": groups
+            "group": groups,
         }
         return result
 

@@ -6,6 +6,10 @@ concern_categories_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_categories],
     "default": concern_categories[0],
 }
+concern_discrimination = ["Race", "Sex or gender", "Sexual orientation", "Religion", "Disability", "Something else"]
+concern_discrimination_dropdown = {
+    "options": [{"label": s, "value": s} for s in concern_discrimination]
+}
 teams = ["A", "B", "C", "D"]
 teams_dropdown = {
     "options": [{"label": s, "value": s} for s in teams],

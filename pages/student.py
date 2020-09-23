@@ -34,6 +34,8 @@ student_list = (
         style_cell={"textAlign": "left"},
         row_selectable="single",
         sort_action="native",
+        filter_action="native",
+        sort_by=[{"column_id": "given_name", "direction": "asc"}],
     ),
 )
 

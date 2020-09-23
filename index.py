@@ -26,8 +26,7 @@ sidebar = [
         children=[
             dcc.Dropdown(
                 id={"type": "filter-dropdown", "id": "team"},
-                options=curriculum.teams_dropdown["options"],
-                value=curriculum.teams_dropdown["default"],
+                placeholder="Select a team",
                 multi=True,
             )
         ],
@@ -37,8 +36,7 @@ sidebar = [
         children=[
             dcc.Dropdown(
                 id={"type": "filter-dropdown", "id": "subject"},
-                options=curriculum.subjects_dropdown["options"],
-                value=curriculum.subjects_dropdown["default"],
+                placeholder="Select a subject",
             )
         ],
     ),
@@ -47,8 +45,7 @@ sidebar = [
         children=[
             dcc.Dropdown(
                 id={"type": "filter-dropdown", "id": "assessment"},
-                options=curriculum.assessments_dropdown["options"],
-                value=curriculum.assessments_dropdown["default"],
+                placeholder="Select an assessment",
             )
         ],
     ),
