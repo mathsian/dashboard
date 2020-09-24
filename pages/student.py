@@ -133,13 +133,13 @@ def register_callbacks(app):
                 )
             )
         # Kudos
-        kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points"]).query(
+        kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points", "from"]).query(
             f'student_id=="{student_id}"'
         )
         kudos_data = kudos_df.to_dict(orient="records")
 
         # Concerns
-        concerns_df = pd.DataFrame.from_records(store_data.get('concern'), columns=["student_id", "cohort", "date", "category", "comment"]).query(
+        concerns_df = pd.DataFrame.from_records(store_data.get('concern'), columns=["student_id", "date", "category", "discrimination", "comment", "from"]).query(
             f'student_id=="{student_id}"'
         )
         concerns_data = concerns_df.to_dict(orient="records")

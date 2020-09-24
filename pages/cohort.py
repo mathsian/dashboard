@@ -21,7 +21,11 @@ cohort_attendance_table = dash_table.DataTable(
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
     ],
-    sort_action='native')
+    style_cell={"textAlign": "left"},
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{"column_id": "given_name", "direction": "asc"}],
+)
 
 content = [html.Div(id="content-cohort-summary"),
            html.Div(id="content-cohort-academic"),

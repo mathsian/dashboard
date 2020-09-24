@@ -22,6 +22,7 @@ layout = [
                 {"name": "Value", "id": "ada_value"},
                 {"name": "Points", "id": "points"},
                 {"name": "For", "id": "description"},
+                {"name": "From", "id": "from"},
                 {"name": "Date", "id": "date"},
             ],
             style_cell={
@@ -40,6 +41,8 @@ layout = [
                 {"name": "Date", "id": "date"},
                 {"name": "Category", "id": "category"},
                 {"name": "Comment", "id": "comment"},
+                {"name": "Raised by", "id": "from"},
+                {"name": "Additional", "id": "discrimination"},
             ],
             style_cell={
                 "maxWidth": "240px",

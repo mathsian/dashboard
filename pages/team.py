@@ -19,21 +19,44 @@ kudos_table = dash_table.DataTable(
     columns=[
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
-    ]
-    + [{"name": v, "id": v} for v in curriculum.values],
+    ] + [{"name": v, "id": v} for v in curriculum.values],
+    style_cell={"textAlign": "left"},
     sort_action="native",
+    filter_action="native",
+    sort_by=[{"column_id": "given_name", "direction": "asc"}],
+
 )
-team_attendance_table = dash_table.DataTable(
-    id="team-attendance-table",
-    sort_action="native",
+concern_table = dash_table.DataTable(
+    id="team-concern-table",
     columns=[
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
-    ])
+        {"name": "Date", "id": "date"},
+        {"name": "Category", "id": "category"},
+        {"name": "Comment", "id": "comment"},
+        {"name": "Additional", "id": "discrimination"},
+        {"name": "Raised by", "id": "from"},],
+    style_cell={"textAlign": "left"},
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{"column_id": "date", "direction": "desc"}],
+
+    )
+team_attendance_table = dash_table.DataTable(
+    id="team-attendance-table",
+    columns=[
+        {"name": "Given name", "id": "given_name"},
+        {"name": "Family name", "id": "family_name"},
+    ],
+    style_cell={"textAlign": "left"},
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{"column_id": "given_name", "direction": "asc"}],
+ )
 content = [
     html.Div(id="content-team-attendance", children=team_attendance_table),
     html.Div(id="content-team-kudos", children=kudos_table),
-    html.Div(id="content-team-concern"),
+    html.Div(id="content-team-concern", children=concern_table),
 ]
 sidebar = [html.Div(id=f"sidebar-team-{s.lower()}") for s in subtabnames]
 panel = [html.Div(id=f"panel-team-{s.lower()}") for s in subtabnames]
@@ -108,7 +131,10 @@ def register_callbacks(app):
             )
 
     @app.callback(
-        Output("team-kudos-table", "data"),
+        [
+            Output("team-kudos-table", "data"),
+            Output("team-concern-table", "data"),
+            ],
         [Input("store-data", "data"),
         Input({"type": "filter-dropdown", "id": "team"}, "value")],
     )
@@ -132,8 +158,14 @@ def register_callbacks(app):
             columns="ada_value",
             aggfunc=sum,
         )
+
+        concern_data = store_data.get("concern")
+        concern_df = pd.DataFrame.from_records(concern_data, columns=["student_id", "date", "comment", "discrimination", "from", "category"])
+        student_concern_df = pd.merge(
+            student_df, concern_df, how="inner", left_on="_id", right_on="student_id"
+        )
         # need to reset index otherwise indices are not provided by to_dict
-        return pivot_table_df.reset_index().to_dict(orient="records")
+        return pivot_table_df.reset_index().to_dict(orient="records"), student_concern_df.to_dict(orient="records")
 
     @app.callback(
         [Output("team-attendance-table", "data"), Output("team-attendance-table", "columns")],

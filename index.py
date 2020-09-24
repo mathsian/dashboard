@@ -28,7 +28,7 @@ sidebar = [
             dcc.Dropdown(
                 id={"type": "filter-dropdown", "id": "team"},
                 placeholder="Select a team",
-                multi=True,
+                multi=False,
             )
         ],
     ),
