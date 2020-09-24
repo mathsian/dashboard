@@ -9,6 +9,7 @@ from dash import callback_context
 from dash.dependencies import Input, Output, State
 import datetime
 import data
+from flask import session
 
 layout = [
     html.Div(id="div-concern-message"),
@@ -76,6 +77,7 @@ def register_callbacks(app):
                 "discrimination": discrimination,
                 "description": description,
                 "date": date,
+                "from": session['email'],
             }
             data.save_docs([doc])
             return f"Concern submitted to {store_student.get('given_name')}"
