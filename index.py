@@ -116,7 +116,8 @@ def register_callbacks(app):
     @app.callback(
         [Output({"type": "filter-dropdown", "id": "team"}, "options"),
          Output({"type": "filter-dropdown", "id": "subject"}, "options"),
-         Output({"type": "filter-dropdown", "id": "assessment"}, "options")],
+         Output({"type": "filter-dropdown", "id": "assessment"}, "options"),
+         ],
     [Input("store-data", "data")])
     def update_dropdowns(store_data):
         teams = pd.DataFrame.from_records(store_data.get("student"), columns=["team"])["team"].unique()

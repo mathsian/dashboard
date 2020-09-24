@@ -9,7 +9,7 @@ from dash import callback_context
 from dash.dependencies import Input, Output, State
 import datetime
 import data
-
+from flask import request
 
 layout = [
     html.Div(id="div-kudos-message"),
@@ -48,7 +48,7 @@ def register_callbacks(app):
         if store_student:
             if n_submit or n_clicks:
                 given_name = store_student.get("given_name")
-                msg = f"Award {points} {value} kudos to {given_name}?" 
+                msg = f"Award {points} {value} kudos to {given_name}" 
                 return msg, True
             else:
                 return "Cancelled", False
@@ -77,6 +77,7 @@ def register_callbacks(app):
                 "points": points,
                 "description": description,
                 "date": date,
+                "from": session.get('email',"none"),
             }
             data.save_docs([doc])
             return f"Kudos submitted to {store_student.get('given_name')}"
