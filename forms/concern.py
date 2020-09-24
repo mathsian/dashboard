@@ -77,7 +77,7 @@ def register_callbacks(app):
                 "discrimination": discrimination,
                 "description": description,
                 "date": date,
-                "from": session['email'],
+                "from": session.get('email', "none"),
             }
             data.save_docs([doc])
             return f"Concern submitted to {store_student.get('given_name')}"
