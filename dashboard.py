@@ -10,9 +10,9 @@ from dash_google_auth import GoogleOAuth
 from configparser import ConfigParser
 import index
 import store
-import dialog
 import dispatch
 from pages import cohort, team, subject, student
+from forms import kudos, concern
 
 config_object = ConfigParser()
 config_object.read("config.ini")
@@ -45,11 +45,12 @@ auth = GoogleOAuth(app, authorized_emails, ['openid'])
 app.layout = index.layout
 index.register_callbacks(app)
 store.register_callbacks(app)
-dialog.register_callbacks(app)
 cohort.register_callbacks(app)
 team.register_callbacks(app)
 subject.register_callbacks(app)
 student.register_callbacks(app)
 dispatch.register_callbacks(app)
+kudos.register_callbacks(app)
+concern.register_callbacks(app)
 if __name__ == "__main__":
     app.run_server(debug=True, port=8000)

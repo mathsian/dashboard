@@ -9,7 +9,7 @@ from dash import callback_context
 from dash.dependencies import Input, Output, State
 import datetime
 import data
-from flask import request
+from flask import session
 
 layout = [
     html.Div(id="div-kudos-message"),
