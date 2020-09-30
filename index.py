@@ -1,5 +1,5 @@
 """
-Owns top level tabs, dropdowns, container and storage
+Owns top level tabs, dropdowns, and container
 """
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -10,6 +10,7 @@ import curriculum
 from pages import cohort, team, subject, student
 from flask import session
 
+# The left page content, contains filter dropdowns and a div for tab specific sidebar content
 sidebar = [
     html.Div(
         id="div-dropdown-cohort",
