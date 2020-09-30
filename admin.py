@@ -7,7 +7,7 @@ def initial_sync():
     conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=172.26.11.131;DATABASE=Reports;UID=Reader;PWD=Reader1')
     sql = "SELECT [STEM_Student_ID], [STUD_Forename_1], [STUD_Surname], [Group_Code], [Group_Name] FROM [Reports].[dbo].[Vw_Enr_Current_SixthForm];"
     df = pd.read_sql(sql, conn)
-    students = [
+    students_rems = [
             {
                 "_id": st.get("STEM_Student_ID"),
                 "type": "enrolment",
@@ -19,6 +19,7 @@ def initial_sync():
             }
             for st in df[df["Group_Name"].str.contains("Team Time", na=False)].to_dict(orient='records')
         ]
+    students_dash = data.get_data("enrolment")
     groups = [
         {
             "type": "group",
@@ -63,4 +64,5 @@ def get_weekly_attendance(wb):
 if __name__ == "__main__":
 #    get_weekly_attendance('2020-08-31')
 #    get_weekly_attendance('2020-09-07')
-     get_weekly_attendance('2020-09-14')
+#     get_weekly_attendance('2020-09-14')
+#     get_weekly_attendance('2020-09-21')
