@@ -3,6 +3,7 @@ Create couchdb views/indices for efficient retrieval
 """
 from configparser import ConfigParser
 from cloudant.client import CouchDB
+from cloudant.error import CloudantArgumentError
 
 config_object = ConfigParser()
 config_object.read("config.ini")
@@ -19,33 +20,47 @@ client = CouchDB(couchdb_user,
                  connect=True,
                  autorenew=False)
 
-db = client['testing']
+db = client['ada20']
 
-# We want to index two ways for now, by student_id and by cohort
+# We just want to index by student_id 
 # Everything else we'll leave to pandas
-for doc_type in ['attendance', 'assessment', 'kudos', 'concern']:
+ddoc = db.get_design_document('enrolment')
+js_fun = """
+function (doc) {
+if (doc.type==='enrolment'){
+emit(doc._id, 1);
+}
+}"""
+try:
+    ddoc.add_view('_id', js_fun)
+    ddoc.save()
+except CloudantArgumentError:
+    print("Enrolment view exists")
+
+for doc_type in ['attendance', 'assessment', 'kudos', 'concern', 'group']:
     ddoc = db.get_design_document(doc_type)
     js_fun = """
 function (doc){{
     if (doc.type==='{}'){{
-        emit(doc._id, 1);
+        emit(doc.student_id, 1);
     }};
     }}
     """.format(doc_type)
-    ddoc.add_view('student_id', js_fun)
+    try:
+        ddoc.add_view('student_id', js_fun)
+        ddoc.save()
+    except CloudantArgumentError:
+        print(f"{doc_type} view exists")
+
+ddoc = db.get_design_document('all')
+js_fun = """
+function (doc){
+emit(doc.type, 1);
+}
+"""
+try:
+    ddoc.add_view('type', js_fun)
     ddoc.save()
-for doc_type in ['enrolment', 'attendance', 'assessment', 'kudos', 'concern']:
-    ddoc = db.get_design_document(doc_type)
-    js_fun = """
-function (doc){{
-    if (doc.type==='{}'){{
-        emit(doc.cohort, doc._id);
-    }};
-    }}
-    """.format(doc_type)
-    ddoc.add_view('cohort', js_fun)
-    ddoc.save()
-# no need to do enrolment as that's literally _id
-#### TODO ####
-## group views ##
+except CloudantArgumentError:
+    print("All view exists")
 client.disconnect()
