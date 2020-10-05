@@ -48,7 +48,7 @@ def register_callbacks(app):
         if store_student:
             if n_submit or n_clicks:
                 given_name = store_student.get("given_name")
-                msg = f"Raise {value} concern for {given_name}?" 
+                msg = f"Raise {category} concern for {given_name}?" 
                 return msg, True
             else:
                 return "Cancelled", False
