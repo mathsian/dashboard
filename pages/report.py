@@ -40,7 +40,7 @@ layout = [
             columns=[
                 {"name": "Date", "id": "date"},
                 {"name": "Category", "id": "category"},
-                {"name": "Comment", "id": "comment"},
+                {"name": "Description", "id": "description"},
                 {"name": "Raised by", "id": "from"},
                 {"name": "Additional", "id": "discrimination"},
             ],
