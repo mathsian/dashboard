@@ -3,3 +3,4 @@
 *.ini
 *.log
 __pycache__
+do.py
