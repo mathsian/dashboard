@@ -36,6 +36,8 @@ student_list = (
         sort_action="native",
         filter_action="native",
         sort_by=[{"column_id": "given_name", "direction": "asc"}],
+        fixed_rows={"headers": True},
+        style_table={"height": 300},
     ),
 )
 
@@ -139,7 +141,7 @@ def register_callbacks(app):
         kudos_data = kudos_df.to_dict(orient="records")
 
         # Concerns
-        concerns_df = pd.DataFrame.from_records(store_data.get('concern'), columns=["student_id", "date", "category", "discrimination", "comment", "from"]).query(
+        concerns_df = pd.DataFrame.from_records(store_data.get('concern'), columns=["student_id", "date", "category", "discrimination", "description", "from"]).query(
             f'student_id=="{student_id}"'
         )
         concerns_data = concerns_df.to_dict(orient="records")

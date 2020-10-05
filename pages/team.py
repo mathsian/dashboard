@@ -33,10 +33,15 @@ concern_table = dash_table.DataTable(
         {"name": "Family name", "id": "family_name"},
         {"name": "Date", "id": "date"},
         {"name": "Category", "id": "category"},
-        {"name": "Comment", "id": "comment"},
+        {"name": "Description", "id": "description"},
         {"name": "Additional", "id": "discrimination"},
         {"name": "Raised by", "id": "from"},],
-    style_cell={"textAlign": "left"},
+    style_cell={
+                "maxWidth": "240px",
+                "textAlign": "left",
+                "overflow": "hidden",
+                "textOverflow": "ellipsis",
+            },
     sort_action="native",
     filter_action="native",
     sort_by=[{"column_id": "date", "direction": "desc"}],
@@ -160,7 +165,7 @@ def register_callbacks(app):
         )
 
         concern_data = store_data.get("concern")
-        concern_df = pd.DataFrame.from_records(concern_data, columns=["student_id", "date", "comment", "discrimination", "from", "category"])
+        concern_df = pd.DataFrame.from_records(concern_data, columns=["student_id", "date", "description", "discrimination", "from", "category"])
         student_concern_df = pd.merge(
             student_df, concern_df, how="inner", left_on="_id", right_on="student_id"
         )
