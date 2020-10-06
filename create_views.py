@@ -35,7 +35,18 @@ try:
     ddoc.add_view('_id', js_fun)
     ddoc.save()
 except CloudantArgumentError:
-    print("Enrolment view exists")
+    print("Enrolment _id view exists")
+js_fun = """
+function (doc) {
+if (doc.type==='enrolment'){
+emit(doc.cohort, 1);
+}
+}"""
+try:
+    ddoc.add_view('cohort', js_fun)
+    ddoc.save()
+except CloudantArgumentError:
+    print("Enrolment cohort view exists")
 
 for doc_type in ['attendance', 'assessment', 'kudos', 'concern', 'group']:
     ddoc = db.get_design_document(doc_type)
@@ -50,7 +61,7 @@ function (doc){{
         ddoc.add_view('student_id', js_fun)
         ddoc.save()
     except CloudantArgumentError:
-        print(f"{doc_type} view exists")
+        print(f"{doc_type} student_id view exists")
 
 ddoc = db.get_design_document('all')
 js_fun = """
