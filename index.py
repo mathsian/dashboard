@@ -100,9 +100,9 @@ layout = dbc.Container(
                                     html.Div(
                                         id="div-panel-content", children=panel_content
                                     ),
-                                    width=2,
+                                    width=1,
                                 ),
-                            ]
+                            ],
                         ),
                     ]
                 ),

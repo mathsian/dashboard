@@ -2,3 +2,7 @@
     display: block !important;
     margin-bottom: 3rem !important;
 }
+.dash-table-container .row {
+    display: block;
+    margin: 0;
+}
