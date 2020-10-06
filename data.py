@@ -24,7 +24,7 @@ def create_db(name):
     return db.exists()
 
 class Connection(object):
-    def __init__(self, db_name):
+    def __init__(self, db_name=None):
         # read the config
         config_object = ConfigParser()
         config_object.read("config.ini")
@@ -43,6 +43,8 @@ class Connection(object):
             autorenew=False,
         )
         self.client = client
+        if not db_name:
+            db_name = couchdb_config["db"]
         self.db = client[db_name]
 
     def __enter__(self):
@@ -52,7 +54,7 @@ class Connection(object):
         self.client.disconnect()
 
 
-def save_docs(docs, db_name="testing"):
+def save_docs(docs, db_name=None):
     """
     Does no error checking here
     """
@@ -61,7 +63,7 @@ def save_docs(docs, db_name="testing"):
     return result
 
 
-def get_data(doc_type, key_field, key_list, db_name="testing"):
+def get_data(doc_type, key_field, key_list, db_name=None):
     """
     Get all docs of given data_type for a list of keys key_list
 
@@ -81,19 +83,19 @@ def get_data(doc_type, key_field, key_list, db_name="testing"):
         ).all()
     return list(map(lambda r: r["doc"], result))
 
-def get_student(student_id, db_name="testing"):
+def get_student(student_id, db_name=None):
     with Connection(db_name) as db:
         result = db[student_id]
     return result
 
 
-def get_students(student_id_list, db_name="testing"):
+def get_students(student_id_list, db_name=None):
     with Connection(db_name) as db:
         result = [db[student_id] for student_id in student_id_list]
     return result
 
 
-def get_df(doc_type, key_field, key_list, db_name="testing"):
+def get_df(doc_type, key_field, key_list, db_name=None):
     """Get all docs of given data_type for a list of keys as a pandas DataFrame"""
     records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)
