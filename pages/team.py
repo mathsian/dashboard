@@ -2,6 +2,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_table
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import curriculum
 import pandas as pd
 
@@ -14,12 +16,12 @@ subtabs = html.Div(
         value="tab-team-attendance",
     ),
 )
-kudos_table = dash_table.DataTable(
+team_kudos_table = dash_table.DataTable(
     id="team-kudos-table",
     columns=[
         {"name": "Given name", "id": "given_name"},
         {"name": "Family name", "id": "family_name"},
-    ] + [{"name": v, "id": v} for v in curriculum.values],
+    ] + [{"name": v, "id": v} for v in curriculum.values] + [{"name": "Total", "id": "total"}],
     style_cell={"textAlign": "left"},
     sort_action="native",
     filter_action="native",
@@ -58,12 +60,19 @@ team_attendance_table = dash_table.DataTable(
     filter_action="native",
     sort_by=[{"column_id": "given_name", "direction": "asc"}],
  )
+team_kudos_radar = dcc.Graph(id="team-kudos-radar")
 content = [
     html.Div(id="content-team-attendance", children=team_attendance_table),
-    html.Div(id="content-team-kudos", children=kudos_table),
+    html.Div(id="content-team-kudos", children=team_kudos_table),
     html.Div(id="content-team-concern", children=concern_table),
 ]
-sidebar = [html.Div(id=f"sidebar-team-{s.lower()}") for s in subtabnames]
+
+sidebar = [
+    html.Div(id="sidebar-team-attendance"),
+    html.Div(id="sidebar-team-kudos", children=team_kudos_radar),
+    html.Div(id="sidebar-team-concern"),
+]
+
 panel = [html.Div(id=f"panel-team-{s.lower()}") for s in subtabnames]
 
 
@@ -139,6 +148,7 @@ def register_callbacks(app):
         [
             Output("team-kudos-table", "data"),
             Output("team-concern-table", "data"),
+            Output("team-kudos-radar", "figure"),
             ],
         [Input("store-data", "data"),
         Input({"type": "filter-dropdown", "id": "team"}, "value")],
@@ -147,12 +157,10 @@ def register_callbacks(app):
         kudos_data = store_data.get("kudos")
         kudos_df = pd.DataFrame.from_records(kudos_data, columns=["student_id", "date", "ada_value", "description", "points"])
         student_data = store_data.get("student")
-        ## this is no longer necessary if we only have single selection for teams
-        if not isinstance(team_value, list):
-            team_value = [team_value]
-        student_df = pd.DataFrame.from_records(student_data).query(
-            "team.isin(@team_value)"
-        )
+        if not team_value:
+            student_df = pd.DataFrame.from_records(student_data)
+        else:
+            student_df = pd.DataFrame.from_records(student_data).query("team==@team_value")
         student_kudos_df = pd.merge(
             student_df, kudos_df, how="left", left_on="_id", right_on="student_id"
         )
@@ -162,15 +170,32 @@ def register_callbacks(app):
             index=["student_id", "given_name", "family_name"],
             columns="ada_value",
             aggfunc=sum,
-        )
-
+            fill_value=0,
+        ).reindex(curriculum.values, axis=1, fill_value=0)
+        pivot_table_df["total"] = pivot_table_df.sum(axis=1)
         concern_data = store_data.get("concern")
         concern_df = pd.DataFrame.from_records(concern_data, columns=["student_id", "date", "description", "discrimination", "from", "category"])
         student_concern_df = pd.merge(
             student_df, concern_df, how="inner", left_on="_id", right_on="student_id"
         )
+
+        # add the first value back on the end to make the graph close
+        vals = curriculum.values + [curriculum.values[0]]
+        fig = make_subplots(specs=[[{"type": "polar"}]])
+        fig.add_trace(
+            go.Scatterpolar(
+                theta=vals,
+                r=[pivot_table_df[v].sum() for v in vals],
+                subplot="polar"),
+            1,1)
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(visible=False),
+            ))
         # need to reset index otherwise indices are not provided by to_dict
-        return pivot_table_df.reset_index().to_dict(orient="records"), student_concern_df.to_dict(orient="records")
+        return (pivot_table_df.reset_index().to_dict(orient="records"),
+                student_concern_df.to_dict(orient="records"),
+                fig)
 
     @app.callback(
         [Output("team-attendance-table", "data"), Output("team-attendance-table", "columns")],
