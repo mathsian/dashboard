@@ -176,7 +176,8 @@ go.Scatter(
         return heading_layout, "", attendance_graph, assessment_layout, kudos_data, concerns_data
 
     @app.callback(
-        Output("sidebar-student-table", "data"),
+        [Output("sidebar-student-table", "data"),
+         Output("sidebar-student-table", "selected_rows")],
         [Input("store-data", "data"), Input({"type": "filter-dropdown", "id": "team"}, "value")],
     )
     def update_sidebar_student_table(store_data, team_value):
@@ -188,5 +189,5 @@ go.Scatter(
                 student_df = student_df[student_df.team.isin(team_value)]
             else:
                 student_df = student_df[student_df.team == team_value]
-        return student_df.to_dict(orient="records")
+        return student_df.to_dict(orient="records"), []
 

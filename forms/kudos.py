@@ -47,7 +47,7 @@ def register_callbacks(app):
     def confirm_kudos(n_submit, n_clicks, description, value, points, store_student):
         if store_student:
             if n_submit or n_clicks:
-                given_names = [s.get("given_name") for s in store_student]
+                given_names = ", ".join([s.get("given_name") for s in store_student])
                 msg = f"Award {points} {value} kudos to {given_names}" 
                 return msg, True
             else:
@@ -82,7 +82,7 @@ def register_callbacks(app):
             data.save_docs(docs)
             return f"Kudos submitted"
         elif store_student:
-            names = [s.get("given_name") for s in store_student]
+            names = ", ".join([s.get("given_name") for s in store_student])
             return f"Award kudos to {names}"
         else:
             return "Select student to award kudos"

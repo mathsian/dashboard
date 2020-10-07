@@ -7,10 +7,10 @@ def register_callbacks(app):
         Output("store-data", "data"),
         [Input({"type": "filter-dropdown", "id": "cohort"}, "value"),
          Input("subject-save-button", "n_clicks"),
-         Input("div-kudos-message", "children")],
+         ],
         [State("subject-table", "data")],
     )
-    def store_student_data(cohort_value, n_clicks, msg, subject_table_data):
+    def store_student_data(cohort_value, n_clicks, subject_table_data):
         if callback_context.triggered:
             if callback_context.triggered[0]['prop_id'] == "subject-save-button.n_clicks":
                 # subject table data is based on a pandas join so

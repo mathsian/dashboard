@@ -47,7 +47,7 @@ def register_callbacks(app):
     def confirm_concern(n_submit, n_clicks, description, category, discrimination, store_student):
         if store_student:
             if n_submit or n_clicks:
-                given_names = [s.get("given_name") for s in store_student]
+                given_names = ", ".join([s.get("given_name") for s in store_student])
                 msg = f"Raise {category} concern for {given_names}?" 
                 return msg, True
             else:
@@ -82,7 +82,7 @@ def register_callbacks(app):
             data.save_docs(docs)
             return f"Concern submitted"
         elif store_student:
-            given_names = [s.get("given_name") for s in store_student]
+            given_names = ", ".join([s.get("given_name") for s in store_student])
             return f"Raise concern about {given_names}"
         else:
             return "Select student to raise concern"
