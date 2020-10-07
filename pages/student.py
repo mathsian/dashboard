@@ -148,7 +148,21 @@ def register_callbacks(app):
         )
         concerns_data = concerns_df.to_dict(orient="records")
 
-        return heading_layout, "", "", assessment_layout, kudos_data, concerns_data
+        # Attendance
+        attendance_df = pd.DataFrame.from_records(store_data.get('attendance')).query(f'student_id==@student_id')
+        attendance_df['percent'] = 100*attendance_df['actual']/attendance_df['possible']
+        fig = dcc.Graph(
+            figure={
+                'data': [
+                    {'x': attendance_df["date"], 'y': attendance_df["percent"], 'type': 'bar'}
+                ]
+            },
+            config={
+                "displayModeBar": False
+            }
+        )
+
+        return heading_layout, "", fig, assessment_layout, kudos_data, concerns_data
 
     @app.callback(
         Output("sidebar-student-table", "data"),

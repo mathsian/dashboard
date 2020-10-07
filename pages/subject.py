@@ -12,7 +12,11 @@ import plotly.graph_objects as go
 import curriculum
 
 subject_graph = html.Div(
-    id="content-subject-view", children=dcc.Graph(id="subject-graph"),
+    id="content-subject-view", children=dcc.Graph(id="subject-graph",
+config={
+                "displayModeBar": False
+            }
+    ),
 )
 subject_table = html.Div(
     id="content-subject-edit",

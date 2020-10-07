@@ -60,7 +60,11 @@ team_attendance_table = dash_table.DataTable(
     filter_action="native",
     sort_by=[{"column_id": "given_name", "direction": "asc"}],
  )
-team_kudos_radar = dcc.Graph(id="team-kudos-radar")
+team_kudos_radar = dcc.Graph(id="team-kudos-radar",
+config={
+                "displayModeBar": False
+            }
+)
 content = [
     html.Div(id="content-team-attendance", children=team_attendance_table),
     html.Div(id="content-team-kudos", children=team_kudos_table),
