@@ -32,12 +32,13 @@ student_list = (
             {"name": "Family Name", "id": "family_name"},
         ],
         style_cell={"textAlign": "left"},
-        row_selectable="single",
+        row_selectable="multi",
         sort_action="native",
         filter_action="native",
         sort_by=[{"column_id": "given_name", "direction": "asc"}],
         fixed_rows={"headers": True},
-        style_table={"height": 300},
+        style_table={"height": '400px',
+                     "minWidth": "100%"},
     ),
 )
 
@@ -100,11 +101,12 @@ def register_callbacks(app):
         store_student,
         store_data,
     ):
-        if "_id" not in store_student.keys():
+        if not store_student:
             return "Select a student from the list", "", "", "", [], []
-        student_id = store_student.get("_id")
+        report_student = store_student[-1]
+        student_id = report_student.get("_id")
         heading_layout = (
-            f"{store_student.get('given_name')} {store_student.get('family_name')}"
+            f"{report_student.get('given_name')} {report_student.get('family_name')}"
         )
         # Assessment
         assessment_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["subtype", "subject", "student_id", "cohort", "assessment", "grade", "date"]).query(

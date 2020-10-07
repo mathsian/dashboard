@@ -47,8 +47,8 @@ def register_callbacks(app):
     def confirm_concern(n_submit, n_clicks, description, category, discrimination, store_student):
         if store_student:
             if n_submit or n_clicks:
-                given_name = store_student.get("given_name")
-                msg = f"Raise {category} concern for {given_name}?" 
+                given_names = [s.get("given_name") for s in store_student]
+                msg = f"Raise {category} concern for {given_names}?" 
                 return msg, True
             else:
                 return "Cancelled", False
@@ -70,18 +70,19 @@ def register_callbacks(app):
     def submit_concern(clicks, store_student, description, category, discrimination):
         if callback_context.triggered[0]['prop_id'] == "dialog-concern-confirm.submit_n_clicks" and store_student:
             date = datetime.datetime.today().strftime("%Y-%m-%d")
-            doc = {
+            docs = [{
                 "type": "concern",
-                "student_id": store_student["_id"],
+                "student_id": s["_id"],
                 "category": category,
                 "discrimination": discrimination,
                 "description": description,
                 "date": date,
                 "from": session.get('email', "none"),
-            }
-            data.save_docs([doc])
-            return f"Concern submitted to {store_student.get('given_name')}"
+            } for s in store_student]
+            data.save_docs(docs)
+            return f"Concern submitted"
         elif store_student:
-            return f"Raise concern about {store_student.get('given_name')}"
+            given_names = [s.get("given_name") for s in store_student]
+            return f"Raise concern about {given_names}"
         else:
             return "Select student to raise concern"

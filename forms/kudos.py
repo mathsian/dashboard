@@ -47,8 +47,8 @@ def register_callbacks(app):
     def confirm_kudos(n_submit, n_clicks, description, value, points, store_student):
         if store_student:
             if n_submit or n_clicks:
-                given_name = store_student.get("given_name")
-                msg = f"Award {points} {value} kudos to {given_name}" 
+                given_names = [s.get("given_name") for s in store_student]
+                msg = f"Award {points} {value} kudos to {given_names}" 
                 return msg, True
             else:
                 return "Cancelled", False
@@ -70,18 +70,19 @@ def register_callbacks(app):
     def submit_kudos(clicks, store_student, description, value, points):
         if callback_context.triggered[0]['prop_id'] == "dialog-kudos-confirm.submit_n_clicks" and store_student:
             date = datetime.datetime.today().strftime("%Y-%m-%d")
-            doc = {
+            docs = [{
                 "type": "kudos",
-                "student_id": store_student["_id"],
+                "student_id": s.get("_id"),
                 "ada_value": value,
                 "points": points,
                 "description": description,
                 "date": date,
                 "from": session.get('email',"none"),
-            }
-            data.save_docs([doc])
-            return f"Kudos submitted to {store_student.get('given_name')}"
+            } for s in store_student]
+            data.save_docs(docs)
+            return f"Kudos submitted"
         elif store_student:
-            return f"Award kudos to {store_student.get('given_name')}"
+            names = [s.get("given_name") for s in store_student]
+            return f"Award kudos to {names}"
         else:
             return "Select student to award kudos"

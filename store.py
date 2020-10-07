@@ -53,6 +53,6 @@ def register_callbacks(app):
     )
     def store_student(row_ids, store_student):
         if row_ids:
-            return data.get_student(row_ids[0])
+            return data.get_students(row_ids)
         else:
-            return store_student
+            return [] 
