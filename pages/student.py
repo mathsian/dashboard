@@ -37,7 +37,7 @@ student_list = (
         filter_action="native",
         sort_by=[{"column_id": "given_name", "direction": "asc"}],
         fixed_rows={"headers": True},
-        style_table={"height": '400px',
+        style_table={"height": '350px',
                      "minWidth": "100%"},
     ),
 )
@@ -151,18 +151,29 @@ def register_callbacks(app):
         # Attendance
         attendance_df = pd.DataFrame.from_records(store_data.get('attendance')).query(f'student_id==@student_id')
         attendance_df['percent'] = 100*attendance_df['actual']/attendance_df['possible']
-        fig = dcc.Graph(
-            figure={
-                'data': [
-                    {'x': attendance_df["date"], 'y': attendance_df["percent"], 'type': 'bar'}
-                ]
-            },
+        figure = go.Figure()
+        figure.add_trace(
+            go.Bar(
+                x=attendance_df["date"],
+                y=attendance_df["percent"],
+                name="Weekly attendance"
+            ))
+        figure.add_trace(
+go.Scatter(
+    x=attendance_df["date"],
+    y=[95]*len(attendance_df),
+    name="Target attendance",
+    line={"color": "green", "dash": "dot"}
+)
+        )
+        attendance_graph = dcc.Graph(
+            figure = figure,
             config={
                 "displayModeBar": False
             }
         )
 
-        return heading_layout, "", fig, assessment_layout, kudos_data, concerns_data
+        return heading_layout, "", attendance_graph, assessment_layout, kudos_data, concerns_data
 
     @app.callback(
         Output("sidebar-student-table", "data"),
