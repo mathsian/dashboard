@@ -46,8 +46,6 @@ Also stored in the session is the ID of the currently selected student for use b
 
 In order to be able to register all the callbacks on initialisation, all the component IDs need to be in the layout from the start. Components that are not relevant to the current tab/subtab are then selectively hidden. Tabs are responsible for hiding their own content in their `register_callbacks` method.
 
-In order to be able to register all the callbacks on initialisation, all the component IDs need to be in the layout from the start. Components that are not relevant to the current tab/subtab are then selectively hidden 
-
 Each tab, `cohort`, `team` and so on, has at least the following attributes, each of which is a list of html.Div:
 * `content` - the main content div(s)
 * `sidebar` - content for the left sidebar such as the student selection table
