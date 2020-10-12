@@ -216,4 +216,4 @@ def register_callbacks(app):
         merged_df['percent_present'] = round(100*merged_df['actual']/merged_df['possible'])
         # merged_pivot = merged_df.pivot(index=["student_id", "given_name", "family_name"], columns="date", values="percent_present").reset_index()
         merged_pivot = merged_df.set_index(["student_id", "given_name", "family_name", "date"])["percent_present"].unstack().reset_index()
-        return merged_pivot.to_dict(orient="records"), [{"name": "Given name", "id": "given_name"}, {"name": "Family name", "id": "family_name"}] + [{"name": c, "id": c} for c in merged_pivot.columns[3:]]
+        return merged_pivot.to_dict(orient="records"), [{"name": "Given name", "id": "given_name"}, {"name": "Family name", "id": "family_name"}] + [{"name": data.format_date(c), "id": c} for c in merged_pivot.columns[3:]]

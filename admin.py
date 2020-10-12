@@ -74,3 +74,5 @@ def copy_docs(doc_type, db_src, db_dest):
         r.pop("_rev", None)
     data.save_docs(result, db_name=db_dest)
 
+if __name__ == "__main__":
+    get_weekly_attendance("2020-10-05", "testing")

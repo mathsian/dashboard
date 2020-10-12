@@ -114,6 +114,6 @@ def register_callbacks(app):
         table_headings = [
             {"name": "Given name", "id": "given_name"},
             {"name": "Family name", "id": "family_name"}
-        ] + [{"name": d, "id": d} for d in merged_pivot.columns[3:-1]] + [{"name": "Change", "id": "change"}]
+        ] + [{"name": data.format_date(d), "id": d} for d in merged_pivot.columns[3:-1]] + [{"name": "Change", "id": "change"}]
         table_data = merged_pivot.to_dict(orient='records')
         return table_data, table_headings
