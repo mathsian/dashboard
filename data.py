@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 from cloudant.client import CouchDB
 import pandas as pd
+import calendar
 
 def create_db(name):
     # read the config
@@ -99,3 +100,8 @@ def get_df(doc_type, key_field, key_list, db_name=None):
     """Get all docs of given data_type for a list of keys as a pandas DataFrame"""
     records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)
+
+def format_date(iso_date):
+    y, m, d = iso_date.split('-')
+    month = calendar.month_abbr[int(m)]
+    return f"{month} {d}"
