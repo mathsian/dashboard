@@ -74,7 +74,7 @@ scales = {
         "SSD",
         "SSS",
     ],
-    "Expectations": ["Insufficient evidence", "Not meeting", "Meeting", "Exceeding"],
+    "Expectations": ["Insufficient Information", "Below Expectations", "Meets Expectations", "Exceeds Expectations"],
 }
 scales_dropdown = {
     "options": [{"label": s, "value": s} for s in list(scales.keys())],

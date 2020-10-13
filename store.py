@@ -25,10 +25,12 @@ def register_callbacks(app):
                     "subject": row.get("subject"),
                     "student_id": row.get("student_id"),
                     "assessment": row.get("assessment"),
+                    "comment": row.get("comment"),
                     "date": row.get("date"),
                     "grade": row.get("grade"),
                 }
                     for row in subject_table_data]
+                data.save_docs(assessments)
         student_data = data.get_data("enrolment", "cohort", cohort_value)
         student_ids = [s.get("_id") for s in student_data]
         groups = data.get_data("group", "student_id", student_ids)

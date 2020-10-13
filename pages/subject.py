@@ -23,14 +23,21 @@ subject_table = html.Div(
     children=dash_table.DataTable(
         id="subject-table",
         columns=[
-            {"name": "Given name", "id": "given_name"},
-            {"name": "Family name", "id": "family_name"},
-            {"name": "Grade", "id": "grade", "presentation": "dropdown", "editable": True},
+            {"name": "Given name", "id": "given_name", "editable": False},
+            {"name": "Family name", "id": "family_name", "editable": False},
+            {"name": "Grade", "id": "grade", "type": "text", "presentation": "dropdown", "editable": True},
+            {"name": "Comment", "id": "comment", "type": "text", "presentation": "input", "editable": True},
         ],
         sort_action='native',
         sort_by=[{"column_id": "given_name", "direction": "asc"}],
         filter_action='native',
-        style_cell={'textAlign': 'left'},
+        style_cell={
+            "textAlign": "left",
+            "whiteSpace": "normal",
+            "height": "auto",
+        },
+        cell_selectable=True,
+        editable=True,
     ),
 )
 subtabs = html.Div(

@@ -21,7 +21,7 @@ def initial_sync(dbname):
         ]
     groups = [
         {
-            "_id": str(int(st.get("Group_ID"))),
+            "group_id": str(int(st.get("Group_ID"))),
             "type": "group",
             "code": st.get("Group_Code"),
             "name": st.get("Group_Name"),
@@ -43,10 +43,11 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
          "subtype": scale_name,
          "assessment": name,
          "date": date,
+         "comment": "",
          "student_id": g.get("student_id"),
             "subject": g.get("name"),
             "cohort": cohort,
-            "grade": curriculum.scales.get(scale_name)[0]} for g in groups]
+            "grade": curriculum.scales.get(scale_name)[2]} for g in groups]
     data.save_docs(assessments, dbname)
 
 
@@ -75,4 +76,13 @@ def copy_docs(doc_type, db_src, db_dest):
     data.save_docs(result, db_name=db_dest)
 
 if __name__ == "__main__":
-    get_weekly_attendance("2020-10-05", "testing")
+    initial_sync("oct20")
+    copy_docs("kudos", "testing", "oct20")
+    copy_docs("concern", "testing", "oct20")
+    create_assessment_all("2022", "First six weeks", "2020-10-13", "Expectations", "oct20")
+    get_weekly_attendance("2020-08-31", "oct20")
+    get_weekly_attendance("2020-09-07", "oct20")
+    get_weekly_attendance("2020-09-14", "oct20")
+    get_weekly_attendance("2020-09-21", "oct20")
+    get_weekly_attendance("2020-09-28", "oct20")
+    get_weekly_attendance("2020-10-05", "oct20")
