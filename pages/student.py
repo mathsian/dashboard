@@ -110,7 +110,7 @@ def register_callbacks(app):
             f"{report_student.get('given_name')} {report_student.get('family_name')}"
         )
         # Assessment
-        assessment_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["subtype", "subject", "student_id", "cohort", "assessment", "grade", "date"]).query(
+        assessment_df = pd.DataFrame.from_records(store_data.get("assessment"), columns=["subtype", "subject", "student_id", "cohort", "assessment", "grade", "comment", "date"]).query(
             f'student_id=="{student_id}"'
         )
         assessment_layout = []
@@ -119,24 +119,10 @@ def register_callbacks(app):
             results = assessment_df.query(f'subject == "{sbj}"').sort_values(
                 by="date"
             )
-            subtype = results.iloc[0].subtype
-            grade_array = curriculum.scales[subtype]
-            assessment_layout.append(
-                dcc.Graph(
-                    figure={
-                        "data": [go.Scatter(x=results["date"], y=results["grade"])],
-                        "layout": go.Layout(
-                            title=sbj,
-                            yaxis={
-                                "type": "category",
-                                "range": [0, len(grade_array)],
-                                "categoryorder": "array",
-                                "categoryarray": grade_array,
-                            },
-                        ),
-                    }
-                )
-            )
+            for result in results.to_dict(orient='records'):
+                assessment_layout.append(html.H6(result.get("subject")))
+                assessment_layout.append(html.P(f"{result.get('date')}: {result.get('grade')}"))
+                assessment_layout.append(html.P(result.get('comment')))
         # Kudos
         kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points", "from"]).query(
             f'student_id=="{student_id}"'
@@ -194,3 +180,22 @@ go.Scatter(
                 student_df = student_df[student_df.team == team_value]
         return student_df.to_dict(orient="records"), []
 
+def subject_assessment_graph():
+    subtype = results.iloc[0].subtype
+    grade_array = curriculum.scales[subtype]
+    assessment_layout.append(
+        dcc.Graph(
+            figure={
+                "data": [go.Scatter(x=results["date"], y=results["grade"])],
+                "layout": go.Layout(
+                    title=sbj,
+                    yaxis={
+                        "type": "category",
+                        "range": [0, len(grade_array)],
+                        "categoryorder": "array",
+                        "categoryarray": grade_array,
+                    },
+                ),
+            }
+        )
+    )
