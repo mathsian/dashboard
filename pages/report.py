@@ -26,10 +26,9 @@ layout = [
                 {"name": "Date", "id": "date"},
             ],
             style_cell={
-                "maxWidth": "240px",
                 "textAlign": "left",
-                "overflow": "hidden",
-                "textOverflow": "ellipsis",
+                "height": "auto",
+                "whiteSpace": "normal",
             },
         )
     ),
