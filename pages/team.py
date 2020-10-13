@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import curriculum
 import pandas as pd
+import data
 
 subtabnames = ["Attendance", "Kudos", "Concern"]
 subtabs = html.Div(
