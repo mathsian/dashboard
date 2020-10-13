@@ -10,6 +10,7 @@ from forms import kudos, concern
 import pandas as pd
 import curriculum
 import plotly.graph_objects as go
+import data
 
 subtabs = html.Div(
     id="div-subtabs-student",
@@ -140,12 +141,14 @@ def register_callbacks(app):
         kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points", "from"]).query(
             f'student_id=="{student_id}"'
         )
+        kudos_df["date"] = kudos_df["date"].apply(lambda d: data.format_date(d))
         kudos_data = kudos_df.to_dict(orient="records")
 
         # Concerns
         concerns_df = pd.DataFrame.from_records(store_data.get('concern'), columns=["student_id", "date", "category", "discrimination", "description", "from"]).query(
             f'student_id=="{student_id}"'
         )
+        concerns_df["date"] = concerns_df["date"].apply(lambda d: data.format_date(d))
         concerns_data = concerns_df.to_dict(orient="records")
 
         # Attendance

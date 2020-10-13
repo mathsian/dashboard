@@ -44,10 +44,9 @@ layout = [
                 {"name": "Additional", "id": "discrimination"},
             ],
             style_cell={
-                "maxWidth": "240px",
                 "textAlign": "left",
-                "overflow": "hidden",
-                "textOverflow": "ellipsis",
+                "height": "auto",
+                "whiteSpace": "normal",
             },
         )
     ),
