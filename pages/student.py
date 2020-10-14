@@ -98,7 +98,7 @@ def register_callbacks(app):
             State("store-data", "data"),
         ],
     )
-    def generate_report(
+    def update_report(
         store_student,
         store_data,
     ):
@@ -121,7 +121,10 @@ def register_callbacks(app):
             )
             for result in results.to_dict(orient='records'):
                 assessment_layout.append(html.H6(result.get("subject")))
-                assessment_layout.append(html.P(f"{result.get('date')}: {result.get('grade')}"))
+                assessment_layout.append(html.P(children=[
+                    html.B(f"{data.format_date(result.get('date'))}"),
+                    f" {result.get('grade')}"]
+                                         ))
                 assessment_layout.append(html.P(result.get('comment')))
         # Kudos
         kudos_df = pd.DataFrame.from_records(store_data.get('kudos'), columns=["student_id", "date", "ada_value", "description", "points", "from"]).query(
