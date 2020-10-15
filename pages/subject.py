@@ -102,7 +102,7 @@ def register_callbacks(app):
         subject_value, assessment_value, store_data,
     ):
 
-        subject_df = pd.DataFrame.from_records(store_data.get("assessment", []), columns=["_id", "_rev", "subtype", "subject", "student_id", "assessment", "grade", "date"]).query(
+        subject_df = pd.DataFrame.from_records(store_data.get("assessment", []), columns=["_id", "_rev", "subtype", "subject", "student_id", "assessment", "grade", "comment", "date"]).query(
             "(subject==@subject_value) and (assessment==@assessment_value)"
         )
         if len(subject_df) < 1:
