@@ -20,7 +20,7 @@ client = CouchDB(couchdb_user,
                  connect=True,
                  autorenew=False)
 
-db = client['oct20']
+db = client['ada']
 
 # We just want to index by student_id 
 # Everything else we'll leave to pandas
