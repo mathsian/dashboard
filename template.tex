@@ -64,28 +64,31 @@
 \vskip \bigskipamount
 \begin{center}
 \begin{tikzpicture}[scale=0.8]
-\begin{axis}[
+  \begin{axis}[
+  ybar stacked,
+  legend style={{at=(-0.2,0.5)},anchor=east},
   axis y line*=right,
   axis x line*=bottom,
-  symbolic x coords={\VAR{attendance_dates}},
+  symbolic x coords={0,\VAR{attendance_dates},1},
   xtick ={\VAR{attendance_dates}},
+  tick align=outside,
   x tick label style={rotate=90,anchor=east},
+  y tick label style={anchor=west},
   ymin = 0,
   ymax = 100,
-  ytick = {95},
-  yticklabels = {Target\quad},
+  ytick = {95, 100},
+  yticklabels = {95\%},
   xticklabels = {\VAR{attendance_dates}},
-  xmin = \VAR{attendance_min},
-  xmax = \VAR{attendance_max},
+  xmin = 0,
+  xmax = 1,
   xlabel = Week beginning,
   ylabel = \% sessions attended,
   grid=major,
   clip=false,
   ]
-  \addplot[adaGreen,line width=3pt,dotted] coordinates {(\VAR{attendance_min}, 95) (\VAR{attendance_max}, 95)};
-  \foreach \coords in {\VAR{attendance_zip}} {
-    \addplot[ybar, bar width=14pt, fill=adaPurple] coordinates {\coords};
-  } 
+  \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{attendance_zip}};
+  \addplot[adaYellow, bar width=14pt, fill=adaYellow] coordinates {\VAR{punctuality_zip}};
+  \legend{Present,Present but late}
 \end{axis}
 \end{tikzpicture}
 \end{center}
@@ -107,7 +110,7 @@
 %% for kudo in kudos
 \VAR{kudo.date}: \VAR{kudo.points}$\times$ \VAR{kudo.ada_value} kudos from
 \VAR{kudo.from}\\
-{\em \VAR{kudo.comment}}\\
+{\em \VAR{kudo.description}}\\
 %% endfor
 %% else
 No kudos points recorded
@@ -120,7 +123,7 @@ No kudos points recorded
 %% if concerns|length > 0
 %% for concern in concerns
 \VAR{concern.date}: \VAR{concern.category} concern raised by \VAR{concern.email}\\
-{\em \VAR{concern.comment}}
+{\em \VAR{concern.description}}
   %% endfor
   %% else
 
