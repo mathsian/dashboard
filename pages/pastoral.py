@@ -56,6 +56,13 @@ attendance_table = dash_table.DataTable(
     }],
 )
 
+attendance_summary = html.Div(children=[
+    html.H6("Last week"),
+    html.P(id="attendance_last_week"),
+    html.H6("Overall"),
+    html.P(id="attendance_overall"),
+])
+
 
 @app.callback(
     [
@@ -69,6 +76,8 @@ attendance_table = dash_table.DataTable(
             "page": "pastoral",
             "tab": "attendance"
         }, "data"),
+        Output("attendance_last_week", "children"),
+        Output("attendance_overall", "children"),
     ],
     [
         Input({
@@ -85,12 +94,20 @@ def update_attendance_table(filter_value):
     elif cohort:
         enrolment_docs = data.get_data("enrolment", "cohort", cohort)
     else:
-        return [], []
+        return [], [], "", ""
     student_ids = [s.get('_id') for s in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
+    attendance_df = pd.DataFrame.from_records(attendance_docs)
+    last_week_date = attendance_df["date"].max()
+    overall_totals = attendance_df.sum()
+    last_week_totals = attendance_df.query("date == @last_week_date").sum()
+    overall_percent = round(100 * overall_totals['actual'] /
+                            overall_totals['possible'])
+    last_week_percent = round(100 * last_week_totals['actual'] /
+                              last_week_totals['possible'])
     # Merge on student id
     attendance_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
-                             pd.DataFrame.from_records(attendance_docs),
+                             attendance_df,
                              left_on='_id',
                              right_on='student_id',
                              how='left')
@@ -98,7 +115,9 @@ def update_attendance_table(filter_value):
     attendance_df['percent_present'] = round(100 * attendance_df['actual'] /
                                              attendance_df['possible'])
     # Pivot to bring dates to columns
-    attendance_pivot = attendance_df.set_index(["student_id", "given_name", "family_name", "date"])["percent_present"].unstack().reset_index()
+    attendance_pivot = attendance_df.set_index(
+        ["student_id", "given_name", "family_name",
+         "date"])["percent_present"].unstack().reset_index()
     columns = [
         {
             "name": "Given name",
@@ -108,8 +127,12 @@ def update_attendance_table(filter_value):
             "name": "Family name",
             "id": "family_name"
         },
-    ] + [{"name": data.format_date(d), "id": d} for d in attendance_pivot.columns[-4:]]
-    return columns, attendance_pivot.to_dict(orient='records')
+    ] + [{
+        "name": data.format_date(d),
+        "id": d
+    } for d in attendance_pivot.columns[-4:]]
+    return columns, attendance_pivot.to_dict(
+        orient='records'), last_week_percent, overall_percent
 
 
 @app.callback(
@@ -136,15 +159,19 @@ def get_content(active_tab, filter_value, store_data):
 
 
 def get_sidebar(active_tab, filter_value, store_data):
-    return f"{name} {active_tab} sidebar"
+    if active_tab == "pastoral-tab-attendance":
+        return attendance_summary
+    else:
+        return ""
 
 
 def get_main(active_tab, filter_value, store_data):
     if active_tab == "pastoral-tab-attendance":
         return attendance_table
     else:
-        return f"{name} {active_tab} {filter_value} {store_data}"
+        return ""
 
 
 def get_panel(active_tab, filter_value, store_data):
-    return f"{name} {active_tab} panel"
+    return ""
+
