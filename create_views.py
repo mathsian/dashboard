@@ -86,4 +86,24 @@ try:
     ddoc.save()
 except CloudantArgumentError:
     print("All view exists")
+# Views for getting unique values of something
+# Remember to call with group=True
+ddoc = db.get_design_document('enrolment')
+map_fun = """
+function (doc){
+if(doc.type==='enrolment'){
+emit(doc.team, null);
+}
+}
+"""
+reduce_fun = """
+function (key, values){
+return null;
+}"""
+try:
+    ddoc.add_view('unique_teams', map_fun, reduce_fun)
+    ddoc.save()
+except CloudantArgumentError as e:
+    print(e)
+
 client.disconnect()

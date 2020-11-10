@@ -3,6 +3,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from app import app
+import data
 
 cohort = html.Div(
     id={"type": "filter-div", "filter": "cohort"},
@@ -65,7 +66,7 @@ url_map = {
     [Input({"type": "filter-dropdown", "filter": "cohort"}, "value")],
 )
 def update_filters(cohort_value):
-    teams = ["A", "B", "C"]
+    teams = data.get_teams(cohort_value)
     subjects = ["1", "2", "3"]
     return [
         [{"label": t, "value": t} for t in teams],
