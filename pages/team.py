@@ -1,5 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import dash_table
 import plotly.graph_objects as go
@@ -50,17 +51,7 @@ concern_table = dash_table.DataTable(
     sort_by=[{"column_id": "date", "direction": "desc"}],
 
     )
-team_attendance_table = dash_table.DataTable(
-    id="team-attendance-table",
-    columns=[
-        {"name": "Given name", "id": "given_name"},
-        {"name": "Family name", "id": "family_name"},
-    ],
-    style_cell={"textAlign": "left"},
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{"column_id": "given_name", "direction": "asc"}],
- )
+
 team_kudos_radar = dcc.Graph(id="team-kudos-radar",
 config={
                 "displayModeBar": False

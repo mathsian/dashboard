@@ -13,6 +13,7 @@ couchdb_user = couchdb_config["user"]
 couchdb_pwd = couchdb_config["pwd"]
 couchdb_ip = couchdb_config["ip"]
 couchdb_port = couchdb_config["port"]
+couchdb_db = couchdb_config["db"]
 
 client = CouchDB(couchdb_user,
                  couchdb_pwd,
@@ -20,7 +21,7 @@ client = CouchDB(couchdb_user,
                  connect=True,
                  autorenew=False)
 
-db = client['ada']
+db = client[couchdb_db]
 
 # We just want to index by student_id 
 # Everything else we'll leave to pandas
@@ -47,6 +48,17 @@ try:
     ddoc.save()
 except CloudantArgumentError:
     print("Enrolment cohort view exists")
+js_fun = """
+function (doc) {
+if (doc.type==='enrolment') {
+emit([doc.cohort, doc.team], 1)
+}
+}"""
+try:
+    ddoc.add_view('cohort_team', js_fun)
+    ddoc.save()
+except CloudantArgumentError:
+    print("Enrolment cohort_team view exists")
 
 for doc_type in ['attendance', 'assessment', 'kudos', 'concern', 'group']:
     ddoc = db.get_design_document(doc_type)
