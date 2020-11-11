@@ -35,7 +35,7 @@ app.layout = html.Div(
 
 # Get all content in the validation layout to avoid callback errors
 app.validation_layout = [nav.layout, filters.layout] + [
-    page.content for page in nav.url_map.values()
+    page.validation_layout for page in nav.url_map.values()
 ]
 
 
