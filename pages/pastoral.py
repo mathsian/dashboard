@@ -4,9 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import dash_table
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from app import app
 import data
+import curriculum
 
 name = "pastoral"
 tabs = ["Attendance", "Kudos", "Concern"]
@@ -22,15 +25,10 @@ content = [
                 card=True,
                 active_tab=f"{name}-tab-{tabs[0].lower()}",
             )),
-        dbc.CardBody(
-            dbc.Row([
-                dbc.Col(width=3, children=html.Div(id=f"{name}-sidebar")),
-                dbc.Col(width=7, children=html.Div(id=f"{name}-main")),
-                dbc.Col(width=2, children=html.Div(id=f"{name}-panel")),
-            ])),
+        dbc.CardBody(dbc.Row(id=f"{name}-content", children=[])),
     ])
 ]
-
+# Attendance tab content
 attendance_table = dash_table.DataTable(
     id={
         "type": "table",
@@ -55,13 +53,133 @@ attendance_table = dash_table.DataTable(
         "direction": "asc"
     }],
 )
-
 attendance_summary = html.Div(children=[
     html.H6("Last week"),
-    html.P(id="attendance_last_week"),
+    html.P(
+        id={
+            "type": "text",
+            "page": "pastoral",
+            "tab": "attendance",
+            "name": "last_week"
+        }),
     html.H6("Overall"),
-    html.P(id="attendance_overall"),
+    html.P(id={
+        "type": "text",
+        "page": "pastoral",
+        "tab": "attendance",
+        "name": "overall"
+    }),
 ])
+
+# Kudos tab content
+kudos_table = dash_table.DataTable(
+    id={
+        "type": "table",
+        "page": "pastoral",
+        "tab": "kudos",
+    },
+    columns=[
+        {
+            "name": "Given name",
+            "id": "given_name"
+        },
+        {
+            "name": "Family name",
+            "id": "family_name"
+        },
+    ] + [{
+        "name": v[:2],
+        "id": v
+    } for v in curriculum.values] + [{
+        "name": "Total",
+        "id": "total"
+    }],
+    style_cell={"textAlign": "left"},
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{
+        "column_id": "given_name",
+        "direction": "asc"
+    }],
+)
+
+fig = make_subplots(specs=[[{"type": "polar"}]])
+fig.add_trace(
+    go.Scatterpolar(theta=curriculum.values,
+                    r=[0 for v in curriculum.values],
+                    subplot="polar",
+                    fill="toself"), 1, 1)
+fig.update_layout(polar=dict(radialaxis=dict(visible=False), ))
+
+kudos_radar = dcc.Graph(id={
+    "type": "graph",
+    "page": "pastoral",
+    "tab": "kudos",
+},
+                        config={"displayModeBar": False},
+                        figure=fig)
+
+# Concern tab content
+concern_table = dash_table.DataTable(
+    id={
+        "type": "table",
+        "page": "pastoral",
+        "tab": "concern",
+    },
+    columns=[
+        {
+            "name": "Given name",
+            "id": "given_name"
+        },
+        {
+            "name": "Family name",
+            "id": "family_name"
+        },
+        {
+            "name": "Date",
+            "id": "date"
+        },
+        {
+            "name": "Category",
+            "id": "category"
+        },
+        {
+            "name": "Description",
+            "id": "description"
+        },
+        {
+            "name": "Additional",
+            "id": "discrimination"
+        },
+        {
+            "name": "Raised by",
+            "id": "from"
+        },
+    ],
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{
+        "column_id": "date",
+        "direction": "desc"
+    }],
+    style_cell={
+        "textAlign": "left",
+        "maxWidth": 100,
+    },
+    style_cell_conditional=[{
+        "if": {
+            "column_id": "description"
+        },
+        "overflow": "hidden",
+        "textOverflow": "ellipsis",
+    }],
+)
+
+# Validation layout contains everything needed to validate all callbacks
+validation_layout = content + [
+    attendance_table, attendance_summary, kudos_table, kudos_radar,
+    concern_table
+]
 
 
 @app.callback(
@@ -76,8 +194,20 @@ attendance_summary = html.Div(children=[
             "page": "pastoral",
             "tab": "attendance"
         }, "data"),
-        Output("attendance_last_week", "children"),
-        Output("attendance_overall", "children"),
+        Output(
+            {
+                "type": "text",
+                "page": "pastoral",
+                "tab": "attendance",
+                "name": "last_week",
+            }, "children"),
+        Output(
+            {
+                "type": "text",
+                "page": "pastoral",
+                "tab": "attendance",
+                "name": "overall",
+            }, "children"),
     ],
     [
         Input({
@@ -86,7 +216,7 @@ attendance_summary = html.Div(children=[
         }, "value"),
     ],
 )
-def update_attendance_table(filter_value):
+def update_pastoral_attendance(filter_value):
     cohort, team, _ = filter_value
     if cohort and team:
         enrolment_docs = data.get_data("enrolment", "cohort_team",
@@ -137,41 +267,121 @@ def update_attendance_table(filter_value):
 
 @app.callback(
     [
-        Output(f"{name}-sidebar", "children"),
-        Output(f"{name}-main", "children"),
-        Output(f"{name}-panel", "children"),
+        Output({
+            "type": "table",
+            "page": "pastoral",
+            "tab": "kudos",
+        }, "data"),
+        Output({
+            "type": "graph",
+            "page": "pastoral",
+            "tab": "kudos",
+        }, "figure")
+    ], [Input({
+        "type": "filter-dropdown",
+        "filter": ALL
+    }, "value")],
+    [State({
+        "type": "graph",
+        "page": "pastoral",
+        "tab": "kudos",
+    }, "figure")])
+def update_pastoral_kudos(filter_value, current_figure):
+    # Get list of relevant students
+    cohort, team, _ = filter_value
+    if cohort and team:
+        enrolment_docs = data.get_data("enrolment", "cohort_team",
+                                       (cohort, team))
+    elif cohort:
+        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
+    else:
+        return [], current_figure
+    student_ids = [s.get('_id') for s in enrolment_docs]
+    # Build kudos dataframe
+    kudos_docs = data.get_data("kudos", "student_id", student_ids)
+    if not kudos_docs:
+        current_figure["data"][0]["r"] = [0 for v in curriculum.values]
+        return [], current_figure
+    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
+                        pd.DataFrame.from_records(kudos_docs),
+                        how="left",
+                        left_on="_id",
+                        right_on="student_id")
+    kudos_pivot_df = pd.pivot_table(
+        kudos_df,
+        values="points",
+        index=["student_id", "given_name", "family_name"],
+        columns="ada_value",
+        aggfunc=sum,
+        fill_value=0,
+    ).reindex(curriculum.values, axis=1, fill_value=0)
+    kudos_pivot_df["total"] = kudos_pivot_df.sum(axis=1)
+    kudos_pivot_df = kudos_pivot_df.reset_index()
+    r = [kudos_pivot_df[v].sum() for v in curriculum.values]
+    current_figure["data"][0]["r"] = r
+    return kudos_pivot_df.to_dict(orient='records'), current_figure
+
+
+@app.callback(
+    [
+        Output({
+            "type": "table",
+            "page": "pastoral",
+            "tab": "concern",
+        }, "data"),
+        Output({
+            "type": "table",
+            "page": "pastoral",
+            "tab": "concern",
+        }, "tooltip_data"),
     ],
+    [Input({
+        "type": "filter-dropdown",
+        "filter": ALL
+    }, "value")],
+)
+def update_pastoral_concern(filter_value):
+    # Get list of relevant students
+    cohort, team, _ = filter_value
+    if cohort and team:
+        enrolment_docs = data.get_data("enrolment", "cohort_team",
+                                       (cohort, team))
+    elif cohort:
+        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
+    else:
+        return []
+    student_ids = [s.get('_id') for s in enrolment_docs]
+    # Build kudos dataframe
+    concern_docs = data.get_data("concern", "student_id", student_ids)
+    if not concern_docs:
+        return []
+    concern_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
+                          pd.DataFrame.from_records(concern_docs),
+                          how="right",
+                          left_on="_id",
+                          right_on="student_id").sort_values("date", ascending=False)
+    tooltips = [{"description": d} for d in concern_df["description"].tolist()]
+    return concern_df.to_dict(orient="records"), tooltips
+
+
+@app.callback(
+    Output(f"{name}-content", "children"),
     [
         Input(f"{name}-tabs", "active_tab"),
-        Input({
-            "type": "filter-dropdown",
-            "filter": ALL
-        }, "value"),
-        Input("store-data", "data"),
     ],
 )
-def get_content(active_tab, filter_value, store_data):
-    return [
-        get_sidebar(active_tab, filter_value, store_data),
-        get_main(active_tab, filter_value, store_data),
-        get_panel(active_tab, filter_value, store_data),
-    ]
-
-
-def get_sidebar(active_tab, filter_value, store_data):
+def get_content(active_tab):
     if active_tab == "pastoral-tab-attendance":
-        return attendance_summary
-    else:
-        return ""
-
-
-def get_main(active_tab, filter_value, store_data):
-    if active_tab == "pastoral-tab-attendance":
-        return attendance_table
-    else:
-        return ""
-
-
-def get_panel(active_tab, filter_value, store_data):
-    return ""
-
+        return [
+            dbc.Col(width=8, children=attendance_table),
+            dbc.Col(children=attendance_summary)
+        ]
+    elif active_tab == "pastoral-tab-kudos":
+        return [
+            dbc.Col(width=8, children=kudos_table),
+            dbc.Col(children=kudos_radar)
+        ]
+    elif active_tab == "pastoral-tab-concern":
+        return [
+            dbc.Col(width=10, children=concern_table),
+        ]
