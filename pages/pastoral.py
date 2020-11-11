@@ -11,21 +11,20 @@ from app import app
 import data
 import curriculum
 
-name = "pastoral"
 tabs = ["Attendance", "Kudos", "Concern"]
 content = [
     dbc.Card([
         dbc.CardHeader(
             dbc.Tabs(
                 [
-                    dbc.Tab(label=t, tab_id=f"{name}-tab-{t.lower()}")
+                    dbc.Tab(label=t, tab_id=f"pastoral-tab-{t.lower()}")
                     for t in tabs
                 ],
-                id=f"{name}-tabs",
+                id=f"pastoral-tabs",
                 card=True,
-                active_tab=f"{name}-tab-{tabs[0].lower()}",
+                active_tab=f"pastoral-tab-{tabs[0].lower()}",
             )),
-        dbc.CardBody(dbc.Row(id=f"{name}-content", children=[])),
+        dbc.CardBody(dbc.Row(id=f"pastoral-content", children=[])),
     ])
 ]
 # Attendance tab content
@@ -180,6 +179,33 @@ validation_layout = content + [
     attendance_table, attendance_summary, kudos_table, kudos_radar,
     concern_table
 ]
+# Associate each tab with its content
+tab_map = {
+    "pastoral-tab-attendance":
+    [
+            dbc.Col(width=8, children=attendance_table),
+            dbc.Col(children=attendance_summary)
+        ],
+    "pastoral-tab-kudos":
+[
+            dbc.Col(width=8, children=kudos_table),
+            dbc.Col(children=kudos_radar)
+        ],
+    "pastoral-tab-concern":
+[
+            dbc.Col(width=10, children=concern_table),
+        ],
+}
+
+
+@app.callback(
+    Output(f"pastoral-content", "children"),
+    [
+        Input(f"pastoral-tabs", "active_tab"),
+    ],
+)
+def get_content(active_tab):
+    return tab_map.get(active_tab)
 
 
 @app.callback(
@@ -362,26 +388,3 @@ def update_pastoral_concern(filter_value):
                           right_on="student_id").sort_values("date", ascending=False)
     tooltips = [{"description": d} for d in concern_df["description"].tolist()]
     return concern_df.to_dict(orient="records"), tooltips
-
-
-@app.callback(
-    Output(f"{name}-content", "children"),
-    [
-        Input(f"{name}-tabs", "active_tab"),
-    ],
-)
-def get_content(active_tab):
-    if active_tab == "pastoral-tab-attendance":
-        return [
-            dbc.Col(width=8, children=attendance_table),
-            dbc.Col(children=attendance_summary)
-        ]
-    elif active_tab == "pastoral-tab-kudos":
-        return [
-            dbc.Col(width=8, children=kudos_table),
-            dbc.Col(children=kudos_radar)
-        ]
-    elif active_tab == "pastoral-tab-concern":
-        return [
-            dbc.Col(width=10, children=concern_table),
-        ]
