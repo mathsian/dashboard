@@ -49,7 +49,7 @@ layout = dbc.Nav(
 
 # Get the relevant page content based on the url
 @app.callback(
-    [Output("content", "children"),], [Input("url", "pathname")],
+    Output("content", "children"), [Input("url", "pathname")],
 )
 def display_content(pathname):
     return url_map.get(pathname, summary).content

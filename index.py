@@ -9,7 +9,6 @@ import nav
 app.layout = html.Div(
     [
         dcc.Location(id="url", refresh=False),
-        dbc.Container(
             dbc.Row(
                 children=[
                     dbc.Col(
@@ -27,9 +26,8 @@ app.layout = html.Div(
                     dbc.Col(id="content"),
                 ]
             ),
-            fluid=True,
-        ),
         dcc.Store(id="store-data", data={}),
+        dcc.Store(id="selected-student-ids", data=[]),
     ]
 )
 
