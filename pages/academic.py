@@ -33,6 +33,7 @@ content = [
     )
 ]
 
+validation_layout = content
 
 @app.callback(
     [

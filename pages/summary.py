@@ -33,7 +33,7 @@ content = [
     )
 ]
 
-
+validation_layout = content
 @app.callback(
     [
         Output(f"{name}-sidebar", "children"),
