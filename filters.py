@@ -28,9 +28,7 @@ team = html.Div(
         "Team",
         dcc.Dropdown(
             id={"type": "filter-dropdown", "filter": "team"},
-            placeholder="Select a team",
-            persistence=True,
-            persistence_type="local",
+            placeholder="All",
             searchable=False,
         ),
     ],
@@ -42,8 +40,6 @@ subject = html.Div(
         dcc.Dropdown(
             id={"type": "filter-dropdown", "filter": "subject"},
             placeholder="Select a subject",
-            persistence=True,
-            persistence_type="local",
             searchable=False,
         ),
     ],
@@ -61,6 +57,7 @@ url_map = {
 @app.callback(
     [
         Output({"type": "filter-dropdown", "filter": "team"}, "options"),
+        Output({"type": "filter-dropdown", "filter": "team"}, "value"),
         Output({"type": "filter-dropdown", "filter": "subject"}, "options"),
     ],
     [Input({"type": "filter-dropdown", "filter": "cohort"}, "value")],
@@ -70,6 +67,7 @@ def update_filters(cohort_value):
     subjects = ["1", "2", "3"]
     return [
         [{"label": t, "value": t} for t in teams],
+        None,
         [{"label": s, "value": s} for s in subjects],
     ]
 

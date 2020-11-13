@@ -27,4 +27,4 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 app = dash.Dash(__name__, server=server, external_stylesheets= [dbc.themes.LITERA], suppress_callback_exceptions=True)
 app.title = "data@ada"
 # wrap in google oauth
-auth = GoogleOAuth(app, authorized_emails, ['openid'])
+#auth = GoogleOAuth(app, authorized_emails, ['openid'])
