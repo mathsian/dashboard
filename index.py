@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 from app import app
 import filters
 import nav
-import store
 
 app.layout = html.Div([
     dcc.Location(id="url", refresh=False),
@@ -34,6 +33,8 @@ app.layout = html.Div([
 app.validation_layout = [nav.layout, filters.layout] + [
     page.validation_layout for page in nav.url_map.values()
 ]
+
+import store
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8001)
