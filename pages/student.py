@@ -315,9 +315,7 @@ content = [
     ])
 ]
 
-validation_layout = html.Div(
-    children=content + report +
-    [student_list_clear_button, student_list, kudos_form, concern_form])
+validation_layout = content + report + [student_list_clear_button, student_list, kudos_form, concern_form]
 tab_map = {
     "student-tab-report": report,
     "student-tab-kudos": kudos_form,
@@ -517,9 +515,9 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Award {points} {ada_value} kudos to')
-        desc = html.Div(["For ", html.Blockquote(description)])
-        recipients = html.Ul(children=[
-            html.Li(f'{s.get("given_name")} {s.get("family_name")}')
+        desc = html.Div(["For ", html.Blockquote(description)]) if description else html.Div()
+        recipients = dbc.ListGroup(children=[
+            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
             for s in enrolment_docs
         ])
         if cc.triggered and "n_clicks" in cc.triggered[0][
@@ -600,9 +598,9 @@ def update_concern_message(selected_student_ids, description, category,
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Raise {category} concern about')
-        desc = html.Div(["For ", html.Blockquote(description)])
-        recipients = html.Ul(children=[
-            html.Li(f'{s.get("given_name")} {s.get("family_name")}')
+        desc = html.Div(["For ", html.Blockquote(description)]) if description else html.Div()
+        recipients = dbc.ListGroup(children=[
+            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
             for s in enrolment_docs
         ])
         if cc.triggered and "n_clicks" in cc.triggered[0][
