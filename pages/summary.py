@@ -8,7 +8,7 @@ import pandas as pd
 from app import app
 import data
 
-tabs = ["Attendance", "Kudos"]
+tabs = ["Attendance"]
 content = [
     dbc.Card([
         dbc.CardHeader(
@@ -32,23 +32,48 @@ content = [
                  n_intervals=0),
 ]
 attendance_dashboard = dbc.Container(children=[
-    daq.Gauge(
-        id={
-            "type": "gauge",
-            "page": "summary",
-            "tab": "attendance",
-            "name": "cumulative"
-        },
-        label="Cumulative attendance",
-        scale={
-            "start": 0,
-            "interval": 5,
-            "labelInterval": 2,
-        },
-        value=0,
-        min=0,
-        max=100,
-    )
+    dbc.Row([
+        dbc.Col(
+            daq.Gauge(
+                id={
+                    "type": "gauge",
+                    "page": "summary",
+                    "tab": "attendance",
+                    "name": "last"
+                },
+                label="Last week",
+                scale={
+                    "start": 0,
+                    "interval": 5,
+                    "labelInterval": 2,
+                },
+                showCurrentValue=True,
+                units="%",
+                value=0,
+                min=0,
+                max=100,
+            )),
+        dbc.Col(
+            daq.Gauge(
+                id={
+                    "type": "gauge",
+                    "page": "summary",
+                    "tab": "attendance",
+                    "name": "cumulative"
+                },
+                label="Overall",
+                scale={
+                    "start": 0,
+                    "interval": 5,
+                    "labelInterval": 2,
+                },
+                showCurrentValue=True,
+                units="%",
+                value=0,
+                min=0,
+                max=100,
+            ), )
+    ])
 ])
 
 validation_layout = content + [attendance_dashboard]
@@ -62,23 +87,34 @@ def get_content(active_tab):
     return tab_map.get(active_tab)
 
 
-@app.callback(
+@app.callback([
     Output(
         {
             "type": "gauge",
             "page": "summary",
             "tab": "attendance",
             "name": "cumulative"
-        }, "value"), [
-            Input({
-                "type": "interval",
-                "page": "summary",
-                "tab": "attendance"
-            }, "n_intervals"),
-        ])
+        }, "value"),
+    Output(
+        {
+            "type": "gauge",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "last"
+        }, "value"),
+], [
+    Input({
+        "type": "interval",
+        "page": "summary",
+        "tab": "attendance"
+    }, "n_intervals"),
+])
 def update_attendance_gauge(n_intervals):
-    attendance_docs = data.get_data("all", "type", "attendance")
-    actual = sum([a.get('actual') for a in attendance_docs])
-    possible = sum([a.get('possible') for a in attendance_docs])
-    percent = round(100 * actual / possible)
-    return percent
+    attendance_df = pd.DataFrame.from_records(
+        data.get_data("all", "type", "attendance"),
+        columns=["date", "actual", "possible"])
+    overall_sum = attendance_df.sum()
+    overall = round(100 * overall_sum['actual'] / overall_sum['possible'])
+    last_sum = attendance_df.query("date == date.max()").sum()
+    last = round(100 * last_sum['actual'] / last_sum['possible'])
+    return overall, last
