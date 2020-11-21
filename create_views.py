@@ -105,5 +105,21 @@ try:
     ddoc.save()
 except CloudantArgumentError as e:
     print(e)
+ddoc = db.get_design_document('group')
+map_fun = """
+function (doc){
+if(doc.type==='group'){
+emit(doc.group_name, null);
+}
+}"""
+reduce_fun = """
+function (key, values){
+return null;
+}"""
+try:
+    ddoc.add_view('unique_groups', map_fun, reduce_fun)
+    ddoc.save()
+except CloudantArgumentError as e:
+    print(e)
 
 client.disconnect()
