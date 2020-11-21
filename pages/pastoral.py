@@ -6,6 +6,7 @@ import dash_table
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import dash_daq as daq
 
 from app import app
 import data
@@ -52,23 +53,42 @@ attendance_table = dash_table.DataTable(
         "direction": "asc"
     }],
 )
-attendance_summary = html.Div(children=[
-    html.H6("Last week"),
-    html.P(
+attendance_summary = [
+    daq.Gauge(
         id={
-            "type": "text",
+            "type": "gauge",
             "page": "pastoral",
             "tab": "attendance",
             "name": "last_week"
-        }),
-    html.H6("Overall"),
-    html.P(id={
-        "type": "text",
-        "page": "pastoral",
-        "tab": "attendance",
-        "name": "overall"
-    }),
-])
+        },
+        label="Last week",
+        scale={
+            "start": 0,
+            "interval": 5,
+            "labelInterval": 2,
+        },
+        value=0,
+        min=0,
+        max=100,
+    ),
+    daq.Gauge(
+        id={
+            "type": "gauge",
+            "page": "pastoral",
+            "tab": "attendance",
+            "name": "overall"
+        },
+        label="Overall",
+        scale={
+            "start": 0,
+            "interval": 5,
+            "labelInterval": 2,
+        },
+        value=0,
+        min=0,
+        max=100,
+    ),
+]
 
 # Kudos tab content
 kudos_table = dash_table.DataTable(
@@ -181,20 +201,16 @@ validation_layout = content + [
 ]
 # Associate each tab with its content
 tab_map = {
-    "pastoral-tab-attendance":
-    [
-            dbc.Col(width=8, children=attendance_table),
-            dbc.Col(children=attendance_summary)
-        ],
+    "pastoral-tab-attendance": [
+        dbc.Col(width=8, children=attendance_table),
+        dbc.Col(children=attendance_summary)
+    ],
     "pastoral-tab-kudos":
-[
-            dbc.Col(width=8, children=kudos_table),
-            dbc.Col(children=kudos_radar)
-        ],
-    "pastoral-tab-concern":
-[
-            dbc.Col(width=10, children=concern_table),
-        ],
+    [dbc.Col(width=8, children=kudos_table),
+     dbc.Col(children=kudos_radar)],
+    "pastoral-tab-concern": [
+        dbc.Col(width=10, children=concern_table),
+    ],
 }
 
 
@@ -222,18 +238,18 @@ def get_content(active_tab):
         }, "data"),
         Output(
             {
-                "type": "text",
+                "type": "gauge",
                 "page": "pastoral",
                 "tab": "attendance",
                 "name": "last_week",
-            }, "children"),
+            }, "value"),
         Output(
             {
-                "type": "text",
+                "type": "gauge",
                 "page": "pastoral",
                 "tab": "attendance",
                 "name": "overall",
-            }, "children"),
+            }, "value"),
     ],
     [
         Input({
@@ -267,6 +283,9 @@ def update_pastoral_attendance(filter_value):
                              left_on='_id',
                              right_on='student_id',
                              how='left')
+    # Get per student totals
+    cumulative_df = attendance_df.groupby("student_id").sum().reset_index()
+    cumulative_df['cumulative_percent_present'] = round(100 * cumulative_df['actual'] / cumulative_df['possible'])
     # Calculate percent present
     attendance_df['percent_present'] = round(100 * attendance_df['actual'] /
                                              attendance_df['possible'])
@@ -274,6 +293,8 @@ def update_pastoral_attendance(filter_value):
     attendance_pivot = attendance_df.set_index(
         ["student_id", "given_name", "family_name",
          "date"])["percent_present"].unstack().reset_index()
+    # Add the cumulative column
+    attendance_pivot = pd.merge(attendance_pivot, cumulative_df[["student_id", "cumulative_percent_present"]], how='left', left_on="student_id", right_on="student_id", suffixes=("", "_y"))
     columns = [
         {
             "name": "Given name",
@@ -283,10 +304,16 @@ def update_pastoral_attendance(filter_value):
             "name": "Family name",
             "id": "family_name"
         },
-    ] + [{
-        "name": data.format_date(d),
+    ]
+    columns.extend([{
+        #"name": data.format_date(d),
+        "name": d,
         "id": d
-    } for d in attendance_pivot.columns[-4:]]
+    } for d in attendance_pivot.columns[-3:-1]])
+    columns.append({
+        "name": "Year",
+        "id": "cumulative_percent_present"
+    })
     return columns, attendance_pivot.to_dict(
         orient='records'), last_week_percent, overall_percent
 
@@ -385,6 +412,7 @@ def update_pastoral_concern(filter_value):
                           pd.DataFrame.from_records(concern_docs),
                           how="right",
                           left_on="_id",
-                          right_on="student_id").sort_values("date", ascending=False)
+                          right_on="student_id").sort_values("date",
+                                                             ascending=False)
     tooltips = [{"description": d} for d in concern_df["description"].tolist()]
     return concern_df.to_dict(orient="records"), tooltips
