@@ -7,12 +7,13 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_daq as daq
+from datetime import date
 
 from app import app
 import data
 import curriculum
 
-tabs = ["Attendance", "Kudos", "Concern"]
+tabs = ["Attendance", "Weekly", "Kudos", "Concern"]
 content = [
     dbc.Card([
         dbc.CardHeader(
@@ -89,6 +90,64 @@ attendance_summary = [
         max=100,
     ),
 ]
+# Weekly tab content
+weekly_header = html.H4(
+    children=["Week beginning ",
+              html.Span(id={
+    "type": "text",
+    "page": "pastoral",
+    "tab": "weekly",
+    "name": "wb"
+              })])
+
+weekly_table = dash_table.DataTable(
+    id={
+        "type": "table",
+        "page": "pastoral",
+        "tab": "weekly"
+    },
+    columns=[
+        {
+            "name": "Given name",
+            "id": "given_name"
+        },
+        {
+            "name": "Family name",
+            "id": "family_name"
+        },
+        {
+            "name": "/",
+            "id": "p"
+        },
+        {
+            "name": "N",
+            "id": "u"
+        },
+        {
+            "name": "M",
+            "id": "m"
+        },
+        {
+            "name": "I",
+            "id": "i"
+        },
+    ],
+    style_cell={"textAlign": "left"},
+    sort_action="native",
+    filter_action="native",
+    sort_by=[{
+        "column_id": "given_name",
+        "direction": "asc"
+    }],
+)
+weekly_picker = dcc.DatePickerSingle(id={
+    "type": "picker",
+    "page": "pastoral",
+    "tab": "weekly"
+},
+                                     date=date.today(),
+                                     display_format="MMM DD YY",
+)
 
 # Kudos tab content
 kudos_table = dash_table.DataTable(
@@ -196,8 +255,8 @@ concern_table = dash_table.DataTable(
 
 # Validation layout contains everything needed to validate all callbacks
 validation_layout = content + [
-    attendance_table, attendance_summary, kudos_table, kudos_radar,
-    concern_table
+    attendance_table, attendance_summary, weekly_header, weekly_table,
+    weekly_picker, kudos_table, kudos_radar, concern_table
 ]
 # Associate each tab with its content
 tab_map = {
@@ -205,6 +264,13 @@ tab_map = {
         dbc.Col(width=8, children=attendance_table),
         dbc.Col(children=attendance_summary)
     ],
+    "pastoral-tab-weekly": dbc.Col([
+        dbc.Row(children=[
+            dbc.Col(width=3, children=weekly_picker),
+            dbc.Col(weekly_header)
+        ]),
+        dbc.Row(dbc.Col(weekly_table)),
+    ]),
     "pastoral-tab-kudos":
     [dbc.Col(width=8, children=kudos_table),
      dbc.Col(children=kudos_radar)],
@@ -285,7 +351,8 @@ def update_pastoral_attendance(filter_value):
                              how='left')
     # Get per student totals
     cumulative_df = attendance_df.groupby("student_id").sum().reset_index()
-    cumulative_df['cumulative_percent_present'] = round(100 * cumulative_df['actual'] / cumulative_df['possible'])
+    cumulative_df['cumulative_percent_present'] = round(
+        100 * cumulative_df['actual'] / cumulative_df['possible'])
     # Calculate percent present
     attendance_df['percent_present'] = round(100 * attendance_df['actual'] /
                                              attendance_df['possible'])
@@ -294,7 +361,13 @@ def update_pastoral_attendance(filter_value):
         ["student_id", "given_name", "family_name",
          "date"])["percent_present"].unstack().reset_index()
     # Add the cumulative column
-    attendance_pivot = pd.merge(attendance_pivot, cumulative_df[["student_id", "cumulative_percent_present"]], how='left', left_on="student_id", right_on="student_id", suffixes=("", "_y"))
+    attendance_pivot = pd.merge(
+        attendance_pivot,
+        cumulative_df[["student_id", "cumulative_percent_present"]],
+        how='left',
+        left_on="student_id",
+        right_on="student_id",
+        suffixes=("", "_y"))
     columns = [
         {
             "name": "Given name",
@@ -305,15 +378,14 @@ def update_pastoral_attendance(filter_value):
             "id": "family_name"
         },
     ]
-    columns.extend([{
-        #"name": data.format_date(d),
-        "name": d,
-        "id": d
-    } for d in attendance_pivot.columns[-3:-1]])
-    columns.append({
-        "name": "Year",
-        "id": "cumulative_percent_present"
-    })
+    columns.extend([
+        {
+            #"name": data.format_date(d),
+            "name": d,
+            "id": d
+        } for d in attendance_pivot.columns[-3:-1]
+    ])
+    columns.append({"name": "Year", "id": "cumulative_percent_present"})
     return columns, attendance_pivot.to_dict(
         orient='records'), last_week_percent, overall_percent
 
@@ -416,3 +488,59 @@ def update_pastoral_concern(filter_value):
                                                              ascending=False)
     tooltips = [{"description": d} for d in concern_df["description"].tolist()]
     return concern_df.to_dict(orient="records"), tooltips
+
+
+@app.callback([
+    Output({
+        "type": "table",
+        "page": "pastoral",
+        "tab": "weekly"
+    }, "data"),
+    Output({
+        "type": "text",
+        "page": "pastoral",
+        "tab": "weekly",
+        "name": "wb"
+    }, "children"),
+], [
+    Input({
+        "type": "filter-dropdown",
+        "filter": ALL
+    }, "value"),
+    Input({
+        "type": "picker",
+        "page": "pastoral",
+        "tab": "weekly"
+    }, "date")
+])
+def update_weekly_table(filter_value, picker_value):
+    # Get list of relevant students
+    cohort, team, _ = filter_value
+    if cohort and team:
+        enrolment_docs = data.get_data("enrolment", "cohort_team",
+                                       (cohort, team))
+    elif cohort:
+        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
+    else:
+        return []
+    student_ids = [s.get('_id') for s in enrolment_docs]
+    enrolment_df = pd.DataFrame.from_records(enrolment_docs)
+    # Get attendance for the latest week before the chosen date
+    attendance_df = pd.DataFrame.from_records(
+        data.get_data("attendance", "student_id", student_ids)).query("date <= @picker_value").query("date == date.max()")
+    # Picked too early a date?
+    if attendance_df.empty:
+        attendance_df = pd.DataFrame.from_records(
+        data.get_data("attendance", "student_id", student_ids)).query("date == date.min()")
+    attendance_df.eval("p = 100*marks.str.count('/')/possible", inplace=True)
+    attendance_df.eval("u = 100*marks.str.count('N')/possible", inplace=True)
+    attendance_df.eval("m = 100*marks.str.count('M')/possible", inplace=True)
+    attendance_df.eval("i = 100*marks.str.count('I')/possible", inplace=True)
+    merged_df = pd.DataFrame.merge(
+        enrolment_df,
+        attendance_df.round(),
+        how='left',
+        left_on='_id',
+        right_on='student_id'
+    )
+    return merged_df.to_dict(orient='records'), data.format_date(attendance_df["date"].iloc[0])
