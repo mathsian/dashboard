@@ -101,6 +101,11 @@ def get_df(doc_type, key_field, key_list, db_name=None):
     records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)
 
+def delete_doc(doc_id, db_name=None):
+    with Connection(db_name) as db:
+        doc = db[doc_id]
+        doc.delete()
+
 def format_date(iso_date):
     y, m, d = iso_date.split('-')
     month = calendar.month_abbr[int(m)]
