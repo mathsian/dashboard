@@ -101,7 +101,21 @@ def get_df(doc_type, key_field, key_list, db_name=None):
     records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)
 
+def delete_docs(doc_ids, db_name=None):
+    if not isinstance(doc_ids, list):
+        doc_ids = [doc_ids]
+    with Connection(db_name) as db:
+        for doc_id in doc_ids:
+            doc = db[doc_id]
+            doc.delete()
+
 def format_date(iso_date):
     y, m, d = iso_date.split('-')
     month = calendar.month_abbr[int(m)]
     return f"{month} {d}"
+
+def get_teams(cohort, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result('enrolment', 'unique_teams', group=True)[[cohort, None]:[cohort, 'ZZZ']]
+    return [r['key'][1] for r in result]
+
