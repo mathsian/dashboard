@@ -4,28 +4,27 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 from app import app
 
-name = "academic"
-
+tabs = ["View", "Edit"]
 content = [
     dbc.Card(
         [
             dbc.CardHeader(
                 dbc.Tabs(
                     [
-                        dbc.Tab(label=f"{name}-tab-{t}", tab_id=f"{name}-tab-{t}")
-                        for t in ["a", "b", "c"]
+                        dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
+                        for t in tabs
                     ],
-                    id=f"{name}-tabs",
+                    id=f"academic-tabs",
                     card=True,
-                    active_tab=f"{name}-tab-a",
+                    active_tab=f"academic-tab-{tabs[0].lower()}",
                 )
             ),
             dbc.CardBody(
                 dbc.Row(
                     [
-                        dbc.Col(width=3, children=html.Div(id=f"{name}-sidebar")),
-                        dbc.Col(width=7, children=html.Div(id=f"{name}-main")),
-                        dbc.Col(width=2, children=html.Div(id=f"{name}-panel")),
+                        dbc.Col(width=3, children=html.Div(id=f"academic-sidebar")),
+                        dbc.Col(width=7, children=html.Div(id=f"academic-main")),
+                        dbc.Col(width=2, children=html.Div(id=f"academic-panel")),
                     ]
                 )
             ),
@@ -37,29 +36,11 @@ validation_layout = content
 
 @app.callback(
     [
-        Output(f"{name}-sidebar", "children"),
-        Output(f"{name}-main", "children"),
-        Output(f"{name}-panel", "children"),
+        Output(f"academic-sidebar", "children"),
+        Output(f"academic-main", "children"),
+        Output(f"academic-panel", "children"),
     ],
-    [Input(f"{name}-tabs", "active_tab"),
-     Input({"type": "filter-dropdown", "filter": ALL}, "value"),
-     Input("store-data", "data")],
+    [Input(f"academic-tabs", "active_tab"),],
 )
-def get_content(active_tab, filter_value, store_data):
-    return [
-        get_sidebar(active_tab, filter_value, store_data),
-        get_main(active_tab, filter_value, store_data),
-        get_panel(active_tab, filter_value, store_data),
-    ]
-
-
-def get_sidebar(active_tab, filter_value, store_data):
-    return f"{name} {active_tab} sidebar"
-
-
-def get_main(active_tab, filter_value, store_data):
-    return f"{name} {active_tab} {filter_value} {store_data}"
-
-
-def get_panel(active_tab, filter_value, store_data):
-    return f"{name} {active_tab} panel"
+def get_content(active_tab):
+    return "", "", ""
