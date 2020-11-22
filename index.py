@@ -35,5 +35,7 @@ app.validation_layout = [nav.layout, filters.layout] + [
     page.validation_layout for page in nav.url_map.values()
 ]
 
+server = app.server
+
 if __name__ == "__main__":
     app.run_server(debug=True, port=8001)
