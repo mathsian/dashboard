@@ -41,7 +41,7 @@ students = [
         "type": "enrolment",
         "given_name": names.get_first_name(),
         "family_name": names.get_last_name(),
-        "cohort": random.choice(curriculum.cohorts),
+        "cohort": random.choice(["1921", "2022"]),
         "team": random.choice(["A", "B", "C", "D"]),
         "prior": [
             {"subject": "Maths", "grade": random.randint(4, 9)},
@@ -55,63 +55,66 @@ students = [
 # Save enrolment docs
 student_bulk_result = data.save_docs(students)
 
+group_ids = {"01": "Maths", "02": "Graphics", "03": "Business"}
+groups = []
+assessments = []
+attendance = []
+kudos = []
+concerns = []
+
 # For each student now in the db, create their A Level data
 # Result is a triple including doc id
 for student in students:
-    subject = random.choice(curriculum.subjects[:-1])
-
-    # Create assessment records
-    # An A Level each
-    assessments = [
-        {
-            "type": "assessment",
-            "subtype": "A-Level",
-            "subject": subject,
-            "student_id": student['_id'],
-            "assessment": assessment,
-            "cohort": student["cohort"],
-            "date": get_assessment_date(assessment, student["cohort"]),
-            "grade": random.choice(curriculum.scales.get("A-Level")),
-        }
-        for assessment in curriculum.assessments
-    ]
-    # Save
-    data.save_docs(assessments)
-    # And then computing
-    assessments = [
-        {
-            "type": "assessment",
-            "subtype": "BTEC-Single",
-            "subject": "Computing",
-            "student_id": student['_id'],
-            "cohort": student["cohort"],
-            "assessment": assessment,
-            "date": get_assessment_date(assessment, student["cohort"]),
-            "grade": random.choice(curriculum.scales.get("BTEC-Single")),
-        }
-        for assessment in curriculum.assessments
-    ]
-    # Save
-    data.save_docs(assessments)
-
+    # Put them in a group
+    group_id = random.choice(list(group_ids.keys()))
+    groups.append(
+    {
+        "_id": group_id,
+        "type": "group",
+        "code": group_id,
+        "name": group_ids.get(group_id),
+        "student_id": student.get("_id")
+    })
+    for i, ass in enumerate(["First", "Second", "Third"]):
+        assessments.append(
+            {
+                "type": "assessment",
+                "subtype": "A-Level",
+                "group_id": group_ids.get(group_id),
+                "student_id": student['_id'],
+                "assessment": ass,
+                "cohort": student["cohort"],
+                "date": f"2020-10-{1+7*i:02}",
+                "grade": random.choice(curriculum.scales.get("A-Level")),
+            }
+        )
+        # And then computing
+        assessments.append(
+            {
+                "type": "assessment",
+                "subtype": "BTEC-Single",
+                "group_id": "04",
+                "student_id": student['_id'],
+                "cohort": student["cohort"],
+                "assessment": ass,
+                "date": f"2020-10-{1+7*i:02}",
+                "grade": random.choice(curriculum.scales.get("BTEC-Single")),
+            }
+        )
     # Create attendance records
     # Use assessment point dates for now
-    attendance = [
-        {
+    attendance.extend(
+        [{
             "type": "attendance",
             "student_id": student['_id'],
-            "cohort": student["cohort"],
-            "date": get_assessment_date(assessment, student["cohort"]),
+            "date": dt,
             "actual": random.randint(40, 90),
             "possible": 90,
-        }
-        for assessment in curriculum.assessments
-    ]
-    # Save
-    data.save_docs(attendance)
-
+            "late": random.randint(0, 30),
+        } for dt in ["2020-08-31", "2020-09-07", "2020-09-14"]]
+    )
     # Create some kudos records
-    kudos = [
+    kudos.extend([
         {
             "type": "kudos",
             "student_id": student['_id'],
@@ -120,24 +123,28 @@ for student in students:
             "ada_value": random.choice(curriculum.values),
             "description": lorem.get_sentence(),
             "points": random.randint(1, 5),
+            "from": f"{names.get_first_name()}@ada.ac.uk",
         }
         for _ in range(random.randint(1, 10))
-    ]
-    # Save them
-    data.save_docs(kudos)
+    ])
 
     # Create some concern records
-    concerns = [
+    concerns.extend([
         {
             "type": "concern",
             "student_id": student['_id'],
             "cohort": student["cohort"],
             "date": get_random_date(student["cohort"]),
             "category": random.choice(curriculum.concern_categories),
-            "comment": lorem.get_sentence(),
+            "description": lorem.get_sentence(),
+            "additional": "",
         }
         for _ in range(random.randint(1, 5))
-    ]
-    # Save them
-    data.save_docs(concerns)
+    ])
+# Save
+data.save_docs(groups)
+data.save_docs(assessments)
+data.save_docs(attendance)
+data.save_docs(kudos)
+data.save_docs(concerns)
 
