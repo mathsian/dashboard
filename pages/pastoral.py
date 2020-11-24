@@ -91,14 +91,15 @@ attendance_summary = [
     ),
 ]
 # Weekly tab content
-weekly_header = html.H4(
-    children=["Week beginning ",
-              html.Span(id={
-    "type": "text",
-    "page": "pastoral",
-    "tab": "weekly",
-    "name": "wb"
-              })])
+weekly_header = html.H4(children=[
+    "Week beginning ",
+    html.Span(id={
+        "type": "text",
+        "page": "pastoral",
+        "tab": "weekly",
+        "name": "wb"
+    })
+])
 
 weekly_table = dash_table.DataTable(
     id={
@@ -116,20 +117,28 @@ weekly_table = dash_table.DataTable(
             "id": "family_name"
         },
         {
-            "name": "/",
-            "id": "p"
+            "name": "Pres",
+            "id": "pr"
         },
         {
-            "name": "N",
-            "id": "u"
+            "name": "Auth",
+            "id": "au"
+        },
+        {
+            "name": "Unauth",
+            "id": "un"
+        },
+        {
+            "name": "L",
+            "id": "la"
         },
         {
             "name": "M",
-            "id": "m"
+            "id": "me"
         },
         {
-            "name": "I",
-            "id": "i"
+            "name": "V",
+            "id": "co"
         },
     ],
     style_cell={"textAlign": "left"},
@@ -140,13 +149,14 @@ weekly_table = dash_table.DataTable(
         "direction": "asc"
     }],
 )
-weekly_picker = dcc.DatePickerSingle(id={
-    "type": "picker",
-    "page": "pastoral",
-    "tab": "weekly"
-},
-                                     date=date.today(),
-                                     display_format="MMM DD YY",
+weekly_picker = dcc.DatePickerSingle(
+    id={
+        "type": "picker",
+        "page": "pastoral",
+        "tab": "weekly"
+    },
+    date=date.today(),
+    display_format="MMM DD YY",
 )
 
 # Kudos tab content
@@ -264,7 +274,8 @@ tab_map = {
         dbc.Col(width=8, children=attendance_table),
         dbc.Col(children=attendance_summary)
     ],
-    "pastoral-tab-weekly": dbc.Col([
+    "pastoral-tab-weekly":
+    dbc.Col([
         dbc.Row(children=[
             dbc.Col(width=3, children=weekly_picker),
             dbc.Col(weekly_header)
@@ -527,20 +538,23 @@ def update_weekly_table(filter_value, picker_value):
     enrolment_df = pd.DataFrame.from_records(enrolment_docs)
     # Get attendance for the latest week before the chosen date
     attendance_df = pd.DataFrame.from_records(
-        data.get_data("attendance", "student_id", student_ids)).query("date <= @picker_value").query("date == date.max()")
+        data.get_data("attendance", "student_id", student_ids)).query(
+            "date <= @picker_value").query("date == date.max()")
     # Picked too early a date?
     if attendance_df.empty:
         attendance_df = pd.DataFrame.from_records(
-        data.get_data("attendance", "student_id", student_ids)).query("date == date.min()")
-    attendance_df.eval("p = 100*marks.str.count('/')/possible", inplace=True)
-    attendance_df.eval("u = 100*marks.str.count('N')/possible", inplace=True)
-    attendance_df.eval("m = 100*marks.str.count('M')/possible", inplace=True)
-    attendance_df.eval("i = 100*marks.str.count('I')/possible", inplace=True)
-    merged_df = pd.DataFrame.merge(
-        enrolment_df,
-        attendance_df.round(),
-        how='left',
-        left_on='_id',
-        right_on='student_id'
-    )
-    return merged_df.to_dict(orient='records'), data.format_date(attendance_df["date"].iloc[0])
+            data.get_data("attendance", "student_id",
+                          student_ids)).query("date == date.min()")
+    attendance_df.eval("pr = 100*actual/possible", inplace=True)
+    attendance_df.eval("un = 100*unauthorised/possible", inplace=True)
+    attendance_df.eval("au = 100*authorised/possible", inplace=True)
+    attendance_df.eval("la = 100*late/possible", inplace=True)
+    attendance_df.eval("me = 100*(marks.str.count('I')+marks.str.count('M'))/possible", inplace=True)
+    attendance_df.eval("co = 100*marks.str.count('V')/possible", inplace=True)
+    merged_df = pd.DataFrame.merge(enrolment_df,
+                                    attendance_df.round(),
+                                    how='left',
+                                    left_on='_id',
+                                    right_on='student_id')
+    return merged_df.to_dict(orient='records'), data.format_date(
+        attendance_df["date"].iloc[0])
