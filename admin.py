@@ -50,6 +50,35 @@ def sync_group(dbname=None, dry=True):
         else:
             data.save_docs(to_add.to_dict(orient='records'), dbname)
 
+def check_ids():
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    enrolment_sql = "SELECT T1.STEM_Student_ID, T2.STUD_Known_As, T1.STUD_Surname, T1.Group_ID, T1.Group_Code, T1.Group_Name FROM Reports.dbo.Vw_Enr_Current_SixthForm AS T1 LEFT JOIN REMSLive.dbo.STUDstudent AS T2 ON T1.STEM_Student_ID = T2.STUD_Student_ID;"
+    #enrolment_df = pd.read_sql(enrolment_sql, conn)
+    #print(enrolment_df.head())
+    stud_sql = "SELECT STUD_Student_ID, STUD_Known_As, STUD_Surname FROM REMSLive.dbo.STUDstudent;"
+    stem_sql = "SELECT STEM_Student_ID FROM Reports.dbo.Vw_Enr_Current_SixthForm;"
+    stud_df = pd.read_sql(stud_sql, conn)
+    print(stud_df.head())
+    print(stud_df.query("STUD_Known_As == 'Ramil'"))
+    print(stud_df.query("STUD_Student_ID.str.contains('160001')"))
+    print(f"AA{stud_df.iloc[0]['STUD_Student_ID']}AA")
+    stem_df = pd.read_sql(stem_sql, conn)
+    print(stem_df.head())
+    print(f"AA{stem_df.iloc[0]['STEM_Student_ID']}AA")
+    merged_df = pd.DataFrame.merge(stud_df, stem_df, how='right', left_on='STUD_Student_ID', right_on='STEM_Student_ID')
+    print(merged_df.head())
+    print(merged_df.query("STUD_Student_ID.notna()"))
+
+
 def sync_enrolment(dbname=None, dry=True):
     # Get connection settings
     config_object = ConfigParser()
@@ -190,7 +219,7 @@ def sync_attendance(dbname, full=False, dry=True):
     # bring index back as columns
     rems_df = rems_df.reset_index()
     rems_df['Wk_Start'] = rems_df['Wk_Start'].astype(str).str.slice(0,10)
-    our_df = pd.DataFrame.from_records(data.get_data("all", "type", "attendance", dbname), columns=["_id", "_rev", "student_id", "date", "type", "possible", "actual", "marks"])
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type", "attendance", dbname), columns=["_id", "_rev", "student_id", "date", "type", "possible", "actual", "marks", "authorised", "unauthorised", "late"])
     merged_df = pd.merge(
         rems_df,
         our_df,
@@ -208,8 +237,8 @@ def sync_attendance(dbname, full=False, dry=True):
     to_update_df.eval("student_id = REGD_Student_ID", inplace=True)
     to_update_df.eval("date = Wk_Start", inplace=True)
     to_update_df.eval("marks = REGD_Attendance_Mark", inplace=True)
-    to_update_df['possible'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('possible') for m in marks])).astype(int)
-    to_update_df['actual'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('actual') for m in marks])).astype(int)
+    to_update_df.loc[:, 'possible'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('possible') for m in marks])).astype(int)
+    to_update_df.loc[:, 'actual'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('actual') for m in marks])).astype(int)
     to_update_df.eval("late = marks.str.count('L')", inplace=True)
     to_update_df.eval("unauthorised = marks.str.count('N')", inplace=True)
     to_update_df.eval("authorised = possible - actual - unauthorised", inplace=True)
@@ -237,4 +266,7 @@ def copy_docs(doc_type, db_src, db_dest):
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
+    #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
     sync_attendance("ada", full=False, dry=True)
+    #sync_enrolment("ada", dry=False)
+    #sync_group("ada", dry=False)
