@@ -24,6 +24,7 @@ def create_db(name):
     db = client.create_database(name)
     return db.exists()
 
+
 class Connection(object):
     def __init__(self, db_name=None):
         # read the config
@@ -79,10 +80,12 @@ def get_data(doc_type, key_field, key_list, db_name=None):
     if not isinstance(key_list, list):
         key_list = [key_list]
     with Connection(db_name) as db:
-        result = db.get_view_result(
-            doc_type, key_field, keys=key_list, include_docs=True
-        ).all()
+        result = db.get_view_result(doc_type,
+                                    key_field,
+                                    keys=key_list,
+                                    include_docs=True).all()
     return list(map(lambda r: r["doc"], result))
+
 
 def get_student(student_id, db_name=None):
     with Connection(db_name) as db:
@@ -101,6 +104,7 @@ def get_df(doc_type, key_field, key_list, db_name=None):
     records = get_data(doc_type, key_field, key_list, db_name)
     return pd.DataFrame.from_records(records)
 
+
 def delete_docs(doc_ids, db_name=None):
     if not isinstance(doc_ids, list):
         doc_ids = [doc_ids]
@@ -109,13 +113,15 @@ def delete_docs(doc_ids, db_name=None):
             doc = db[doc_id]
             doc.delete()
 
+
 def format_date(iso_date):
     y, m, d = iso_date.split('-')
     month = calendar.month_abbr[int(m)]
     return f"{month} {d}"
 
+
 def get_teams(cohort, db_name=None):
     with Connection(db_name) as db:
-        result = db.get_view_result('enrolment', 'unique_teams', group=True)[[cohort, None]:[cohort, 'ZZZ']]
+        result = db.get_view_result('enrolment', 'unique_teams',
+                                    group=True)[[cohort, None]:[cohort, 'ZZZ']]
     return [r['key'][1] for r in result]
-
