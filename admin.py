@@ -173,7 +173,7 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
     data.save_docs(assessments, dbname)
 
 
-def get_weekly_attendance(wb, dbname):
+def sync_attendance(dbname, full=False, dry=True):
     config_object = ConfigParser()
     config_object.read("config.ini")
     rems_settings = config_object["REMS"]
@@ -183,21 +183,46 @@ def get_weekly_attendance(wb, dbname):
     conn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
-    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] = '{wb} 00:00:00.000';"
-    df = pd.read_sql(sql, conn).groupby('REGD_Student_ID').agg(
+    #sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] = '{wb} 00:00:00.000';"
+    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID], [Wk_Start] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] >= '{curriculum.this_year_start} 00:00:00.000';"
+    rems_df = pd.read_sql(sql, conn).groupby(['Wk_Start', 'REGD_Student_ID']).agg(
         {'REGD_Attendance_Mark': ''.join})
-    df['possible'] = df['REGD_Attendance_Mark'].apply(len)
-    df['late'] = df['REGD_Attendance_Mark'].str.count('L')
-    df['unauthorised'] = df['REGD_Attendance_Mark'].str.count('N')
-    df['actual'] = df['REGD_Attendance_Mark'].str.count('/') + df['late']
-    df['type'] = 'attendance'
-    df['date'] = wb
-    # bring index back as column and rename to fit conventions
-    data.save_docs(
-        df.reset_index().rename(columns={
-            'REGD_Attendance_Mark': 'marks',
-            'REGD_Student_ID': 'student_id'
-        }).to_dict(orient='records'), dbname)
+    # bring index back as columns
+    rems_df = rems_df.reset_index()
+    rems_df['Wk_Start'] = rems_df['Wk_Start'].astype(str).str.slice(0,10)
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type", "attendance", dbname), columns=["_id", "_rev", "student_id", "date", "type", "possible", "actual", "marks"])
+    merged_df = pd.merge(
+        rems_df,
+        our_df,
+        how='left',
+        left_on=['REGD_Student_ID', 'Wk_Start'],
+        right_on=['student_id', 'date'])
+    if full:
+        # For a full update...
+        to_update_df = merged_df
+    else:
+        # For a selective update
+        to_update_df = merged_df.query("_id.isna() or not marks == REGD_Attendance_Mark")
+    
+    to_update_df.eval("type = 'attendance'", inplace=True)
+    to_update_df.eval("student_id = REGD_Student_ID", inplace=True)
+    to_update_df.eval("date = Wk_Start", inplace=True)
+    to_update_df.eval("marks = REGD_Attendance_Mark", inplace=True)
+    to_update_df['possible'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('possible') for m in marks])).astype(int)
+    to_update_df['actual'] = to_update_df['marks'].apply(lambda marks: sum([curriculum.register_marks.get(m).get('actual') for m in marks])).astype(int)
+    to_update_df.eval("late = marks.str.count('L')", inplace=True)
+    to_update_df.eval("unauthorised = marks.str.count('N')", inplace=True)
+    to_update_df.eval("authorised = possible - actual - unauthorised", inplace=True)
+    to_add_docs = to_update_df.query('_id.isna()')[["type", "student_id", "date", "marks", "possible", "actual", "unauthorised", "authorised", "late"]].to_dict(orient='records')
+    if to_add_docs:
+        print(f"Adding {len(to_add_docs)} entries")
+        if not dry:
+            data.save_docs(to_add_docs, dbname)
+    to_update_docs = to_update_df.query('_id.notna()')[["_id", "_rev", "type", "student_id", "date", "marks", "possible", "actual", "unauthorised", "authorised", "late"]].to_dict(orient='records')
+    if to_update_docs:
+        print(f"Updating {len(to_update_docs)} entries")
+        if not dry:
+            data.save_docs(to_update_docs, dbname)
 
 
 def copy_docs(doc_type, db_src, db_dest):
@@ -212,16 +237,4 @@ def copy_docs(doc_type, db_src, db_dest):
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
-    sync_enrolment("ada", dry=False)
-    sync_group("ada", dry=False)
-    # initial_sync("ada")
-    # copy_docs("kudos", "testing", "ada")
-    # copy_docs("concern", "testing", "ada")
-    # create_assessment_all("2022", "First seven weeks", "2020-10-13",
-    #                       "Expectations", "ada")
-    # get_weekly_attendance("2020-08-31", "ada")
-    # get_weekly_attendance("2020-09-07", "ada")
-    # get_weekly_attendance("2020-09-14", "ada")
-    # get_weekly_attendance("2020-09-21", "ada")
-    # get_weekly_attendance("2020-09-28", "ada")
-    # get_weekly_attendance("2020-10-05", "ada")
+    sync_attendance("ada", full=False, dry=True)
