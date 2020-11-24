@@ -1,6 +1,33 @@
 """
 Static info
 """
+register_marks = {
+    '/': {'name': 'present', 'possible': 1, 'actual': 1},
+    'B': {'name': 'clubs', 'possible': 1, 'actual': 1},
+    'P': {'name': 'project', 'possible': 1, 'actual': 1},
+    'L': {'name': 'late', 'possible': 1, 'actual': 1},
+    'N': {'name': 'unauthorised', 'possible': 1, 'actual': 0},
+    'U': {'name': 'what is this', 'possible': 1, 'actual': 0},
+    'A': {'name': 'authorised', 'possible': 1, 'actual': 0},
+    'M': {'name': 'medical', 'possible': 1, 'actual': 0},
+    'I': {'name': 'illness', 'possible': 1, 'actual': 0},
+    'Y': {'name': 'interview', 'possible': 1, 'actual': 0},
+    'V': {'name': 'covid', 'possible': 1, 'actual': 0},
+    'E': {'name': 'exam', 'possible': 1, 'actual': 1},
+    'R': {'name': 'observance', 'possible': 0, 'actual': 0},
+    'X': {'name': 'not required', 'possible': 0, 'actual': 0},
+    '#': {'name': 'not college day', 'possible': 0, 'actual': 0},
+    '*': {'name': 'no idea', 'possible': 0, 'actual': 0},
+    '-': {'name': 'incomplete', 'possible': 0, 'actual': 0},
+    'S': {'name': 'suspicious', 'possible': 0, 'actual': 0},
+    '+': {'name': 'addition', 'possible': 0, 'actual': 0},
+    'C': {'name': 'help', 'possible': 0, 'actual': 0},
+    'F': {'name': 'ummmm', 'possible': 0, 'actual': 0},
+    'Z': {'name': 'asleep', 'possible': 0, 'actual': 0},
+}
+
+this_year_start = "2020-08-31"
+
 concern_categories = ["Conduct", "Academic"]
 concern_categories_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_categories],
