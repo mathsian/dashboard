@@ -37,11 +37,7 @@ concern_discrimination = ["Race", "Sex or gender", "Sexual orientation", "Religi
 concern_discrimination_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_discrimination]
 }
-teams = ["A", "B", "C", "D"]
-teams_dropdown = {
-    "options": [{"label": s, "value": s} for s in teams],
-    "default": teams
-}
+
 values = [
     "Curiosity",
     "Creativity",
@@ -67,16 +63,7 @@ cohorts_dropdown = {
     "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
     "default": cohorts[-1],
 }
-subjects = [
-    "Maths",
-    "Business",
-    "Graphics",
-    "Computing",
-]
-subjects_dropdown = {
-    "options": [{"label": s, "value": s} for s in subjects],
-    "default": subjects[-1],
-}
+
 scales = {
     "alevel": ["U", "E", "D", "C", "B", "A", "S"],
     "A-Level": ["U", "E", "D", "C", "B", "A", "S"],
@@ -106,16 +93,4 @@ scales = {
 scales_dropdown = {
     "options": [{"label": s, "value": s} for s in list(scales.keys())],
     "default": "Expectations"
-}
-subject_scales = {
-    "Maths": "A-Level",
-    "Business": "A-Level",
-    "Graphics": "A-Level",
-    "Computing": "BTEC-Single"
-}
-
-assessments = [f"{y}.{p}" for y in [12, 13] for p in [1, 2, 3]]
-assessments_dropdown = {
-    "options": [{"label": s, "value": s} for s in assessments],
-    "default": assessments[-1],
 }
