@@ -4,7 +4,7 @@ import pandas as pd
 from configparser import ConfigParser
 import curriculum
 
-def sync_group(dbname=None, dry=True):
+def sync_group(dbname=None, full=False, dry=True):
     # Get connection settings
     config_object = ConfigParser()
     config_object.read("config.ini")
@@ -15,15 +15,15 @@ def sync_group(dbname=None, dry=True):
     conn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
-    enrolment_sql = "SELECT T1.STEM_Student_ID, T2.STUD_Known_As, T1.STUD_Surname, T1.Group_ID, T1.Group_Code, T1.Group_Name FROM Reports.dbo.Vw_Enr_Current_SixthForm AS T1 LEFT JOIN REMSLive.dbo.STUDstudent AS T2 ON T1.STEM_Student_ID = T2.STUD_Student_ID;"
-    rems_df = pd.read_sql(enrolment_sql, conn).dropna()
+    enrolment_sql = "SELECT T1.STEM_Student_ID, T2.STUD_Known_As, T1.STUD_Surname, T1.Group_ID, T1.Group_Code, T1.Group_Name, T1.PRPI_Title, T1.STEM_Expctd_End_Date FROM Reports.dbo.Vw_Enr_Current_SixthForm AS T1 LEFT JOIN REMSLive.dbo.STUDstudent AS T2 ON T1.STEM_Student_ID = T2.STUD_Student_ID;"
+    rems_df = pd.read_sql(enrolment_sql, conn).dropna(subset=(["Group_Name"]))
     rems_group_df = rems_df.query("not Group_Name.str.contains('EEP')").copy()
     rems_group_df["Group_ID"] = rems_group_df["Group_ID"].astype(int).astype(str)
     our_group_df = pd.DataFrame.from_records(
-        data.get_data("all", "type", "group", dbname), columns=["_id", "_rev", "type", "group_id", "group_name", "group_code", "student_id"])
+        data.get_data("all", "type", "group", dbname), columns=["_id", "_rev", "type", "group_id", "group_name", "group_code", "student_id", "cohort", "subject"])
     merged_group_df = pd.DataFrame.merge(
-        rems_group_df,
-        our_group_df,
+        rems_group_df.astype(str),
+        our_group_df.astype(str),
         how="outer",
         left_on=["STEM_Student_ID", "Group_ID"],
         right_on=["student_id", "group_id"],
@@ -36,19 +36,33 @@ def sync_group(dbname=None, dry=True):
             print(to_delete)
         else:
             data.delete_docs(to_delete['_id'].tolist(), dbname)
-    new_df = merged_group_df.dropna(subset=["STEM_Student_ID"]).query("_id.isna()")
+    # Not in our db
+    if full:
+        new_df = merged_group_df.dropna(subset=["STEM_Student_ID"])
+    else:
+        new_df = merged_group_df.dropna(subset=["STEM_Student_ID"]).query("_id.isna()")
     new_df.eval("student_id = STEM_Student_ID", inplace=True)
     new_df.eval("group_id = Group_ID", inplace=True)
     new_df.eval("group_code = Group_Code", inplace=True)
     new_df.eval("group_name = Group_Name", inplace=True)
     new_df.eval("type = 'group'", inplace=True)
-    to_add = new_df[["type", "student_id", "group_id", "group_code", "group_name"]]
+    new_df.eval("subject = PRPI_Title", inplace=True)
+    new_df["cohort"] = new_df["STEM_Expctd_End_Date"].apply(lambda eed: str(int(eed[2:4])-2) + str(int(eed[2:4])))
+    to_add = new_df.query("_id.isna()")[["type", "student_id", "group_id", "group_code", "group_name", "subject", "cohort"]]
     if not to_add.empty:
         print(f"Adding {len(to_add)} docs")
         if dry:
             print(to_add)
         else:
             data.save_docs(to_add.to_dict(orient='records'), dbname)
+    to_update = new_df.query("_id.notna()")[["_id", "_rev", "type", "student_id", "group_id", "group_code", "group_name", "subject", "cohort"]]
+    if not to_update.empty:
+        print(f"Updating {len(to_update)} docs")
+        if dry:
+            print(to_update)
+        else:
+            data.save_docs(to_update.to_dict(orient='records'), dbname)
+
 
 def check_ids():
     # Get connection settings
@@ -262,11 +276,32 @@ def copy_docs(doc_type, db_src, db_dest):
         r.pop("_rev", None)
     data.save_docs(result, db_name=db_dest)
 
+def fix_assessments(db_name=None):
+    # One off repair assessments so that they are linked to a group id rather than a group_name
+    assessment_docs = data.get_data("all", "type", "assessment", db_name=db_name)
+    assessment_df = pd.DataFrame.from_records(assessment_docs)
+    group_docs = data.get_data("all", "type", "group", db_name=db_name)
+    group_df = pd.DataFrame.from_records(group_docs)
+    for assessment in assessment_docs:
+        assessment_subject = assessment.get("subject")
+        print(f"Looking for {assessment_subject}")
+        group_subject_df = group_df.query("group_name == @assessment_subject")
+        if group_subject_df.empty:
+            group_subject_df = group_df.query("name == @assessment_subject")
+        if group_subject_df.empty:
+            print(f"Can't find {assessment_subject}")
+        else:
+            group_subject = group_subject_df.iloc[0]["group_name"]
+            if group_subject == 'nan':
+                group_subject = group_subject_df.iloc[0]["name"]
+            print(f"Updating {assessment_subject} to {group_subject}")
+            assessment.update({"subject": group_subject})
 
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
-    sync_attendance("ada", full=False, dry=True)
+    #sync_attendance("ada", full=False, dry=False)
     #sync_enrolment("ada", dry=False)
-    #sync_group("ada", dry=False)
+    #sync_group("testing", full=True, dry=False)
+    #fix_assessments("ada")
