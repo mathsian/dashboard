@@ -41,6 +41,8 @@ subject = html.Div(
             id={"type": "filter-dropdown", "filter": "subject"},
             placeholder="Select a subject",
             searchable=False,
+            optionHeight=90,
+            style={"font-size": "70%"},
         ),
     ],
 )
@@ -59,16 +61,18 @@ url_map = {
         Output({"type": "filter-dropdown", "filter": "team"}, "options"),
         Output({"type": "filter-dropdown", "filter": "team"}, "value"),
         Output({"type": "filter-dropdown", "filter": "subject"}, "options"),
+        Output({"type": "filter-dropdown", "filter": "subject"}, "value"),
     ],
     [Input({"type": "filter-dropdown", "filter": "cohort"}, "value")],
 )
 def update_filters(cohort_value):
     teams = data.get_teams(cohort_value)
-    subjects = ["1", "2", "3"]
+    subjects = data.get_groups(cohort_value)
     return [
         [{"label": t, "value": t} for t in teams],
         None,
         [{"label": s, "value": s} for s in subjects],
+        None,
     ]
 
 
