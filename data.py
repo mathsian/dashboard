@@ -130,6 +130,6 @@ def get_teams(cohort, db_name=None):
 
 def get_groups(cohort, db_name=None):
     with Connection(db_name) as db:
-        result = db.get_view_result('group', 'unique_groups',
+        result = db.get_view_result('group', 'unique_group_ids',
                                     group=True)[[cohort, None]:[cohort, 'ZZZ']]
-    return [r['key'][1] for r in result]
+    return [(r['key'][1], r['value']) for r in result]

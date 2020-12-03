@@ -67,11 +67,11 @@ url_map = {
 )
 def update_filters(cohort_value):
     teams = data.get_teams(cohort_value)
-    subjects = data.get_groups(cohort_value)
+    groups = data.get_groups(cohort_value)
     return [
         [{"label": t, "value": t} for t in teams],
         None,
-        [{"label": s, "value": s} for s in subjects],
+        [{"label": s[1], "value": s[0]} for s in groups],
         None,
     ]
 

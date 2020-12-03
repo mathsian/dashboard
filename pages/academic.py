@@ -94,11 +94,11 @@ def get_content(active_tab):
     "filter": ALL
 }, "value")])
 def update_subject_table(filter_value):
-    cohort, _, subject = filter_value
-    if not (cohort and subject):
+    cohort, _, group_id = filter_value
+    if not (cohort and group_id):
         return [], {}
     group_df = pd.DataFrame.from_records(
-        data.get_data("group", "cohort_subject", [(cohort, subject)]))
+        data.get_data("group", "group_id", group_id))
     student_ids = group_df["student_id"].tolist()
     enrolment_df = pd.DataFrame.from_records(
         data.get_data("enrolment", "_id", student_ids))
