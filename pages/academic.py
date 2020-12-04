@@ -56,6 +56,8 @@ subject_table = dash_table.DataTable(id={
                                              "editable": True
                                          },
                                      ],
+                                     sort_action='native',
+                                     filter_action='native',
                                      sort_by=[{
                                          "column_id": "given_name",
                                          "direction": "asc"
@@ -64,8 +66,17 @@ subject_table = dash_table.DataTable(id={
                                          "direction": "asc"
                                      }])
 
-validation_layout = content + [subject_table]
-tab_map = {"academic-tab-view": [dbc.Col()], "academic-tab-edit": [dbc.Col(subject_table)]}
+assessment_filter = dcc.Dropdown(id={
+    "type": "dropdown",
+    "page": "academic",
+    "name": "assessment"
+}, )
+validation_layout = content + [subject_table, assessment_filter]
+tab_map = {
+    "academic-tab-view": [dbc.Col([assessment_filter])],
+    "academic-tab-edit":
+    [dbc.Col([assessment_filter, html.Br(), subject_table])]
+}
 
 
 @app.callback(
@@ -103,3 +114,30 @@ def update_subject_table(filter_value):
     enrolment_df = pd.DataFrame.from_records(
         data.get_data("enrolment", "_id", student_ids))
     return enrolment_df.to_dict(orient='records'), {}
+
+
+@app.callback([
+    Output({
+        "type": "dropdown",
+        "page": "academic",
+        "name": "assessment"
+    }, "options"),
+    Output({
+        "type": "dropdown",
+        "page": "academic",
+        "name": "assessment"
+    }, "value")
+], [Input({
+    "type": "filter-dropdown",
+    "filter": ALL
+}, "value")])
+def update_assessment_dropdown(filter_value):
+    cohort, _, group_id = filter_value
+    if not (cohort and group_id):
+        return [], ""
+    assessment_df = pd.DataFrame.from_records(
+        data.get_data("assessment", "group_id", group_id))
+    assessment_list = assessment_df.sort_values(
+        by="date", ascending=False)["assessment"].unique().tolist()
+    options = [{"label": a, "value": a} for a in assessment_list]
+    return options, options[0].get("value")
