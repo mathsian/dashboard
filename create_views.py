@@ -92,7 +92,7 @@ ddoc = db.get_design_document('enrolment')
 map_fun = """
 function (doc){
 if(doc.type==='enrolment'){
-emit(doc.team, null);
+emit([doc.cohort, doc.team], null);
 }
 }
 """
@@ -109,7 +109,7 @@ ddoc = db.get_design_document('group')
 map_fun = """
 function (doc){
 if(doc.type==='group'){
-emit(doc.group_name, null);
+emit([doc.cohort, doc.subject], null);
 }
 }"""
 reduce_fun = """
@@ -121,5 +121,18 @@ try:
     ddoc.save()
 except CloudantArgumentError as e:
     print(e)
+ddoc = db.get_design_document('group')
+map_fun = """
+function (doc){
+if(doc.type==='group'){
+emit([doc.cohort, doc.subject], null);
+}
+}"""
+try:
+    ddoc.add_view('cohort_subject', map_fun)
+    ddoc.save()
+except CloudantArgumentError as e:
+    print(e)
+
 
 client.disconnect()

@@ -2,45 +2,258 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
+import dash_table
+import pandas as pd
 from app import app
+import data
+import plotly.graph_objects as go
+import curriculum
+academic_header = html.H4(id={
+    "type": "text",
+    "page": "academic",
+    "name": "header"
+})
+assessment_filter = dcc.Dropdown(id={
+    "type": "dropdown",
+    "page": "academic",
+    "name": "assessment"
+}, )
 
 tabs = ["View", "Edit"]
 content = [
-    dbc.Card(
-        [
-            dbc.CardHeader(
-                dbc.Tabs(
-                    [
-                        dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
-                        for t in tabs
-                    ],
-                    id=f"academic-tabs",
-                    card=True,
-                    active_tab=f"academic-tab-{tabs[0].lower()}",
-                )
-            ),
-            dbc.CardBody(
-                dbc.Row(
-                    [
-                        dbc.Col(width=3, children=html.Div(id=f"academic-sidebar")),
-                        dbc.Col(width=7, children=html.Div(id=f"academic-main")),
-                        dbc.Col(width=2, children=html.Div(id=f"academic-panel")),
-                    ]
-                )
-            ),
-        ]
-    )
+    dbc.Card([
+        dbc.CardHeader(
+academic_header
+        ),
+        dbc.CardBody(
+assessment_filter
+        )
+    ]),
+    dbc.Card([
+        dbc.CardHeader(
+            dbc.Tabs(
+                [
+                    dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
+                    for t in tabs
+                ],
+                id=f"academic-tabs",
+                card=True,
+                active_tab=f"academic-tab-{tabs[0].lower()}",
+            )),
+        dbc.CardBody(dbc.Row(id="academic-content")),
+    ])
 ]
+subject_table = dash_table.DataTable(id={
+    "type": "table",
+    "page": "academic",
+    "tab": "edit"
+},
+                                     columns=[
+                                         {
+                                             "name": "Given name",
+                                             "id": "given_name",
+                                             "editable": False
+                                         },
+                                         {
+                                             "name": "Family name",
+                                             "id": "family_name",
+                                             "editable": False
+                                         },
+                                         {
+                                             "name": "Grade",
+                                             "id": "grade",
+                                             "type": "text",
+                                             "presentation": "dropdown",
+                                             "editable": True
+                                         },
+                                         {
+                                             "name": "Comment",
+                                             "id": "comment",
+                                             "type": "text",
+                                             "presentation": "input",
+                                             "editable": True
+                                         },
+                                     ],
+                                     style_cell={
+                                         "textAlign": "left",
+                                         "height": "auto",
+                                         "whiteSpace": "normal",
+                                     },
+                                     sort_action='native',
+                                     filter_action='native',
+                                     sort_by=[{
+                                         "column_id": "given_name",
+                                         "direction": "asc"
+                                     }, {
+                                         "column_id": "family_name",
+                                         "direction": "asc"
+                                     }])
 
-validation_layout = content
+assessment_graph = dcc.Graph(id={
+    "type": "graph",
+    "page": "academic",
+    "tab": "view",
+    "name": "bar"
+},
+                             figure={
+                                 "layout": {
+                                     "xaxis": {
+                                         "visible": False
+                                     },
+                                     "yaxis": {
+                                         "visible": False
+                                     }
+                                 }
+                             },
+                             config={"displayModeBar": False})
+validation_layout = content + [
+    subject_table,
+    assessment_graph,
+]
+tab_map = {
+    "academic-tab-view": [
+        dbc.Col([
+            assessment_graph
+        ])
+    ],
+    "academic-tab-edit": [
+        dbc.Col([
+            subject_table
+        ])
+    ]
+}
+
 
 @app.callback(
+    Output(f"academic-content", "children"),
     [
-        Output(f"academic-sidebar", "children"),
-        Output(f"academic-main", "children"),
-        Output(f"academic-panel", "children"),
+        Input(f"academic-tabs", "active_tab"),
     ],
-    [Input(f"academic-tabs", "active_tab"),],
 )
 def get_content(active_tab):
-    return "", "", ""
+    return tab_map.get(active_tab)
+
+
+@app.callback([
+    Output({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "data"),
+    Output({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "dropdown"),
+], [
+    Input({
+        "type": "dropdown",
+        "page": "academic",
+        "name": "assessment"
+    }, "value")
+], [State({
+    "type": "filter-dropdown",
+    "filter": ALL
+}, "value")])
+def update_subject_table(assessment_name, filter_value):
+    _, _, subject_code = filter_value
+    if not assessment_name:
+        return [], {}
+    assessment_df = pd.DataFrame.from_records(
+        data.get_data("assessment", "assessment_subject",
+                      [(assessment_name, subject_code)]))
+    student_ids = assessment_df["student_id"].tolist()
+    enrolment_df = pd.DataFrame.from_records(
+        data.get_data("enrolment", "_id", student_ids))
+    merged_df = pd.merge(assessment_df,
+                         enrolment_df,
+                         left_on='student_id',
+                         right_on='_id',
+                         how='inner')
+    subtype = merged_df.iloc[0]["subtype"]
+    dropdown = {
+        "grade": {
+            "options": [{
+                "label": s,
+                "value": s
+            } for s in curriculum.scales.get(subtype)]
+        }
+    }
+    return merged_df.to_dict(orient='records'), dropdown
+
+
+@app.callback(
+    Output(
+        {
+            "type": "graph",
+            "page": "academic",
+            "tab": "view",
+            "name": "bar",
+        }, "figure"),
+    [
+        Input({
+            "type": "dropdown",
+            "page": "academic",
+            "name": "assessment"
+        }, "value")
+    ], [State({
+        "type": "filter-dropdown",
+        "filter": ALL
+    }, "value")])
+def update_subject_graph(assessment_name, filter_value):
+    _, _, subject_code = filter_value
+    if not assessment_name:
+        return {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                }
+            }
+        }
+    assessment_df = pd.DataFrame.from_records(
+        data.get_data("assessment", "assessment_subject",
+                      [(assessment_name, subject_code)]))
+    subtype = assessment_df.iloc[0]["subtype"]
+    x = curriculum.scales.get(subtype)
+    y = [len(assessment_df.query("grade == @g")) for g in x]
+    fig = go.Figure(go.Bar(x=x, y=y))
+    return fig
+
+
+@app.callback([
+    Output({
+        "type": "dropdown",
+        "page": "academic",
+        "name": "assessment"
+    }, "options"),
+    Output({
+        "type": "dropdown",
+        "page": "academic",
+        "name": "assessment"
+    }, "value"),
+    Output({
+        "type": "text",
+        "page": "academic",
+        "name": "header"
+    }, "children"),
+], [Input({
+    "type": "filter-dropdown",
+    "filter": ALL
+}, "value")])
+def update_assessment_dropdown(filter_value):
+    cohort, _, subject_code = filter_value
+    if not (cohort and subject_code):
+        return [], "", "Select a teaching group"
+    assessment_df = pd.DataFrame.from_records(
+        data.get_data("assessment", "subject_code", subject_code))
+    group_docs = data.get_data("group", "subject_code", subject_code)
+    subject = group_docs[0].get("subject_name")
+    if assessment_df.empty:
+        return [], "", subject
+    assessment_list = assessment_df.sort_values(
+        by="date", ascending=False)["assessment"].unique().tolist()
+    options = [{"label": a, "value": a} for a in assessment_list]
+    return options, options[0].get("value"), subject

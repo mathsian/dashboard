@@ -62,12 +62,14 @@ attendance_summary = [
             "tab": "attendance",
             "name": "last_week"
         },
-        label="Last week",
+        label="This week",
         scale={
             "start": 0,
             "interval": 5,
             "labelInterval": 2,
         },
+        showCurrentValue=True,
+        units="%",
         value=0,
         min=0,
         max=100,
@@ -85,6 +87,8 @@ attendance_summary = [
             "interval": 5,
             "labelInterval": 2,
         },
+        showCurrentValue=True,
+        units="%",
         value=0,
         min=0,
         max=100,
@@ -351,9 +355,9 @@ def update_pastoral_attendance(filter_value):
     overall_totals = attendance_df.sum()
     last_week_totals = attendance_df.query("date == @last_week_date").sum()
     overall_percent = round(100 * overall_totals['actual'] /
-                            overall_totals['possible'])
+                            overall_totals['possible'], 1)
     last_week_percent = round(100 * last_week_totals['actual'] /
-                              last_week_totals['possible'])
+                              last_week_totals['possible'], 1)
     # Merge on student id
     attendance_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
                              attendance_df,
@@ -549,12 +553,14 @@ def update_weekly_table(filter_value, picker_value):
     attendance_df.eval("un = 100*unauthorised/possible", inplace=True)
     attendance_df.eval("au = 100*authorised/possible", inplace=True)
     attendance_df.eval("la = 100*late/possible", inplace=True)
-    attendance_df.eval("me = 100*(marks.str.count('I')+marks.str.count('M'))/possible", inplace=True)
+    attendance_df.eval(
+        "me = 100*(marks.str.count('I')+marks.str.count('M'))/possible",
+        inplace=True)
     attendance_df.eval("co = 100*marks.str.count('V')/possible", inplace=True)
     merged_df = pd.DataFrame.merge(enrolment_df,
-                                    attendance_df.round(),
-                                    how='left',
-                                    left_on='_id',
-                                    right_on='student_id')
+                                   attendance_df.round(),
+                                   how='left',
+                                   left_on='_id',
+                                   right_on='student_id')
     return merged_df.to_dict(orient='records'), data.format_date(
         attendance_df["date"].iloc[0])
