@@ -73,7 +73,8 @@ blank_attendance = {
         },
         "yaxis": {
             "visible": False
-        }}
+        }
+    }
 }
 report = [
     html.H2(id={
@@ -242,6 +243,15 @@ concern_form = dbc.Row(children=[
             options=curriculum.concern_categories_dropdown["options"],
             value=curriculum.concern_categories_dropdown["default"],
         ),
+        dbc.Input(id={
+            "type": "input",
+            "page": "student",
+            "tab": "concern",
+            "name": "description"
+        },
+                  type="text",
+                  debounce=False,
+                  placeholder="Description"),
         dcc.Dropdown(
             id={
                 "type": "dropdown",
@@ -253,15 +263,6 @@ concern_form = dbc.Row(children=[
             placeholder="Discrimination (optional)",
             multi=True,
         ),
-        dbc.Input(id={
-            "type": "input",
-            "page": "student",
-            "tab": "concern",
-            "name": "description"
-        },
-                  type="text",
-                  debounce=False,
-                  placeholder="Description"),
     ]),
     dbc.Col([
         dbc.Button("Submit",
@@ -315,7 +316,9 @@ content = [
     ])
 ]
 
-validation_layout = content + report + [student_list_clear_button, student_list, kudos_form, concern_form]
+validation_layout = content + report + [
+    student_list_clear_button, student_list, kudos_form, concern_form
+]
 tab_map = {
     "student-tab-report": report,
     "student-tab-kudos": kudos_form,
@@ -331,21 +334,18 @@ def get_content(active_tab):
     return tab_map.get(active_tab)
 
 
-@app.callback(
-    [
+@app.callback([
     Output({
         "type": "badge",
         "page": "student",
         "name": "clear"
     }, "children"),
-Output({
+    Output({
         "type": "button",
         "page": "student",
         "name": "clear"
-
-
-}, "color")
-        ], [Input("selected-student-ids", "data")])
+    }, "color")
+], [Input("selected-student-ids", "data")])
 def update_student_list_badge(selected_student_ids):
     l = len(selected_student_ids)
     if l == 0:
@@ -445,14 +445,13 @@ def update_student_report(selected_student_ids):
     concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
     attendance_df = pd.DataFrame.from_records(attendance_docs)
-    attendance_df['percent'] = round(100*attendance_df['actual']/attendance_df['possible'])
+    attendance_df['percent'] = round(100 * attendance_df['actual'] /
+                                     attendance_df['possible'])
     attendance_figure = go.Figure()
     attendance_figure.add_trace(
-            go.Bar(
-                x=attendance_df["date"],
-                y=attendance_df["percent"],
-                name="Weekly attendance"
-            ))
+        go.Bar(x=attendance_df["date"],
+               y=attendance_df["percent"],
+               name="Weekly attendance"))
     return heading, f"Team {enrolment_doc.get('team')}", attendance_figure, [], kudos_docs, concern_docs
 
 
@@ -515,7 +514,8 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Award {points} {ada_value} kudos to')
-        desc = html.Div(["For ", html.Blockquote(description)]) if description else html.Div()
+        desc = html.Div(["For ", html.Blockquote(description)
+                         ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
             dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
             for s in enrolment_docs
@@ -598,7 +598,8 @@ def update_concern_message(selected_student_ids, description, category,
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Raise {category} concern about')
-        desc = html.Div(["For ", html.Blockquote(description)]) if description else html.Div()
+        desc = html.Div(["For ", html.Blockquote(description)
+                         ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
             dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
             for s in enrolment_docs
