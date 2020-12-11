@@ -41,7 +41,7 @@ attendance_dashboard = dbc.Container(children=[
                     "tab": "attendance",
                     "name": "last"
                 },
-                label="Last week",
+                label="This week",
                 scale={
                     "start": 0,
                     "interval": 5,
@@ -114,7 +114,7 @@ def update_attendance_gauge(n_intervals):
         data.get_data("all", "type", "attendance"),
         columns=["date", "actual", "possible"])
     overall_sum = attendance_df.sum()
-    overall = round(100 * overall_sum['actual'] / overall_sum['possible'])
+    overall = round(100 * overall_sum['actual'] / overall_sum['possible'], 1)
     last_sum = attendance_df.query("date == date.max()").sum()
-    last = round(100 * last_sum['actual'] / last_sum['possible'])
+    last = round(100 * last_sum['actual'] / last_sum['possible'], 1)
     return overall, last
