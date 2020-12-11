@@ -133,3 +133,9 @@ def get_groups(cohort, db_name=None):
         result = db.get_view_result('group', 'unique_group_ids',
                                     group=True)[[cohort, None]:[cohort, 'ZZZ']]
     return [(r['key'][1], r['value']) for r in result]
+
+def get_subjects(cohort, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result('group', 'unique_subject_codes',
+                                    group=True)[[cohort, None]:[cohort, 'ZZZ']]
+    return [(r['key'][1], r['value']) for r in result]
