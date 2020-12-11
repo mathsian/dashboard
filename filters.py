@@ -42,7 +42,7 @@ subject = html.Div(
             placeholder="Select a subject",
             searchable=False,
             optionHeight=90,
-            style={"font-size": "70%"},
+            style={"font-size": "90%"},
         ),
     ],
 )
@@ -67,11 +67,11 @@ url_map = {
 )
 def update_filters(cohort_value):
     teams = data.get_teams(cohort_value)
-    groups = data.get_groups(cohort_value)
+    subjects = data.get_subjects(cohort_value)
     return [
         [{"label": t, "value": t} for t in teams],
         None,
-        [{"label": s[1], "value": s[0]} for s in groups],
+        [{"label": s[0], "value": s[0]} for s in subjects],
         None,
     ]
 
