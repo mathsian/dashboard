@@ -3,6 +3,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import dash_table
+from dash.exceptions import PreventUpdate
 import pandas as pd
 from app import app
 import data
@@ -21,14 +22,9 @@ assessment_filter = dcc.Dropdown(id={
 
 tabs = ["View", "Edit"]
 content = [
-    dbc.Card([
-        dbc.CardHeader(
-academic_header
-        ),
-        dbc.CardBody(
-assessment_filter
-        )
-    ]),
+    dbc.Card(
+        [dbc.CardHeader(academic_header),
+         dbc.CardBody(assessment_filter)]),
     dbc.Card([
         dbc.CardHeader(
             dbc.Tabs(
@@ -88,7 +84,14 @@ subject_table = dash_table.DataTable(id={
                                          "column_id": "family_name",
                                          "direction": "asc"
                                      }])
-
+assessment_toast = dbc.Toast("Testing",
+                             id={
+                                 "type": "toast",
+                                 "page": "academic",
+                                 "tab": "edit"
+                             },
+                             is_open=False,
+                             duration=3000)
 assessment_graph = dcc.Graph(id={
     "type": "graph",
     "page": "academic",
@@ -107,20 +110,15 @@ assessment_graph = dcc.Graph(id={
                              },
                              config={"displayModeBar": False})
 validation_layout = content + [
+    assessment_toast,
     subject_table,
     assessment_graph,
 ]
 tab_map = {
-    "academic-tab-view": [
-        dbc.Col([
-            assessment_graph
-        ])
-    ],
-    "academic-tab-edit": [
-        dbc.Col([
-            subject_table
-        ])
-    ]
+    "academic-tab-view": [dbc.Col([assessment_graph])],
+    "academic-tab-edit":
+    [dbc.Col(subject_table),
+     dbc.Col(assessment_toast, width=3)]
 }
 
 
@@ -257,3 +255,59 @@ def update_assessment_dropdown(filter_value):
         by="date", ascending=False)["assessment"].unique().tolist()
     options = [{"label": a, "value": a} for a in assessment_list]
     return options, options[0].get("value"), subject
+
+
+@app.callback([
+    Output({
+        "type": "toast",
+        "page": "academic",
+        "tab": "edit",
+    }, "is_open"),
+    Output({
+        "type": "toast",
+        "page": "academic",
+        "tab": "edit",
+    }, "children"),
+], [
+    Input({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "data_timestamp"),
+], [
+    State({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "data"),
+    State({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "data_previous"),
+],
+              prevent_initial_call=True)
+def update_subject_toast(data_ts, table_data, previous_data):
+    if not previous_data:
+        return False, "No previous data"
+    df, df_previous = pd.DataFrame(table_data).sort_index(), pd.DataFrame(
+        previous_data).sort_index()
+    changes = df_previous.compare(df)
+    changed = changes.index
+    if len(changed) != 1:
+        return True, "Multiple changes, weirdly"
+    assessment_doc = df.rename(columns={
+        "_id_x": "_id",
+        "_rev_x": "_rev",
+        "cohort_x": "cohort",
+        "type_x": "type"
+    }).loc[changed, [
+        "_id", "_rev", "type", "subtype", "date", "student_id", "grade",
+        "comment", "cohort", "group_id", "subject_code", "subject_name",
+        "assessment"
+    ]].to_dict(orient='records')
+    data.save_docs(assessment_doc)
+    return True, [
+        html.Div(f"{d.get('grade')}, {d.get('comment')}")
+        for d in assessment_doc
+    ]
