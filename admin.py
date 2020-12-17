@@ -387,14 +387,30 @@ def fix_group_cohorts(dbname, dry=True):
         group_df.loc[group_df["group_code"] == group_code, "cohort"] = cohort
     data.save_docs(group_df.to_dict(orient='records'), db_name=dbname)
 
+def fix_null_descriptions(db_name):
+    kudos_docs = data.get_data("all", "type", "kudos", db_name)
+    for k in kudos_docs:
+        if not k.get('description'):
+            k['description'] = ""
+    data.save_docs(kudos_docs, db_name)
+    
+def fix_nan_comments(db_name):
+    assessment_docs = data.get_data("all", "type", "assessment", db_name)
+    for a in assessment_docs:
+        if a.get('comment') == "nan":
+            a['comment'] = ""
+    data.save_docs(assessment_docs, db_name)
+
 
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
-    sync_attendance("ada", full=False, dry=False)
+    #sync_attendance("ada", full=False, dry=False)
     #sync_enrolment("ada", dry=False)
-    #sync_group("ada", full=True, dry=False)
+    #sync_group("ada", full=False, dry=False)
     #fix_assessments("ada")
     #fix_group_cohorts("ada", dry=True)
     #fix_assessment_comments("ada")
+    #fix_null_descriptions("ada")
+    #fix_nan_comments("ada")
