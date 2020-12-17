@@ -55,16 +55,17 @@
 \begin{center}
     {\rmfamily\uppercase{
         {\large \VAR{name}}\\
-        October 2020}}
+        December 2020}}
 \tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
 \end{center}
 % Attendance bar chart
-\noindent\makebox[\columnwidth]{\rmfamily\uppercase{Attendance}
-  \VAR{attendance_cumulative}\% \hrulefill}
+\noindent\makebox[\columnwidth]{\rmfamily\VAR{attendance_cumulative}\% \uppercase{Attendance}\hrulefill}
 \vskip \bigskipamount
 \begin{center}
-\begin{tikzpicture}[scale=0.8]
+\begin{tikzpicture}[scale=1]
   \begin{axis}[
+  width=10cm,
+  height=5cm,
   ybar stacked,
   legend style={{at=(-0.2,0.5)},anchor=east},
   axis y line*=right,
@@ -86,8 +87,8 @@
   grid=major,
   clip=false,
   ]
-  \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{attendance_zip}};
-  \addplot[adaYellow, bar width=14pt, fill=adaYellow] coordinates {\VAR{punctuality_zip}};
+  \addplot[adaPurple, bar width=12pt, fill=adaPurple] coordinates {\VAR{attendance_zip}};
+  \addplot[adaYellow, bar width=12pt, fill=adaYellow] coordinates {\VAR{punctuality_zip}};
   \legend{Present,Present but late}
 \end{axis}
 \end{tikzpicture}
@@ -97,14 +98,14 @@
 \noindent\makebox[\columnwidth]{\rmfamily\uppercase{Academic}\hrulefill}
 {\sffamily
 %% for subject in academic
-\noindent \VAR{subject.subject}\\
+\noindent \VAR{subject.subject_name}\\
 \VAR{subject.assessment} {\em \VAR{subject.grade}}\\
 {\em \VAR{subject.comment}}\\
 %% endfor
 }
 \vskip \bigskipamount
 % Kudos
-\noindent\makebox[\columnwidth]{\rmfamily\uppercase{Kudos}\hrulefill}
+\noindent\makebox[\columnwidth]{\rmfamily\VAR{kudos_total} \uppercase{Kudos}\hrulefill}
 {\sffamily
 %% if kudos|length > 0
 %% for kudo in kudos
@@ -118,7 +119,7 @@ No kudos points recorded
 }
 \vskip \bigskipamount
 % Concern
-\noindent\makebox[\textwidth]{\rmfamily\uppercase{Concerns}\hrulefill}
+\noindent\makebox[\textwidth]{\rmfamily\VAR{concern_total} \uppercase{Concerns}\hrulefill}
 {\sffamily
 %% if concerns|length > 0
 %% for concern in concerns
