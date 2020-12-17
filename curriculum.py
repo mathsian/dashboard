@@ -71,8 +71,8 @@ scales = {
     "Level3": ["U", "E", "D", "C", "B", "A"],
     "GCSE-Letter": ["U", "G", "F", "E", "D", "C", "B", "A", "S"],
     "GCSE-Number": [str(i) for i in range(10)],
-    "btec": ["U", "N", "P", "M", "D", "Ds"],
-    "BTEC-Single": ["U", "N", "P", "M", "D", "Ds"],
+    "btec": ["U", "NYP", "N", "P", "M", "D", "Ds"],
+    "BTEC-Single": ["U", "NYP", "N", "P", "M", "D", "Ds"],
     "BTEC-Double": ["U", "N", "PP", "MP", "MM", "DM", "DD", "Ds", "DsDs"],
     "BTEC-Triple": [
         "U",
