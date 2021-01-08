@@ -406,7 +406,7 @@ if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
-    #sync_attendance("ada", full=False, dry=False)
+    sync_attendance("ada", full=False, dry=False)
     #sync_enrolment("ada", dry=False)
     #sync_group("ada", full=False, dry=False)
     #fix_assessments("ada")
