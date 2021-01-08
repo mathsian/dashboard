@@ -76,6 +76,7 @@ subject_table = dash_table.DataTable(id={
                                          "whiteSpace": "normal",
                                      },
                                      sort_action='native',
+                                     export_format='csv',
                                      filter_action='native',
                                      sort_by=[{
                                          "column_id": "given_name",
