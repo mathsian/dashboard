@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State, ALL
 import dash_table
 from dash.exceptions import PreventUpdate
 import pandas as pd
+import urllib
 from app import app
 import data
 import plotly.graph_objects as go
@@ -76,7 +77,6 @@ subject_table = dash_table.DataTable(id={
                                          "whiteSpace": "normal",
                                      },
                                      sort_action='native',
-                                     export_format='csv',
                                      filter_action='native',
                                      sort_by=[{
                                          "column_id": "given_name",
@@ -85,6 +85,18 @@ subject_table = dash_table.DataTable(id={
                                          "column_id": "family_name",
                                          "direction": "asc"
                                      }])
+
+assessment_download_link = html.A("Download csv",
+                                  id={
+                                      "type": "link",
+                                      "page": "academic",
+                                      "tab": "edit",
+                                      "name": "download"
+                                  },
+                                  hidden=True,
+                                  href="",
+                                  target="_blank")
+
 assessment_toast = dbc.Toast("Testing",
                              id={
                                  "type": "toast",
@@ -119,9 +131,8 @@ tab_map = {
     "academic-tab-view": [dbc.Col([assessment_graph])],
     "academic-tab-edit":
     [dbc.Col(subject_table),
-     dbc.Col(assessment_toast, width=3)]
+     dbc.Col([assessment_download_link, assessment_toast], width=3)]
 }
-
 
 @app.callback(
     Output(f"academic-content", "children"),
@@ -140,6 +151,24 @@ def get_content(active_tab):
         "tab": "edit"
     }, "data"),
     Output({
+        "type": "link",
+        "page": "academic",
+        "tab": "edit",
+        "name": "download"
+    }, "hidden"),
+    Output({
+        "type": "link",
+        "page": "academic",
+        "tab": "edit",
+        "name": "download"
+    }, "download"),
+    Output({
+        "type": "link",
+        "page": "academic",
+        "tab": "edit",
+        "name": "download"
+    }, "href"),
+    Output({
         "type": "table",
         "page": "academic",
         "tab": "edit"
@@ -157,7 +186,7 @@ def get_content(active_tab):
 def update_subject_table(assessment_name, filter_value):
     _, _, subject_code = filter_value
     if not assessment_name:
-        return [], {}
+        return [], True, "", "", {}
     assessment_df = pd.DataFrame.from_records(
         data.get_data("assessment", "assessment_subject",
                       [(assessment_name, subject_code)]))
@@ -178,7 +207,8 @@ def update_subject_table(assessment_name, filter_value):
             } for s in curriculum.scales.get(subtype)]
         }
     }
-    return merged_df.to_dict(orient='records'), dropdown
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(merged_df.to_csv(index=False, encoding="utf-8"))
+    return merged_df.to_dict(orient='records'), False, f"{subject_code} {assessment_name}.csv", csv_string, dropdown
 
 
 @app.callback(
