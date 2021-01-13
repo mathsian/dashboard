@@ -17,7 +17,12 @@ tabs = ["Attendance", "Weekly", "Kudos", "Concern"]
 content = [
     dbc.Card([
         dbc.CardHeader(
-            dbc.Tabs(
+            [html.H3(id={
+    "type": "text",
+    "page": "pastoral",
+    "name": "header"
+            }),
+             dbc.Tabs(
                 [
                     dbc.Tab(label=t, tab_id=f"pastoral-tab-{t.lower()}")
                     for t in tabs
@@ -25,7 +30,7 @@ content = [
                 id=f"pastoral-tabs",
                 card=True,
                 active_tab=f"pastoral-tab-{tabs[0].lower()}",
-            )),
+            )]),
         dbc.CardBody(dbc.Row(id=f"pastoral-content", children=[])),
     ])
 ]
@@ -304,6 +309,25 @@ tab_map = {
 def get_content(active_tab):
     return tab_map.get(active_tab)
 
+@app.callback(
+    Output({
+        "type": "text",
+        "page": "pastoral",
+        "name": "header"
+    }, "children"),
+[Input({
+    "type": "filter-dropdown",
+    "filter": ALL
+}, "value")])
+def update_pastoral_header(filter_values):
+    cohort, team, _ = filter_values
+    if cohort and team:
+        return f"Cohort {cohort}, Team {team}"
+    elif cohort:
+        return f"Cohort {cohort}"
+    else:
+        return ""
+
 
 @app.callback(
     [
@@ -347,7 +371,7 @@ def update_pastoral_attendance(filter_value):
     elif cohort:
         enrolment_docs = data.get_data("enrolment", "cohort", cohort)
     else:
-        return [], [], "", ""
+        return [], {}, 0, 0
     student_ids = [s.get('_id') for s in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
     attendance_df = pd.DataFrame.from_records(attendance_docs)
@@ -401,6 +425,7 @@ def update_pastoral_attendance(filter_value):
         } for d in attendance_pivot.columns[-3:-1]
     ])
     columns.append({"name": "Year", "id": "cumulative_percent_present"})
+
     return columns, attendance_pivot.to_dict(
         orient='records'), last_week_percent, overall_percent
 
