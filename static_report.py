@@ -33,7 +33,8 @@ def generate_report(student_id):
     attendance_df = pd.DataFrame.from_records(attendance).sort_values(by='date', ascending=True)
     # KLUDGE trim off latest week's attendance KLUDGE
     max_date = attendance_df["date"].max()
-    attendance_df = attendance_df.query("date < @max_date")
+    min_date = "2020-11-02"
+    attendance_df = attendance_df.query("date < @max_date and date >= @min_date")
     attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_df['percent'] = round(100*(attendance_df['actual']-attendance_df['late'])/attendance_df['possible'])
     attendance_df['late'] = round(100*attendance_df['late']/attendance_df['possible'])
@@ -67,11 +68,11 @@ def generate_report(student_id):
                        "concern_total": concern_total}
         f.write(template.render(template_data))
 def cohort_reports(cohort):
-    enrolment_docs = data.get_data("enrolment", "cohort", cohort)
+    enrolment_docs = data.get_data("enrolment", "cohort", cohort, db_name="ada")
     for student in enrolment_docs:
         print(f"Generating report for {student.get('given_name')}")
         generate_report(student.get('_id'))
 
 if __name__ == "__main__":
-    generate_report("190774")
-    
+    generate_report("190765")
+    #cohort_reports("2022")

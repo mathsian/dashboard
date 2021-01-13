@@ -89,7 +89,13 @@ report = [
         "tab": "report",
         "name": "subheading"
     }),
-    html.H4("Attendance"),
+    html.H3("Attendance"),
+    html.Div(id={
+        "type": "text",
+        "page": "student",
+        "tab": "report",
+        "name": "attendance"
+    }),
     dcc.Graph(id={
         "type": "graph",
         "page": "student",
@@ -98,15 +104,15 @@ report = [
     },
               figure=blank_attendance,
               config={"displayModeBar": False}),
-    html.H4("Academic"),
+    html.H3("Academic"),
     html.Div(id={
         "type": "text",
         "page": "student",
         "tab": "report",
         "name": "academic"
     }),
-    html.H4("Pastoral"),
-    html.H6("Kudos"),
+    html.H3("Pastoral"),
+    html.H4("Kudos"),
     html.Div(
         dash_table.DataTable(
             id={
@@ -143,7 +149,7 @@ report = [
                 "whiteSpace": "normal",
             },
         )),
-    html.H6("Concerns"),
+    html.H4("Concerns"),
     html.Div(
         dash_table.DataTable(
             id={
@@ -408,6 +414,13 @@ def update_student_table(filter_value, n_clicks):
         }, "children"),
     Output(
         {
+            "type": "text",
+            "page": "student",
+            "tab": "report",
+            "name": "attendance"
+        }, "children"),
+    Output(
+        {
             "type": "graph",
             "page": "student",
             "tab": "report",
@@ -437,22 +450,33 @@ def update_student_table(filter_value, n_clicks):
 ], [Input("selected-student-ids", "data")])
 def update_student_report(selected_student_ids):
     if not selected_student_ids:
-        return "", "Select a student to view their report", blank_attendance, [], [], []
+        return "", "Select a student to view their report", "", blank_attendance, [], [], []
     student_id = selected_student_ids[-1]
     enrolment_doc = data.get_student(student_id)
     heading = f'{enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'
+    assessment_docs = data.get_data("assessment", "student_id", student_id)
+    assessment_children = []
+    if len(assessment_docs) > 0:
+        assessment_df = pd.DataFrame.from_records(assessment_docs).set_index(['subject_name', 'assessment'])
+        for subject_name in assessment_df.index.unique(level=0):
+            assessment_children.append(html.H4(subject_name))
+            for assessment in assessment_df.loc[subject_name].index.unique():
+                assessment_children.append(html.H5(assessment))
+                assessment_children.append(assessment_df.loc[(subject_name, assessment), "grade"])
+                assessment_children.append(html.Blockquote(assessment_df.loc[(subject_name, assessment), "comment"]))
     kudos_docs = data.get_data("kudos", "student_id", student_id)
     concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
     attendance_df = pd.DataFrame.from_records(attendance_docs)
     attendance_df['percent'] = round(100 * attendance_df['actual'] /
                                      attendance_df['possible'])
+    attendance_year = round(100*attendance_df['actual'].sum()/attendance_df['possible'].sum())
     attendance_figure = go.Figure()
     attendance_figure.add_trace(
         go.Bar(x=attendance_df["date"],
                y=attendance_df["percent"],
                name="Weekly attendance"))
-    return heading, f"Team {enrolment_doc.get('team')}", attendance_figure, [], kudos_docs, concern_docs
+    return heading, f"Team {enrolment_doc.get('team')}", attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
 
 
 @app.callback([
