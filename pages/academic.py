@@ -275,17 +275,17 @@ def update_subject_graph(assessment_name, filter_value):
 def update_assessment_dropdown(filter_value):
     cohort, _, subject_code = filter_value
     if not (cohort and subject_code):
-        return [], "", "Select a teaching group"
+        return [], "", f"Cohort {cohort}"
     assessment_df = pd.DataFrame.from_records(
         data.get_data("assessment", "subject_code", subject_code))
     group_docs = data.get_data("group", "subject_code", subject_code)
     subject = group_docs[0].get("subject_name")
     if assessment_df.empty:
-        return [], "", subject
+        return [], "", f"Cohort {cohort}, {subject}"
     assessment_list = assessment_df.sort_values(
         by="date", ascending=False)["assessment"].unique().tolist()
     options = [{"label": a, "value": a} for a in assessment_list]
-    return options, options[0].get("value"), subject
+    return options, options[0].get("value"), f"Cohort {cohort}, {subject}"
 
 
 @app.callback([
