@@ -94,6 +94,7 @@ attendance_dashboard = dbc.Container(children=[
                       }
                   },
                   config={"displayModeBar": False}),
+        
         dcc.Graph(id={
             "type": "graph",
             "page": "summary",
@@ -112,6 +113,25 @@ attendance_dashboard = dbc.Container(children=[
                   },
                   config={"displayModeBar": False}),
     ]),
+html.Div([
+            dcc.Slider(id={
+                "type": "slider",
+                "page": "summary",
+                "tab": "attendance",
+                "name": "threshold",
+            },
+                       min=0,
+                       max=100,
+                       value=92,
+                       marks={
+                           60: '60',
+                           80: '80',
+                           90: '90',
+                           92: '92',
+                           95: '95',
+                       },
+            ),
+        ]),
 ])
 
 validation_layout = content + [attendance_dashboard]
@@ -160,8 +180,15 @@ def get_content(active_tab):
         "page": "summary",
         "tab": "attendance"
     }, "n_intervals"),
+    Input(
+        {
+            "type": "slider",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "threshold",
+        }, "value")
 ])
-def update_attendance_gauge(n_intervals):
+def update_attendance_gauge(n_intervals, threshold):
     attendance_df = pd.DataFrame.from_records(
         data.get_data("all", "type", "attendance"),
         columns=["date", "actual", "possible"])
@@ -174,7 +201,7 @@ def update_attendance_gauge(n_intervals):
         data.get_data("all", "type", "monthly"),
         columns=["date", "student_id", "actual", "possible"])
     monthly_df.eval("percent = 100 * actual / possible", inplace=True)
-    monthly_df["low"] = np.where(monthly_df["percent"] < 90, 1, 0)
+    monthly_df["low"] = np.where(monthly_df["percent"] < threshold, 1, 0)
     monthly = monthly_df.groupby("date").agg({
         "percent": 'mean',
         "student_id": 'count',
@@ -192,8 +219,12 @@ def update_attendance_gauge(n_intervals):
                 textposition='auto',
             ),
         ],
-        layout={"title": "Monthly average student attendance",
-                "yaxis": {"range": [60,100]}},
+        layout={
+            "title": "Monthly average student attendance",
+            "yaxis": {
+                "range": [60, 100]
+            }
+        },
     )
     low_figure = go.Figure(
         data=[
@@ -204,6 +235,8 @@ def update_attendance_gauge(n_intervals):
                 textposition='auto',
             )
         ],
-        layout={"title": "Proportion of students with low attendance"},
+        layout={
+            "title": f"Proportion of students with < {threshold}% attendance"
+        },
     )
     return overall, last, monthly_figure, low_figure
