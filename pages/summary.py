@@ -4,6 +4,8 @@ import dash_bootstrap_components as dbc
 import dash_daq as daq
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
+import plotly.graph_objects as go
+import numpy as np
 
 from app import app
 import data
@@ -73,7 +75,43 @@ attendance_dashboard = dbc.Container(children=[
                 min=0,
                 max=100,
             ), )
-    ])
+    ]),
+    dbc.Row([
+        dcc.Graph(id={
+            "type": "graph",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "monthly"
+        },
+                  figure={
+                      "layout": {
+                          "xaxis": {
+                              "visible": False
+                          },
+                          "yaxis": {
+                              "visible": False
+                          }
+                      }
+                  },
+                  config={"displayModeBar": False}),
+        dcc.Graph(id={
+            "type": "graph",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "low"
+        },
+                  figure={
+                      "layout": {
+                          "xaxis": {
+                              "visible": False
+                          },
+                          "yaxis": {
+                              "visible": False
+                          }
+                      }
+                  },
+                  config={"displayModeBar": False}),
+    ]),
 ])
 
 validation_layout = content + [attendance_dashboard]
@@ -102,6 +140,20 @@ def get_content(active_tab):
             "tab": "attendance",
             "name": "last"
         }, "value"),
+    Output(
+        {
+            "type": "graph",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "monthly"
+        }, "figure"),
+    Output(
+        {
+            "type": "graph",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "low"
+        }, "figure")
 ], [
     Input({
         "type": "interval",
@@ -117,4 +169,41 @@ def update_attendance_gauge(n_intervals):
     overall = round(100 * overall_sum['actual'] / overall_sum['possible'], 1)
     last_sum = attendance_df.query("date == date.max()").sum()
     last = round(100 * last_sum['actual'] / last_sum['possible'], 1)
-    return overall, last
+
+    monthly_df = pd.DataFrame.from_records(
+        data.get_data("all", "type", "monthly"),
+        columns=["date", "student_id", "actual", "possible"])
+    monthly_df.eval("percent = 100 * actual / possible", inplace=True)
+    monthly_df["low"] = np.where(monthly_df["percent"] < 90, 1, 0)
+    monthly = monthly_df.groupby("date").agg({
+        "percent": 'mean',
+        "student_id": 'count',
+        "low": 'sum'
+    })
+    monthly.eval("low_percent = 100 * low / student_id", inplace=True)
+    monthly = monthly.round({'percent': 1, 'low_percent': 1})
+    monthly.reset_index(inplace=True)
+    monthly_figure = go.Figure(
+        data=[
+            go.Bar(
+                x=monthly['date'],
+                y=monthly['percent'],
+                text=monthly['percent'],
+                textposition='auto',
+            ),
+        ],
+        layout={"title": "Monthly average student attendance",
+                "yaxis": {"range": [60,100]}},
+    )
+    low_figure = go.Figure(
+        data=[
+            go.Bar(
+                x=monthly['date'],
+                y=monthly['low_percent'],
+                text=monthly['low_percent'],
+                textposition='auto',
+            )
+        ],
+        layout={"title": "Proportion of students with low attendance"},
+    )
+    return overall, last, monthly_figure, low_figure

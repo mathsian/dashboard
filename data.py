@@ -114,6 +114,11 @@ def delete_docs(doc_ids, db_name=None):
             doc = db[doc_id]
             doc.delete()
 
+def delete_all(doc_type, db_name=None):
+    docs = get_data("all", "type", doc_type, db_name=db_name)
+    doc_ids = [doc["_id"] for doc in docs]
+    delete_docs(doc_ids, db_name=db_name)
+
 
 def format_date(iso_date):
     y, m, d = iso_date.split('-')
