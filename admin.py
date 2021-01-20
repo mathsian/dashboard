@@ -239,6 +239,94 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
     data.save_docs(assessments, dbname)
 
 
+def sync_monthly_attendance(dbname, full=False, dry=True):
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    ##
+    # Monthly
+    ##
+    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID], [REGS_Session_Date] FROM [Reports].[dbo].[Vw_Rpt_Marks_Current] WHERE [Wk_Start] >= '{curriculum.this_year_start} 00:00:00.000';"
+    # We don't want apprentices
+    student_ids = [doc.get("_id") for doc in data.get_data("all", "type", "enrolment")]
+    rems_raw = pd.read_sql(sql, conn).query("REGD_Student_ID in @student_ids")
+    # Date should be rounded down to get monthly
+    rems_raw["rems_date"] = rems_raw['REGS_Session_Date'].astype(
+        str).str.slice(2, 7)
+    rems_df = rems_raw.groupby(['rems_date', 'REGD_Student_ID'
+                                ]).agg({'REGD_Attendance_Mark': ''.join})
+    # bring mb and id back as columns
+    rems_df = rems_df.reset_index()
+    # Compare to current attendance data
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type", "monthly",
+                                                     dbname),
+                                       columns=[
+                                           "_id", "_rev", "student_id", "date",
+                                           "type", "possible", "actual",
+                                           "marks", "authorised",
+                                           "unauthorised", "late"
+                                       ])
+    # Merge on student id and date
+    merged_df = pd.merge(rems_df,
+                         our_df,
+                         how='left',
+                         left_on=['REGD_Student_ID', 'rems_date'],
+                         right_on=['student_id', 'date'])
+    # If we're doing a full update then use this whole df
+    # Otherwise just the rows where rems is ahead
+    if full:
+        # For a full update...
+        to_update_df = merged_df
+    else:
+        # For a selective update
+        to_update_df = merged_df.query(
+            "_id.isna() or not marks == REGD_Attendance_Mark")
+
+    to_update_df.eval("type = 'monthly'", inplace=True)
+    to_update_df.eval("student_id = REGD_Student_ID", inplace=True)
+    to_update_df.eval("date = rems_date", inplace=True)
+    to_update_df.eval("marks = REGD_Attendance_Mark", inplace=True)
+    # Lookup each mark in curriculum to see if it contributes to possible and/or actual
+    to_update_df.loc[:, 'possible'] = to_update_df['marks'].apply(
+        lambda marks: sum(
+            [curriculum.register_marks.get(m).get('possible')
+             for m in marks])).astype(int)
+    to_update_df.loc[:, 'actual'] = to_update_df['marks'].apply(
+        lambda marks: sum(
+            [curriculum.register_marks.get(m).get('actual')
+             for m in marks])).astype(int)
+    # Count lates and unauthorised
+    to_update_df.eval("late = marks.str.count('L')", inplace=True)
+    to_update_df.eval("unauthorised = marks.str.count('N')", inplace=True)
+    # Calculate unauthorised
+    to_update_df.eval("authorised = possible - actual - unauthorised",
+                      inplace=True)
+    # If there's no attendance doc _id then that row is a new doc
+    to_add_docs = to_update_df.query('_id.isna()')[[
+        "type", "student_id", "date", "marks", "possible", "actual",
+        "unauthorised", "authorised", "late"
+    ]].to_dict(orient='records')
+    if to_add_docs:
+        print(f"Adding {len(to_add_docs)} entries")
+        if not dry:
+            data.save_docs(to_add_docs, dbname)
+    # Otherwise it's a doc to update
+    to_update_docs = to_update_df.query('_id.notna()')[[
+        "_id", "_rev", "type", "student_id", "date", "marks", "possible",
+        "actual", "unauthorised", "authorised", "late"
+    ]].to_dict(orient='records')
+    if to_update_docs:
+        print(f"Updating {len(to_update_docs)} entries")
+        if not dry:
+            data.save_docs(to_update_docs, dbname)
+
+
 def sync_attendance(dbname, full=False, dry=True):
     config_object = ConfigParser()
     config_object.read("config.ini")
@@ -250,12 +338,21 @@ def sync_attendance(dbname, full=False, dry=True):
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
     #sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] = '{wb} 00:00:00.000';"
-    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID], [Wk_Start] FROM [Reports].[dbo].[Vw_Rpt_Marks] WHERE [Wk_Start] >= '{curriculum.this_year_start} 00:00:00.000';"
-    rems_df = pd.read_sql(sql, conn).groupby(
+    ##
+    # Weekly
+    ##
+    sql = f"SELECT [REGD_Attendance_Mark], [REGD_Student_ID], [Wk_Start] FROM [Reports].[dbo].[Vw_Rpt_Marks_Current] WHERE [Wk_Start] >= '{curriculum.this_year_start} 00:00:00.000';"
+    # We don't want apprentices
+    student_ids = [doc.get("_id") for doc in data.get_data("all", "type", "enrolment")]
+    rems_raw = pd.read_sql(sql, conn).query("REGD_Student_ID in @student_ids")
+    # Group by week beginning and student id, aggregate by concatenating register marks
+    rems_df = rems_raw.groupby(
         ['Wk_Start', 'REGD_Student_ID']).agg({'REGD_Attendance_Mark': ''.join})
-    # bring index back as columns
+    # bring wb and id back as columns
     rems_df = rems_df.reset_index()
+    # remove trailing timestamp from date
     rems_df['Wk_Start'] = rems_df['Wk_Start'].astype(str).str.slice(0, 10)
+    # Compare to current attendance data
     our_df = pd.DataFrame.from_records(data.get_data("all", "type",
                                                      "attendance", dbname),
                                        columns=[
@@ -264,11 +361,14 @@ def sync_attendance(dbname, full=False, dry=True):
                                            "marks", "authorised",
                                            "unauthorised", "late"
                                        ])
+    # Merge on student id and date
     merged_df = pd.merge(rems_df,
                          our_df,
                          how='left',
                          left_on=['REGD_Student_ID', 'Wk_Start'],
                          right_on=['student_id', 'date'])
+    # If we're doing a full update then use this whole df
+    # Otherwise just the rows where rems is ahead
     if full:
         # For a full update...
         to_update_df = merged_df
@@ -281,6 +381,7 @@ def sync_attendance(dbname, full=False, dry=True):
     to_update_df.eval("student_id = REGD_Student_ID", inplace=True)
     to_update_df.eval("date = Wk_Start", inplace=True)
     to_update_df.eval("marks = REGD_Attendance_Mark", inplace=True)
+    # Lookup each mark in curriculum to see if it contributes to possible and/or actual
     to_update_df.loc[:, 'possible'] = to_update_df['marks'].apply(
         lambda marks: sum(
             [curriculum.register_marks.get(m).get('possible')
@@ -289,10 +390,13 @@ def sync_attendance(dbname, full=False, dry=True):
         lambda marks: sum(
             [curriculum.register_marks.get(m).get('actual')
              for m in marks])).astype(int)
+    # Count lates and unauthorised
     to_update_df.eval("late = marks.str.count('L')", inplace=True)
     to_update_df.eval("unauthorised = marks.str.count('N')", inplace=True)
+    # Calculate unauthorised
     to_update_df.eval("authorised = possible - actual - unauthorised",
                       inplace=True)
+    # If there's no attendance doc _id then that row is a new doc
     to_add_docs = to_update_df.query('_id.isna()')[[
         "type", "student_id", "date", "marks", "possible", "actual",
         "unauthorised", "authorised", "late"
@@ -301,6 +405,7 @@ def sync_attendance(dbname, full=False, dry=True):
         print(f"Adding {len(to_add_docs)} entries")
         if not dry:
             data.save_docs(to_add_docs, dbname)
+    # Otherwise it's a doc to update
     to_update_docs = to_update_df.query('_id.notna()')[[
         "_id", "_rev", "type", "student_id", "date", "marks", "possible",
         "actual", "unauthorised", "authorised", "late"
@@ -387,13 +492,15 @@ def fix_group_cohorts(dbname, dry=True):
         group_df.loc[group_df["group_code"] == group_code, "cohort"] = cohort
     data.save_docs(group_df.to_dict(orient='records'), db_name=dbname)
 
+
 def fix_null_descriptions(db_name):
     kudos_docs = data.get_data("all", "type", "kudos", db_name)
     for k in kudos_docs:
         if not k.get('description'):
             k['description'] = ""
     data.save_docs(kudos_docs, db_name)
-    
+
+
 def fix_nan_comments(db_name):
     assessment_docs = data.get_data("all", "type", "assessment", db_name)
     for a in assessment_docs:
@@ -406,7 +513,10 @@ if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
+    #data.delete_all("attendance", "ada")
+    #data.delete_all("monthly", "ada")
     sync_attendance("ada", full=False, dry=False)
+    sync_monthly_attendance("ada", full=False, dry=False)
     #sync_enrolment("ada", dry=False)
     #sync_group("ada", full=False, dry=False)
     #fix_assessments("ada")
