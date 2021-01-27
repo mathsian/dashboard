@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 # Third party library for authenticating with google
 # https://github.com/mathsian/dash-google-auth
-from dash_google_auth import GoogleOAuth
+from dash_google_auth_email import GoogleOAuth
 from configparser import ConfigParser
 
 # Get configuration

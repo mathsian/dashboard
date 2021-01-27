@@ -1,3 +1,4 @@
+from flask import session
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -323,7 +324,7 @@ content = [
 ]
 
 validation_layout = content + report + [
-    student_list_clear_button, student_list, kudos_form, concern_form
+    kudos_form, concern_form
 ]
 tab_map = {
     "student-tab-report": report,
@@ -537,7 +538,7 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
                          n_clicks, button_color):
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
-        intro = html.Div(f'Award {points} {ada_value} kudos to')
+        intro = html.Div(f'Award {points} {ada_value} kudos from {session.get("email")} to')
         desc = html.Div(["For ", html.Blockquote(description)
                          ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
