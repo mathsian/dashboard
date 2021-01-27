@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 # Third party library for authenticating with google
 # https://github.com/mathsian/dash-google-auth
-from dash_google_auth import GoogleOAuth
+from dash_google_auth_email import GoogleOAuth
 from configparser import ConfigParser
 
 # Get configuration
@@ -27,4 +27,4 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 app = dash.Dash(__name__, server=server, external_stylesheets= [dbc.themes.LITERA], suppress_callback_exceptions=True)
 app.title = "data@ada"
 # wrap in google oauth
-#auth = GoogleOAuth(app, authorized_emails, ['openid'])
+auth = GoogleOAuth(app, authorized_emails, ['openid'])
