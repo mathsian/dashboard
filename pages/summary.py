@@ -132,6 +132,12 @@ html.Div([
                        },
             ),
         ]),
+    html.Div(id={
+        "type": "text",
+        "page": "summary",
+        "tab": "attendance",
+        "name": "low_cumulative"
+    }),
 ])
 
 validation_layout = content + [attendance_dashboard]
@@ -173,7 +179,14 @@ def get_content(active_tab):
             "page": "summary",
             "tab": "attendance",
             "name": "low"
-        }, "figure")
+        }, "figure"),
+    Output(
+        {
+            "type": "text",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "low_cumulative"
+        }, "children")
 ], [
     Input({
         "type": "interval",
@@ -189,17 +202,26 @@ def get_content(active_tab):
         }, "value")
 ])
 def update_attendance_gauge(n_intervals, threshold):
+    # All weekly attendance records
     attendance_df = pd.DataFrame.from_records(
         data.get_data("all", "type", "attendance"),
-        columns=["date", "actual", "possible"])
+        columns=["student_id", "date", "actual", "possible"])
+    # For overall cumulative attendance
     overall_sum = attendance_df.sum()
     overall = round(100 * overall_sum['actual'] / overall_sum['possible'], 1)
+    # For this week
     last_sum = attendance_df.query("date == date.max()").sum()
     last = round(100 * last_sum['actual'] / last_sum['possible'], 1)
-
+    # Monthly attendance records
     monthly_df = pd.DataFrame.from_records(
         data.get_data("all", "type", "monthly"),
         columns=["date", "student_id", "actual", "possible"])
+    # For proportion of sts with cumulative low attendance
+    grouped_df = monthly_df.groupby("student_id").sum()
+    grouped_df.eval("percent = 100 * actual / possible", inplace=True)
+    low_cumulative = round(100*len(grouped_df.query("percent < @threshold"))/len(grouped_df), 1)
+    low_cumulative_text = f"{low_cumulative}% of students have < {threshold}% overall attendance"
+    # For monthly graph
     monthly_df.eval("percent = 100 * actual / possible", inplace=True)
     monthly_df["low"] = np.where(monthly_df["percent"] < threshold, 1, 0)
     monthly = monthly_df.groupby("date").agg({
@@ -239,4 +261,4 @@ def update_attendance_gauge(n_intervals, threshold):
             "title": f"Proportion of students with < {threshold}% attendance"
         },
     )
-    return overall, last, monthly_figure, low_figure
+    return overall, last, monthly_figure, low_figure, low_cumulative_text
