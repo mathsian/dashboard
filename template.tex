@@ -1,7 +1,9 @@
 \errorcontextlines 10000
-\documentclass[a4paper,14pt]{memoir}
+\documentclass[a4paper,12pt]{memoir}
 \usepackage{etoolbox}
-
+% for flexible tables
+\usepackage{tabularx}
+\usepackage{ltablex}
 % set up fonts
 \usepackage{fontspec}
 \setsansfont{Titillium-Regular}
@@ -9,8 +11,12 @@
 \setromanfont{FSSinclair-Medium}
 
 % smaller margins
-\usepackage[margin=1.2cm]{geometry}
+\usepackage[margin=2cm]{geometry}
 
+% customise sections
+% need explicit to access parameter number to get the section on the left
+\usepackage[explicit]{titlesec}
+\titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
 % drawing packages
 \usepackage{tikz}
 \usetikzlibrary{shapes}
@@ -20,7 +26,8 @@
   compat = newest,
   tick label style = {font=\sffamily},
   every axis label = {font=\sffamily},
-  legend style = {font=\sffamily},
+  legend style = {font=\sffamily\small, draw=none},
+  y axis line style = {draw=none},
   label style = {font=\sffamily}
 }
 
@@ -55,81 +62,82 @@
 \begin{center}
     {\rmfamily\uppercase{
         {\large \VAR{name}}\\
-        December 2020}}
+        \VAR{date}}}
 \tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
 \end{center}
 % Attendance bar chart
-\noindent\makebox[\columnwidth]{\rmfamily\VAR{attendance_cumulative}\% \uppercase{Attendance}\hrulefill}
-\vskip \bigskipamount
-\begin{center}
+\section*{\VAR{attendance_cumulative}\% Attendance}
 \begin{tikzpicture}[scale=1]
   \begin{axis}[
   width=10cm,
   height=5cm,
   ybar stacked,
-  legend style={{at=(-0.2,0.5)},anchor=east},
-  axis y line*=right,
+  legend style={{at=(1.2,0.5)},anchor=west},
+  legend cell align={left},
+  axis y line*=left,
   axis x line*=bottom,
   symbolic x coords={0,\VAR{attendance_dates},1},
   xtick ={\VAR{attendance_dates}},
   tick align=outside,
   x tick label style={rotate=90,anchor=east},
-  y tick label style={anchor=west},
+  y tick label style={anchor=east},
   ymin = 0,
   ymax = 100,
   ytick = {95, 100},
-  yticklabels = {95\%},
+  yticklabels = {},
   xticklabels = {\VAR{attendance_dates}},
   xmin = 0,
   xmax = 1,
-  xlabel = Week beginning,
   ylabel = \% sessions attended,
   grid=major,
   clip=false,
   ]
-  \addplot[adaPurple, bar width=12pt, fill=adaPurple] coordinates {\VAR{attendance_zip}};
-  \addplot[adaYellow, bar width=12pt, fill=adaYellow] coordinates {\VAR{punctuality_zip}};
+  \addplot[adaBlue, bar width=14pt, fill=adaBlue] coordinates {\VAR{attendance_zip}};
+  \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{punctuality_zip}};
+  \node at (axis cs:1,95) [anchor=west] {{\sffamily Target 95\%}};
   \legend{Present,Present but late}
 \end{axis}
 \end{tikzpicture}
-\end{center}
-\vskip \bigskipamount
 % Academic
-\noindent\makebox[\columnwidth]{\rmfamily\uppercase{Academic}\hrulefill}
+\section*{Academic}
 {\sffamily
-%% for subject in academic
-\noindent \VAR{subject.subject_name}\\
-\VAR{subject.assessment} {\em \VAR{subject.grade}}\\
-{\em \VAR{subject.comment}}\\
+  \begin{tabularx}{\linewidth}{l l l X}
+%% for subject, assessment in academic.items()
+\multicolumn{4}{l}{\VAR{subject}}\\
+%% for assessment_name, assessment_details in assessment.items()
+& \VAR{assessment_name}& \VAR{assessment_details['grade']}& {\em \VAR{assessment_details['comment']}}\\
 %% endfor
+%% endfor
+  \end{tabularx}
 }
-\vskip \bigskipamount
 % Kudos
-\noindent\makebox[\columnwidth]{\rmfamily\VAR{kudos_total} \uppercase{Kudos}\hrulefill}
+\section*{\VAR{kudos_total} Kudos}
 {\sffamily
 %% if kudos|length > 0
+  \begin{tabularx}{\linewidth}{l l X}
 %% for kudo in kudos
-\VAR{kudo.date}: \VAR{kudo.points}$\times$ \VAR{kudo.ada_value} kudos from
-\VAR{kudo.from}\\
-{\em \VAR{kudo.description}}\\
+\VAR{kudo.date}& $\VAR{kudo.points}\times$ \VAR{kudo.ada_value} & {\em
+                                                                  \VAR{kudo.description}}
+                                                                  \mbox{-- \VAR{kudo.from}}\\
 %% endfor
+    \end{tabularx}
 %% else
 No kudos points recorded
 %% endif
 }
-\vskip \bigskipamount
 % Concern
-\noindent\makebox[\textwidth]{\rmfamily\VAR{concern_total} \uppercase{Concerns}\hrulefill}
+\section*{\VAR{concern_total} Concerns}
 {\sffamily
 %% if concerns|length > 0
+  \begin{tabularx}{\linewidth}{l l X}
 %% for concern in concerns
-\VAR{concern.date}: \VAR{concern.category} concern raised by \VAR{concern.from}\\
-{\em \VAR{concern.description}}\\
+\VAR{concern.date}& \VAR{concern.category} & {\em \VAR{concern.description}} -- \VAR{concern.from}\\
   %% endfor
+    \end{tabularx}
   %% else
 
   No concerns recorded
   %% endif
   }
-\vskip \bigskipamount
+\section*{Key Dates}
 \end{document}
