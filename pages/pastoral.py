@@ -578,8 +578,10 @@ def update_weekly_table(filter_value, picker_value):
     attendance_df.eval("un = 100*unauthorised/possible", inplace=True)
     attendance_df.eval("au = 100*authorised/possible", inplace=True)
     attendance_df.eval("la = 100*late/possible", inplace=True)
+    attendance_df.eval("ill = marks.str.count('I')", inplace=True)
+    attendance_df.eval("med = marks.str.count('M')", inplace=True)
     attendance_df.eval(
-        "me = 100*(marks.str.count('I')+marks.str.count('M'))/possible",
+        "me = 100*(ill + med)/possible",
         inplace=True)
     attendance_df.eval("co = 100*marks.str.count('V')/possible", inplace=True)
     merged_df = pd.DataFrame.merge(enrolment_df,
