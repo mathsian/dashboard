@@ -71,6 +71,7 @@ subject_table = dash_table.DataTable(id={
                                              "editable": True
                                          },
                                      ],
+                                     editable=True,
                                      style_cell={
                                          "textAlign": "left",
                                          "height": "auto",

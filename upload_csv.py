@@ -5,7 +5,7 @@ import pandas as pd
 def csv_to_couchdb(file_name, dbname=None):
     print(file_name)
     print(dbname)
-    df = pd.read_csv(file_name).astype(str)
+    df = pd.read_csv(file_name).fillna("").astype(str)
     print(f"{len(df)} rows")
     print(df.columns)
     pd.set_option("display.max_columns", None)

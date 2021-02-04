@@ -121,9 +121,12 @@ def delete_all(doc_type, db_name=None):
 
 
 def format_date(iso_date):
-    y, m, d = iso_date.split('-')
-    month = calendar.month_abbr[int(m)]
-    return f"{month} {d}"
+    split_date = iso_date.split('-')
+    month = calendar.month_abbr[int(split_date[1])]
+    if len(split_date) == 2:
+        return f"{month} {split_date[0]}"
+    else:
+        return f"{split_date[2]} {month} {split_date[0]}"
 
 
 def get_teams(cohort, db_name=None):
