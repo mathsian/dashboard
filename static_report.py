@@ -32,7 +32,7 @@ def generate_report(student_id):
     attendance = data.get_data("monthly", "student_id", [student_id], "ada")
     student = data.get_student(student_id, "ada")
 
-    attendance_df = pd.DataFrame.from_records(attendance).sort_values(by='date', ascending=True)
+    attendance_df = pd.DataFrame.from_records(attendance).sort_values(by='date', ascending=True).query("date < date.max()")
     attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_df['percent'] = round(100*(attendance_df['actual']-attendance_df['late'])/attendance_df['possible'])
     attendance_df['late'] = round(100*attendance_df['late']/attendance_df['possible'])
@@ -55,7 +55,8 @@ def generate_report(student_id):
     student_name = f"{student.get('given_name')} {student.get('family_name')}"
     with open(f"latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data={"name": student_name,
-                       "date": "January 2020",
+                       "date": "February 2020",
+                       "team": student.get("team"),
                        "attendance_dates": attendance_dates,
                        "attendance_zip": attendance_zip,
                        "punctuality_zip": punctuality_zip,
@@ -75,9 +76,5 @@ def cohort_reports(cohort):
         generate_report(student.get('_id'))
 
 if __name__ == "__main__":
-    generate_report("201002")
-    generate_report("201003")
-    generate_report("190747")
-    generate_report("190723")
-    generate_report("190821")
-    #cohort_reports("2022")
+    #generate_report("201002")
+    cohort_reports("2022")
