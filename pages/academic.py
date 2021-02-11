@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State, ALL
 import dash_table
 from dash.exceptions import PreventUpdate
 import pandas as pd
+import numpy as np
 import urllib
 from app import app
 import data
@@ -106,34 +107,67 @@ assessment_toast = dbc.Toast("Testing",
                              },
                              is_open=False,
                              duration=3000)
-assessment_graph = dcc.Graph(id={
-    "type": "graph",
+assessment_graph = dcc.Graph(
+    id={
+        "type": "graph",
+        "page": "academic",
+        "tab": "view",
+        "name": "bar"
+    },
+    figure={
+        "layout": {
+            "xaxis": {
+                "visible": False
+            },
+            "yaxis": {
+                "visible": False
+            }
+        }
+    },
+    config={
+        "displayModeBar": False,
+    },
+    style={'height': '350px'},
+)
+assessment_colour_dropdown = dcc.Dropdown(id={
     "page": "academic",
     "tab": "view",
-    "name": "bar"
+    "type": "dropdown",
+    "name": "colour"
 },
-                             figure={
-                                 "layout": {
-                                     "xaxis": {
-                                         "visible": False
-                                     },
-                                     "yaxis": {
-                                         "visible": False
-                                     }
-                                 }
-                             },
-                             config={"displayModeBar": False})
+                                          options=[
+                                              {
+                                                  "label": "Maths",
+                                                  "value": "gc-ma"
+                                              },
+                                              {
+                                                  "label": "English",
+                                                  "value": "gc-en"
+                                              },
+                                              {
+                                                  "label": "Computer Science",
+                                                  "value": "gc-comp.sci"
+                                              },
+                                          ],
+                                          value="gc-ma")
 validation_layout = content + [
-    assessment_toast,
-    subject_table,
-    assessment_graph,
+    assessment_toast, subject_table, assessment_graph,
+    assessment_colour_dropdown
 ]
 tab_map = {
-    "academic-tab-view": [dbc.Col([assessment_graph])],
-    "academic-tab-edit":
-    [dbc.Col(subject_table),
-     dbc.Col([assessment_download_link, assessment_toast], width=3)]
+    "academic-tab-view": [
+        dbc.Col([
+            assessment_graph,
+        ], width=8),
+        dbc.Col([html.Div("Colour by GCSE "), assessment_colour_dropdown],
+                width=3)
+    ],
+    "academic-tab-edit": [
+        dbc.Col(subject_table),
+        dbc.Col([assessment_download_link, assessment_toast], width=3)
+    ]
 }
+
 
 @app.callback(
     Output(f"academic-content", "children"),
@@ -151,24 +185,27 @@ def get_content(active_tab):
         "page": "academic",
         "tab": "edit"
     }, "data"),
-    Output({
-        "type": "link",
-        "page": "academic",
-        "tab": "edit",
-        "name": "download"
-    }, "hidden"),
-    Output({
-        "type": "link",
-        "page": "academic",
-        "tab": "edit",
-        "name": "download"
-    }, "download"),
-    Output({
-        "type": "link",
-        "page": "academic",
-        "tab": "edit",
-        "name": "download"
-    }, "href"),
+    Output(
+        {
+            "type": "link",
+            "page": "academic",
+            "tab": "edit",
+            "name": "download"
+        }, "hidden"),
+    Output(
+        {
+            "type": "link",
+            "page": "academic",
+            "tab": "edit",
+            "name": "download"
+        }, "download"),
+    Output(
+        {
+            "type": "link",
+            "page": "academic",
+            "tab": "edit",
+            "name": "download"
+        }, "href"),
     Output({
         "type": "table",
         "page": "academic",
@@ -208,8 +245,11 @@ def update_subject_table(assessment_name, filter_value):
             } for s in curriculum.scales.get(subtype)]
         }
     }
-    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(merged_df.to_csv(index=False, encoding="utf-8"))
-    return merged_df.to_dict(orient='records'), False, f"{subject_code} {assessment_name}.csv", csv_string, dropdown
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(
+        merged_df.to_csv(index=False, encoding="utf-8"))
+    return merged_df.to_dict(
+        orient='records'
+    ), False, f"{subject_code} {assessment_name}.csv", csv_string, dropdown
 
 
 @app.callback(
@@ -225,12 +265,19 @@ def update_subject_table(assessment_name, filter_value):
             "type": "dropdown",
             "page": "academic",
             "name": "assessment"
-        }, "value")
+        }, "value"),
+        Input(
+            {
+                "type": "dropdown",
+                "page": "academic",
+                "tab": "view",
+                "name": "colour"
+            }, "value"),
     ], [State({
         "type": "filter-dropdown",
         "filter": ALL
     }, "value")])
-def update_subject_graph(assessment_name, filter_value):
+def update_subject_graph(assessment_name, colour_code, filter_value):
     _, _, subject_code = filter_value
     if not assessment_name:
         return {
@@ -247,9 +294,36 @@ def update_subject_graph(assessment_name, filter_value):
         data.get_data("assessment", "assessment_subject",
                       [(assessment_name, subject_code)]))
     subtype = assessment_df.iloc[0]["subtype"]
-    x = curriculum.scales.get(subtype)
-    y = [len(assessment_df.query("grade == @g")) for g in x]
-    fig = go.Figure(go.Bar(x=x, y=y))
+    enrolment_df = pd.DataFrame.from_records(
+        data.get_data("enrolment", "_id",
+                      assessment_df["student_id"].to_list()))
+    merged_df = assessment_df.merge(enrolment_df,
+                                    left_on="student_id",
+                                    right_on="_id",
+                                    how="inner")
+    fig = go.Figure(
+        go.Scatter(
+            x=merged_df["aps"],
+            y=merged_df["grade"],
+            marker=dict(
+                color=merged_df[colour_code],
+                colorscale='viridis',
+                showscale=True,
+                size=20,
+            ),
+            customdata=np.stack(
+                (merged_df["given_name"], merged_df["family_name"]), axis=-1),
+            hovertemplate=
+            "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<extra></extra>",
+            mode='markers'))
+    fig.update_yaxes(
+        categoryorder='array',
+        categoryarray=curriculum.scales.get(subtype),
+    )
+    fig.update_layout(margin={'t': 0},
+                      autosize=True,
+                      xaxis_title="GCSE Average Point Score",
+                      yaxis_title="Grade")
     return fig
 
 
