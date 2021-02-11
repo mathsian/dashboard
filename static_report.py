@@ -55,7 +55,7 @@ def generate_report(student_id):
     student_name = f"{student.get('given_name')} {student.get('family_name')}"
     with open(f"latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data={"name": student_name,
-                       "date": "February 2020",
+                       "date": "February 2021",
                        "team": student.get("team"),
                        "attendance_dates": attendance_dates,
                        "attendance_zip": attendance_zip,
@@ -76,5 +76,5 @@ def cohort_reports(cohort):
         generate_report(student.get('_id'))
 
 if __name__ == "__main__":
-    #generate_report("201002")
-    cohort_reports("2022")
+    generate_report("200975")
+    #cohort_reports("2022")

@@ -11,7 +11,7 @@
 \setromanfont{FSSinclair-Medium}
 
 % smaller margins
-\usepackage[margin=2cm]{geometry}
+\usepackage[margin=1cm]{geometry}
 
 % customise sections
 % need explicit to access parameter number to get the section on the left
@@ -54,7 +54,9 @@
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
 
-\setlength{\columnsep}{3em}
+\setlength{\columnsep}{1em}
+\renewcommand{\arraystretch}{1.2}
+
 \begin{document}
 % no page numbers
 \pagestyle{empty}
@@ -62,8 +64,8 @@
 \begin{center}
     {\rmfamily\uppercase{
         {\large \VAR{name}}\\
-        Team \VAR{team}\\
-        \VAR{date}}}
+        \VAR{date}\\
+        Team \VAR{team}}}
 \tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
 \end{center}
 % Attendance bar chart
@@ -104,7 +106,7 @@
 {\sffamily
   \begin{tabularx}{\linewidth}{l l l X}
 %% for subject, assessment in academic.items()
-\multicolumn{4}{l}{\VAR{subject}}\\
+\multicolumn{4}{l}{\rmfamily \VAR{subject}}\\
 %% for assessment_name, assessment_details in assessment.items()
 & \VAR{assessment_name}& \VAR{assessment_details['grade']}& {\em \VAR{assessment_details['comment']}}\\
 %% endfor
