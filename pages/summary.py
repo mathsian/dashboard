@@ -94,7 +94,6 @@ attendance_dashboard = dbc.Container(children=[
                       }
                   },
                   config={"displayModeBar": False}),
-        
         dcc.Graph(id={
             "type": "graph",
             "page": "summary",
@@ -113,31 +112,33 @@ attendance_dashboard = dbc.Container(children=[
                   },
                   config={"displayModeBar": False}),
     ]),
-html.Div([
-            dcc.Slider(id={
+    html.Div([
+        dcc.Slider(
+            id={
                 "type": "slider",
                 "page": "summary",
                 "tab": "attendance",
                 "name": "threshold",
             },
-                       min=0,
-                       max=100,
-                       value=92,
-                       marks={
-                           60: '60',
-                           80: '80',
-                           90: '90',
-                           92: '92',
-                           95: '95',
-                       },
-            ),
-        ]),
-    html.Div(id={
-        "type": "text",
-        "page": "summary",
-        "tab": "attendance",
-        "name": "low_cumulative"
-    }),
+            min=0,
+            max=100,
+            value=92,
+            marks={
+                60: '60',
+                80: '80',
+                90: '90',
+                92: '92',
+                95: '95',
+            },
+        ),
+    ]),
+    html.Div(
+        id={
+            "type": "text",
+            "page": "summary",
+            "tab": "attendance",
+            "name": "low_cumulative"
+        }),
 ])
 
 validation_layout = content + [attendance_dashboard]
@@ -219,7 +220,9 @@ def update_attendance_gauge(n_intervals, threshold):
     # For proportion of sts with cumulative low attendance
     grouped_df = monthly_df.groupby("student_id").sum()
     grouped_df.eval("percent = 100 * actual / possible", inplace=True)
-    low_cumulative = round(100*len(grouped_df.query("percent < @threshold"))/len(grouped_df), 1)
+    low_cumulative = round(
+        100 * len(grouped_df.query("percent < @threshold")) / len(grouped_df),
+        1)
     low_cumulative_text = f"{low_cumulative}% of students have < {threshold}% overall attendance"
     # For monthly graph
     monthly_df.eval("percent = 100 * actual / possible", inplace=True)
@@ -227,7 +230,7 @@ def update_attendance_gauge(n_intervals, threshold):
     monthly = monthly_df.groupby("date").agg({
         "percent": 'mean',
         "student_id": 'count',
-        "low": 'sum'
+        "low": 'sum',
     })
     monthly.eval("low_percent = 100 * low / student_id", inplace=True)
     monthly = monthly.round({'percent': 1, 'low_percent': 1})
@@ -255,7 +258,7 @@ def update_attendance_gauge(n_intervals, threshold):
                 y=monthly['low_percent'],
                 text=monthly['low_percent'],
                 textposition='auto',
-            )
+            ),
         ],
         layout={
             "title": f"Proportion of students with < {threshold}% attendance"
