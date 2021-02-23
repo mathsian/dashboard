@@ -1,3 +1,4 @@
+import plotly.express as px
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -145,7 +146,7 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                                   "value": "gc-en"
                                               },
                                               {
-                                                  "label": "Computer Science",
+                                                  "label": "Comp Sci",
                                                   "value": "gc-comp.sci"
                                               },
                                           ],
@@ -158,9 +159,9 @@ tab_map = {
     "academic-tab-view": [
         dbc.Col([
             assessment_graph,
-        ], width=8),
+        ], width=10),
         dbc.Col([html.Div("Colour by GCSE "), assessment_colour_dropdown],
-                width=3)
+                width=2)
     ],
     "academic-tab-edit": [
         dbc.Col(subject_table),
@@ -307,9 +308,12 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
             y=merged_df["grade"],
             marker=dict(
                 color=merged_df[colour_code],
-                colorscale='viridis',
+                colorbar=dict(tickmode='array', tickvals=list(range(-1, 10)), ticktext=["missing"] + list(range(10))),
+                cmin=-1,
+                cmax=9,
+                colorscale=px.colors.sequential.Rainbow,
                 showscale=True,
-                size=20,
+                size=10,
             ),
             customdata=np.stack(
                 (merged_df["given_name"], merged_df["family_name"]), axis=-1),
