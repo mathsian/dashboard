@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.subplots as sp
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -302,8 +303,10 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
                                     left_on="student_id",
                                     right_on="_id",
                                     how="inner")
-    fig = go.Figure(
-        go.Scatter(
+    fig = sp.make_subplots(
+        rows=1, cols=2, shared_yaxes=True, shared_xaxes=False, column_widths=[0.2,0.8], 
+    )
+    scatter_trace = go.Scatter(
             x=merged_df["aps"],
             y=merged_df["grade"],
             marker=dict(
@@ -311,22 +314,40 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
                 colorbar=dict(tickmode='array', tickvals=list(range(-1, 10)), ticktext=["missing"] + list(range(10))),
                 cmin=-1,
                 cmax=9,
-                colorscale=px.colors.sequential.Rainbow,
+                colorscale=px.colors.sequential.thermal,
                 showscale=True,
-                size=10,
+                size=16,
+                opacity=0.8,
             ),
+        showlegend=False,
             customdata=np.stack(
-                (merged_df["given_name"], merged_df["family_name"]), axis=-1),
+                (merged_df["given_name"], merged_df["family_name"], merged_df[colour_code]), axis=-1),
             hovertemplate=
-            "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<extra></extra>",
-            mode='markers'))
+            "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<br>"+colour_code+": %{customdata[2]}<extra></extra>",
+            mode='markers')
+    bar_trace = go.Histogram(
+        y=merged_df["grade"],
+        histfunc='count',
+        histnorm='percent',
+        orientation='h',
+        showlegend=False,
+        hovertemplate="%{y} %{x:.1f}<extra></extra>",
+    )
+    fig.add_trace(bar_trace, row=1, col=1)
+    fig.add_trace(scatter_trace, row=1, col=2)
     fig.update_yaxes(
         categoryorder='array',
         categoryarray=curriculum.scales.get(subtype),
     )
+    fig.update_xaxes(
+        title_text="GCSE Average Point Score", row=1, col=2, 
+    )
+    fig.update_xaxes(
+        title_text="Percent", row=1, col=1, 
+    )
     fig.update_layout(margin={'t': 0},
                       autosize=True,
-                      xaxis_title="GCSE Average Point Score",
+                      plot_bgcolor="#FFF",
                       yaxis_title="Grade")
     return fig
 
