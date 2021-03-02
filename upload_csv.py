@@ -10,6 +10,8 @@ def csv_to_couchdb(file_name, dbname=None):
         df["_id"] = df["_id"].astype(str)
     if "cohort" in df.columns:
         df["cohort"] = df["cohort"].astype(str)
+    if "student_id" in df.columns:
+        df["student_id"] = df["student_id"].astype(str)
     print(f"{len(df)} rows")
     print(df.columns)
     pd.set_option("display.max_columns", None)
