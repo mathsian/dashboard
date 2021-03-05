@@ -53,7 +53,7 @@ subject_table = dash_tabulator.DashTabulator(
         "page": "academic",
         "tab": "edit"
     },
-    options={"resizableColumns": False, "index": "_id", "layout": "fitDataStretch", "clipboard": True, "selectable": False, "clipboardPasteAction": ns("clipboardPasteAction"), "clipboardCopySelector": "table", "clipboardPasted": ns("clipboardPasted")},
+    options={"placeholder": "Select a subject", "resizableColumns": False, "index": "_id", "layout": "fitDataStretch", "clipboard": True, "selectable": False, "clipboardPasteAction": ns("clipboardPasteAction"), "clipboardCopySelector": "table", "clipboardPasted": ns("clipboardPasted")},
     downloadButtonType={"css": "btn btn-primary", "text": "Download", "type": "csv"},
     theme='bootstrap/tabulator_bootstrap4',
 )
