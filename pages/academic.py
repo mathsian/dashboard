@@ -1,3 +1,4 @@
+import dash_tabulator
 import plotly.express as px
 import plotly.subplots as sp
 import dash_core_components as dcc
@@ -13,6 +14,9 @@ from app import app
 import data
 import plotly.graph_objects as go
 import curriculum
+from dash_extensions.javascript import Namespace
+ns = Namespace("myNameSpace", "tabulator")
+
 academic_header = html.H4(id={
     "type": "text",
     "page": "academic",
@@ -43,72 +47,17 @@ content = [
         dbc.CardBody(dbc.Row(id="academic-content")),
     ])
 ]
-subject_table = dash_table.DataTable(id={
-    "type": "table",
-    "page": "academic",
-    "tab": "edit"
-},
-                                     columns=[
-                                         {
-                                             "name": "Given name",
-                                             "id": "given_name",
-                                             "editable": False
-                                         },
-                                         {
-                                             "name": "Family name",
-                                             "id": "family_name",
-                                             "editable": False
-                                         },
-                                         {
-                                             "name": "Grade",
-                                             "id": "grade",
-                                             "type": "text",
-                                             "presentation": "dropdown",
-                                             "editable": True
-                                         },
-                                         {
-                                             "name": "Comment",
-                                             "id": "comment",
-                                             "type": "text",
-                                             "presentation": "input",
-                                             "editable": True
-                                         },
-                                     ],
-                                     editable=True,
-                                     style_cell={
-                                         "textAlign": "left",
-                                         "height": "auto",
-                                         "whiteSpace": "normal",
-                                     },
-                                     sort_action='native',
-                                     filter_action='native',
-                                     sort_by=[{
-                                         "column_id": "given_name",
-                                         "direction": "asc"
-                                     }, {
-                                         "column_id": "family_name",
-                                         "direction": "asc"
-                                     }])
+subject_table = dash_tabulator.DashTabulator(
+    id={
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    },
+    options={"placeholder": "Select a subject", "resizableColumns": False, "index": "_id", "layout": "fitDataStretch", "clipboard": True, "selectable": False, "clipboardPasteAction": ns("clipboardPasteAction"), "clipboardCopySelector": "table", "clipboardPasted": ns("clipboardPasted")},
+    downloadButtonType={"css": "btn btn-primary", "text": "Download", "type": "csv"},
+    theme='bootstrap/tabulator_bootstrap4',
+)
 
-assessment_download_link = html.A("Download csv",
-                                  id={
-                                      "type": "link",
-                                      "page": "academic",
-                                      "tab": "edit",
-                                      "name": "download"
-                                  },
-                                  hidden=True,
-                                  href="",
-                                  target="_blank")
-
-assessment_toast = dbc.Toast("Testing",
-                             id={
-                                 "type": "toast",
-                                 "page": "academic",
-                                 "tab": "edit"
-                             },
-                             is_open=False,
-                             duration=3000)
 assessment_graph = dcc.Graph(
     id={
         "type": "graph",
@@ -153,7 +102,7 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                           ],
                                           value="gc-ma")
 validation_layout = content + [
-    assessment_toast, subject_table, assessment_graph,
+    subject_table, assessment_graph,
     assessment_colour_dropdown
 ]
 tab_map = {
@@ -165,8 +114,7 @@ tab_map = {
                 width=2)
     ],
     "academic-tab-edit": [
-        dbc.Col(subject_table),
-        dbc.Col([assessment_download_link, assessment_toast], width=3)
+        dbc.Col(subject_table, width=12),
     ]
 }
 
@@ -187,49 +135,62 @@ def get_content(active_tab):
         "page": "academic",
         "tab": "edit"
     }, "data"),
-    Output(
-        {
-            "type": "link",
-            "page": "academic",
-            "tab": "edit",
-            "name": "download"
-        }, "hidden"),
-    Output(
-        {
-            "type": "link",
-            "page": "academic",
-            "tab": "edit",
-            "name": "download"
-        }, "download"),
-    Output(
-        {
-            "type": "link",
-            "page": "academic",
-            "tab": "edit",
-            "name": "download"
-        }, "href"),
     Output({
         "type": "table",
         "page": "academic",
         "tab": "edit"
-    }, "dropdown"),
+    }, "columns"),
 ], [
     Input({
         "type": "dropdown",
         "page": "academic",
         "name": "assessment"
-    }, "value")
+    }, "value"),
+    Input({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, "cellEdited"),
+    Input({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit",
+    }, "clipboardPasted")
 ], [State({
     "type": "filter-dropdown",
     "filter": ALL
 }, "value")])
-def update_subject_table(assessment_name, filter_value):
+def update_subject_table(assessment_name, changed, row_data, filter_value):
     _, _, subject_code = filter_value
+    # If the user hasn't selected a subject/assessment yet
     if not assessment_name:
-        return [], True, "", "", {}
-    assessment_df = pd.DataFrame.from_records(
-        data.get_data("assessment", "assessment_subject",
-                      [(assessment_name, subject_code)]))
+        return [], []
+    # If we're here because a cell has been edited
+    if changed:
+        row = changed.get("row")
+        doc = data.get_doc(row.get("_id_x"))
+        doc.update({"grade": row.get("grade"),"comment": row.get("comment")})
+        data.save_docs([doc])
+    # If we're here because data has been pasted
+    if row_data:
+        assessment_docs = data.get_data("assessment", "assessment_subject", [(assessment_name, subject_code)])
+        assessment_df = pd.DataFrame.from_records(assessment_docs)
+        try:
+            pasted_df = pd.DataFrame.from_records(row_data)[["student_id", "grade", "comment"]]
+        except KeyError:
+            # Silently fail if student_id, grade, and comment fields were not present
+            print("Problematic row data: ", row_data)
+        else:
+            pasted_df = pasted_df.replace('\r', '', regex=True)
+            merged_df = pd.merge(assessment_df,
+                                pasted_df,
+                                on="student_id")
+            merged_df = merged_df.rename(columns={"grade_y": "grade", "comment_y": "comment"}).drop(["grade_x", "comment_x"], axis=1)
+            merged_docs = merged_df.to_dict(orient='records')
+            data.save_docs(merged_docs)
+
+    assessment_docs = data.get_data("assessment", "assessment_subject", [(assessment_name, subject_code)])
+    assessment_df = pd.DataFrame.from_records(assessment_docs)
     student_ids = assessment_df["student_id"].tolist()
     enrolment_df = pd.DataFrame.from_records(
         data.get_data("enrolment", "_id", student_ids))
@@ -239,19 +200,49 @@ def update_subject_table(assessment_name, filter_value):
                          right_on='_id',
                          how='inner')
     subtype = merged_df.iloc[0]["subtype"]
-    dropdown = {
-        "grade": {
-            "options": [{
-                "label": s,
-                "value": s
-            } for s in curriculum.scales.get(subtype)]
-        }
-    }
-    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(
-        merged_df.to_csv(index=False, encoding="utf-8"))
-    return merged_df.to_dict(
-        orient='records'
-    ), False, f"{subject_code} {assessment_name}.csv", csv_string, dropdown
+    columns = [
+        {
+            "title": "Student ID",
+            "field": "student_id",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
+        },
+        {
+            "title": "Email",
+            "field": "student_email",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
+        },
+        {
+            "title": "Given name",
+            "field": "given_name",
+            "width": "20%"
+        },
+        {
+            "title": "Family name",
+            "field": "family_name",
+            "width": "20%"
+        },
+        {
+            "title": "Grade",
+            "field": "grade",
+            "editor": "select",
+            "editorParams": {
+                "values": curriculum.scales.get(subtype)
+            },
+            "width": "15%"
+        },
+        {
+            "title": "Comment",
+            "field": "comment",
+            "editor": "textarea",
+            "editorParams": {"verticalNavigation": "hybrid"},
+            "formatter": "plaintext",
+        },
+    ]
+    return merged_df.to_dict(orient='records'), columns
 
 
 @app.callback(
@@ -304,27 +295,35 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
                                     right_on="_id",
                                     how="inner")
     fig = sp.make_subplots(
-        rows=1, cols=2, shared_yaxes=True, shared_xaxes=False, column_widths=[0.2,0.8], 
+        rows=1,
+        cols=2,
+        shared_yaxes=True,
+        shared_xaxes=False,
+        column_widths=[0.2, 0.8],
     )
     scatter_trace = go.Scatter(
-            x=merged_df["aps"],
-            y=merged_df["grade"],
-            marker=dict(
-                color=merged_df[colour_code],
-                colorbar=dict(tickmode='array', tickvals=list(range(-1, 10)), ticktext=["missing"] + list(range(10))),
-                cmin=-1,
-                cmax=9,
-                colorscale=px.colors.sequential.thermal,
-                showscale=True,
-                size=16,
-                opacity=0.8,
-            ),
+        x=merged_df["aps"],
+        y=merged_df["grade"],
+        marker=dict(
+            color=merged_df[colour_code],
+            colorbar=dict(tickmode='array',
+                          tickvals=list(range(-1, 10)),
+                          ticktext=["missing"] + list(range(10))),
+            cmin=-1,
+            cmax=9,
+            colorscale=px.colors.sequential.thermal,
+            showscale=True,
+            size=16,
+            opacity=0.8,
+        ),
         showlegend=False,
-            customdata=np.stack(
-                (merged_df["given_name"], merged_df["family_name"], merged_df[colour_code]), axis=-1),
-            hovertemplate=
-            "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<br>"+colour_code+": %{customdata[2]}<extra></extra>",
-            mode='markers')
+        customdata=np.stack((merged_df["given_name"], merged_df["family_name"],
+                             merged_df[colour_code]),
+                            axis=-1),
+        hovertemplate=
+        "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<br>" +
+        colour_code + ": %{customdata[2]}<extra></extra>",
+        mode='markers')
     bar_trace = go.Histogram(
         y=merged_df["grade"],
         histfunc='count',
@@ -340,10 +339,14 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         categoryarray=curriculum.scales.get(subtype),
     )
     fig.update_xaxes(
-        title_text="GCSE Average Point Score", row=1, col=2, 
+        title_text="GCSE Average Point Score",
+        row=1,
+        col=2,
     )
     fig.update_xaxes(
-        title_text="Percent", row=1, col=1, 
+        title_text="Percent",
+        row=1,
+        col=1,
     )
     fig.update_layout(margin={'t': 0},
                       autosize=True,
@@ -386,59 +389,3 @@ def update_assessment_dropdown(filter_value):
         by="date", ascending=False)["assessment"].unique().tolist()
     options = [{"label": a, "value": a} for a in assessment_list]
     return options, options[0].get("value"), f"Cohort {cohort}, {subject}"
-
-
-@app.callback([
-    Output({
-        "type": "toast",
-        "page": "academic",
-        "tab": "edit",
-    }, "is_open"),
-    Output({
-        "type": "toast",
-        "page": "academic",
-        "tab": "edit",
-    }, "children"),
-], [
-    Input({
-        "type": "table",
-        "page": "academic",
-        "tab": "edit"
-    }, "data_timestamp"),
-], [
-    State({
-        "type": "table",
-        "page": "academic",
-        "tab": "edit"
-    }, "data"),
-    State({
-        "type": "table",
-        "page": "academic",
-        "tab": "edit"
-    }, "data_previous"),
-],
-              prevent_initial_call=True)
-def update_subject_toast(data_ts, table_data, previous_data):
-    if not previous_data:
-        return False, "No previous data"
-    df, df_previous = pd.DataFrame(table_data).sort_index(), pd.DataFrame(
-        previous_data).sort_index()
-    changes = df_previous.compare(df)
-    changed = changes.index
-    if len(changed) != 1:
-        return True, "Multiple changes, weirdly"
-    assessment_doc = df.rename(columns={
-        "_id_x": "_id",
-        "_rev_x": "_rev",
-        "cohort_x": "cohort",
-        "type_x": "type"
-    }).loc[changed, [
-        "_id", "_rev", "type", "subtype", "date", "student_id", "grade",
-        "comment", "cohort", "group_id", "subject_code", "subject_name",
-        "assessment"
-    ]].to_dict(orient='records')
-    data.save_docs(assessment_doc)
-    return True, [
-        html.Div(f"{d.get('grade')}, {d.get('comment')}")
-        for d in assessment_doc
-    ]
