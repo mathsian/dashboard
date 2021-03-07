@@ -12,20 +12,27 @@ app.layout = html.Div([
     dbc.Container(
         dbc.Row(children=[
             dbc.Col(
-                [
-                    dbc.Card(
-                        [dbc.CardHeader("data@ada"),
-                         dbc.CardBody(nav.layout)]),
-                    html.Br(),
-                    dbc.Card([
-                        dbc.CardHeader("Filter"),
-                        dbc.CardBody(filters.layout)
-                    ]),
-                ],
+                dbc.Nav(
+                    [
+                        dbc.Card([
+                            dbc.CardHeader("data@ada"),
+                            dbc.CardBody(nav.layout)
+                        ]),
+                        html.Br(),
+                        dbc.Card([
+                            dbc.CardHeader("Filter"),
+                            dbc.CardBody(filters.layout)
+                        ]),
+                    ],
+                    style={"position": "fixed"},
+                    vertical=True
+                ),
                 width=2,
             ),
-            dbc.Col(id="content", width=9),
-        ]),fluid=True ),
+            dbc.Col(id="content", width=10),
+        ]),
+        fluid=True,
+    ),
     dcc.Store(id="store-data", data={}),
     dcc.Store(id="selected-student-ids", data=[]),
 ])

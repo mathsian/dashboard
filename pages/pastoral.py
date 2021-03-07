@@ -1,3 +1,4 @@
+import dash_tabulator
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -16,13 +17,13 @@ import curriculum
 tabs = ["Attendance", "Weekly", "Kudos", "Concern"]
 content = [
     dbc.Card([
-        dbc.CardHeader(
-            [html.H3(id={
-    "type": "text",
-    "page": "pastoral",
-    "name": "header"
+        dbc.CardHeader([
+            html.H3(id={
+                "type": "text",
+                "page": "pastoral",
+                "name": "header"
             }),
-             dbc.Tabs(
+            dbc.Tabs(
                 [
                     dbc.Tab(label=t, tab_id=f"pastoral-tab-{t.lower()}")
                     for t in tabs
@@ -30,74 +31,62 @@ content = [
                 id=f"pastoral-tabs",
                 card=True,
                 active_tab=f"pastoral-tab-{tabs[0].lower()}",
-            )]),
+            )
+        ]),
         dbc.CardBody(dbc.Row(id=f"pastoral-content", children=[])),
     ])
 ]
 # Attendance tab content
-attendance_table = dash_table.DataTable(
+attendance_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "pastoral",
         "tab": "attendance"
     },
-    columns=[
-        {
-            "name": "Given name",
-            "id": "given_name"
-        },
-        {
-            "name": "Family name",
-            "id": "family_name"
-        },
-    ],
-    style_cell={"textAlign": "left"},
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{
-        "column_id": "given_name",
-        "direction": "asc"
-    }],
+    options={"resizableColumns": False, "layout": "fitData", "clipboard": "copy"},
+    theme='bootstrap/tabulator_bootstrap4',
 )
 attendance_summary = [
-    daq.Gauge(
-        id={
-            "type": "gauge",
-            "page": "pastoral",
-            "tab": "attendance",
-            "name": "last_week"
-        },
-        label="This week",
-        scale={
-            "start": 0,
-            "interval": 5,
-            "labelInterval": 2,
-        },
-        showCurrentValue=True,
-        units="%",
-        value=0,
-        min=0,
-        max=100,
-    ),
-    daq.Gauge(
-        id={
-            "type": "gauge",
-            "page": "pastoral",
-            "tab": "attendance",
-            "name": "overall"
-        },
-        label="Overall",
-        scale={
-            "start": 0,
-            "interval": 5,
-            "labelInterval": 2,
-        },
-        showCurrentValue=True,
-        units="%",
-        value=0,
-        min=0,
-        max=100,
-    ),
+    dbc.Col(width=6,
+            children=daq.Gauge(
+                id={
+                    "type": "gauge",
+                    "page": "pastoral",
+                    "tab": "attendance",
+                    "name": "last_week"
+                },
+                label="This week",
+                scale={
+                    "start": 0,
+                    "interval": 5,
+                    "labelInterval": 2,
+                },
+                showCurrentValue=True,
+                units="%",
+                value=0,
+                min=0,
+                max=100,
+            )),
+    dbc.Col(width=6,
+            children=daq.Gauge(
+                id={
+                    "type": "gauge",
+                    "page": "pastoral",
+                    "tab": "attendance",
+                    "name": "overall"
+                },
+                label="Overall",
+                scale={
+                    "start": 0,
+                    "interval": 5,
+                    "labelInterval": 2,
+                },
+                showCurrentValue=True,
+                units="%",
+                value=0,
+                min=0,
+                max=100,
+            )),
 ]
 # Weekly tab content
 weekly_header = html.H4(children=[
@@ -110,53 +99,58 @@ weekly_header = html.H4(children=[
     })
 ])
 
-weekly_table = dash_table.DataTable(
+weekly_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "pastoral",
         "tab": "weekly"
     },
+    options={"resizableColumns": False, "layout": "fitData", "clipboard": "copy"},
     columns=[
-        {
-            "name": "Given name",
-            "id": "given_name"
-        },
-        {
-            "name": "Family name",
-            "id": "family_name"
-        },
-        {
-            "name": "Pres",
-            "id": "pr"
-        },
-        {
-            "name": "Auth",
-            "id": "au"
-        },
-        {
-            "name": "Unauth",
-            "id": "un"
-        },
-        {
-            "name": "L",
-            "id": "la"
-        },
-        {
-            "name": "M",
-            "id": "me"
-        },
-        {
-            "name": "V",
-            "id": "co"
-        },
-    ],
-    style_cell={"textAlign": "left"},
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{
-        "column_id": "given_name",
-        "direction": "asc"
-    }],
+    {
+        "title": "Given name",
+        "field": "given_name",
+        "headerFilter": True,
+    },
+    {
+        "title": "Family name",
+        "field": "family_name",
+        "headerFilter": True,
+    },
+    {
+        "title": "Present",
+        "field": "pr",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": "<",
+        "headerFilterPlaceholder": "Less than",
+    },
+    {
+        "title": "Authorised",
+        "field": "au",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": ">",
+        "headerFilterPlaceholder": "More than",
+    },
+    {
+        "title": "Unauthorised",
+        "field": "un",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": ">",
+        "headerFilterPlaceholder": "More than",
+    },
+    {
+        "title": "Late",
+        "field": "la",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": ">",
+        "headerFilterPlaceholder": "More than",
+    },
+     ],
+    theme='bootstrap/tabulator_bootstrap4',
 )
 weekly_picker = dcc.DatePickerSingle(
     id={
@@ -169,34 +163,33 @@ weekly_picker = dcc.DatePickerSingle(
 )
 
 # Kudos tab content
-kudos_table = dash_table.DataTable(
+kudos_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "pastoral",
         "tab": "kudos",
     },
+    theme='bootstrap/tabulator_bootstrap4',
+    options={"resizableColumns": False, "layout": "fitData", "clipboard": "copy"},
     columns=[
         {
-            "name": "Given name",
-            "id": "given_name"
-        },
-        {
-            "name": "Family name",
-            "id": "family_name"
-        },
+        "title": "Given name",
+        "field": "given_name",
+        "headerFilter": True,
+    },
+    {
+        "title": "Family name",
+        "field": "family_name",
+        "headerFilter": True,
+    },
     ] + [{
-        "name": v[:2],
-        "id": v
+        "title": v[:3],
+        "field": v,
+        "hozAlign": "right",
     } for v in curriculum.values] + [{
-        "name": "Total",
-        "id": "total"
-    }],
-    style_cell={"textAlign": "left"},
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{
-        "column_id": "given_name",
-        "direction": "asc"
+        "title": "Total",
+        "field": "total",
+        "hozAlign": "right",
     }],
 )
 
@@ -206,7 +199,8 @@ fig.add_trace(
                     r=[0 for v in curriculum.values],
                     subplot="polar",
                     fill="toself"), 1, 1)
-fig.update_layout(polar=dict(radialaxis=dict(visible=False), ))
+fig.update_layout(autosize=True,
+                  polar=dict(radialaxis=dict(visible=False)))
 
 kudos_radar = dcc.Graph(id={
     "type": "graph",
@@ -217,7 +211,7 @@ kudos_radar = dcc.Graph(id={
                         figure=fig)
 
 # Concern tab content
-concern_table = dash_table.DataTable(
+concern_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "pastoral",
@@ -225,52 +219,33 @@ concern_table = dash_table.DataTable(
     },
     columns=[
         {
-            "name": "Given name",
-            "id": "given_name"
+            "title": "Given name",
+            "field": "given_name"
         },
         {
-            "name": "Family name",
-            "id": "family_name"
+            "title": "Family name",
+            "field": "family_name"
         },
         {
-            "name": "Date",
-            "id": "date"
+            "title": "Date",
+            "field": "date"
         },
         {
-            "name": "Category",
-            "id": "category"
+            "title": "Category",
+            "field": "category"
         },
         {
-            "name": "Description",
-            "id": "description"
+            "title": "Raised by",
+            "field": "from"
         },
-        {
-            "name": "Additional",
-            "id": "discrimination"
-        },
-        {
-            "name": "Raised by",
-            "id": "from"
+  {
+            "title": "Description",
+            "field": "description"
         },
     ],
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{
-        "column_id": "date",
-        "direction": "desc"
-    }],
-    style_cell={
-        "textAlign": "left",
-        "maxWidth": 100,
-    },
-    style_cell_conditional=[{
-        "if": {
-            "column_id": "description"
-        },
-        "overflow": "hidden",
-        "textOverflow": "ellipsis",
-    }],
-)
+    theme='bootstrap/tabulator_bootstrap4',
+    options={"resizableColumns": False, "layout": "fitDataStretch", "clipboard": "copy"},
+ )
 
 # Validation layout contains everything needed to validate all callbacks
 validation_layout = content + [
@@ -279,10 +254,8 @@ validation_layout = content + [
 ]
 # Associate each tab with its content
 tab_map = {
-    "pastoral-tab-attendance": [
-        dbc.Col(width=8, children=attendance_table),
-        dbc.Col(children=attendance_summary)
-    ],
+    "pastoral-tab-attendance":
+    [dbc.Col(children=[dbc.Row(attendance_summary), attendance_table])],
     "pastoral-tab-weekly":
     dbc.Col([
         dbc.Row(children=[
@@ -292,10 +265,9 @@ tab_map = {
         dbc.Row(dbc.Col(weekly_table)),
     ]),
     "pastoral-tab-kudos":
-    [dbc.Col(width=8, children=kudos_table),
-     dbc.Col(children=kudos_radar)],
+    [dbc.Col(width=12, children=[kudos_radar, kudos_table])],
     "pastoral-tab-concern": [
-        dbc.Col(width=10, children=concern_table),
+        dbc.Col(width=12, children=concern_table),
     ],
 }
 
@@ -309,16 +281,17 @@ tab_map = {
 def get_content(active_tab):
     return tab_map.get(active_tab)
 
+
 @app.callback(
     Output({
         "type": "text",
         "page": "pastoral",
         "name": "header"
     }, "children"),
-[Input({
-    "type": "filter-dropdown",
-    "filter": ALL
-}, "value")])
+    [Input({
+        "type": "filter-dropdown",
+        "filter": ALL
+    }, "value")])
 def update_pastoral_header(filter_values):
     cohort, team, _ = filter_values
     if cohort and team:
@@ -378,10 +351,10 @@ def update_pastoral_attendance(filter_value):
     last_week_date = attendance_df["date"].max()
     overall_totals = attendance_df.sum()
     last_week_totals = attendance_df.query("date == @last_week_date").sum()
-    overall_percent = round(100 * overall_totals['actual'] /
-                            overall_totals['possible'], 1)
-    last_week_percent = round(100 * last_week_totals['actual'] /
-                              last_week_totals['possible'], 1)
+    overall_percent = round(
+        100 * overall_totals['actual'] / overall_totals['possible'], 1)
+    last_week_percent = round(
+        100 * last_week_totals['actual'] / last_week_totals['possible'], 1)
     # Merge on student id
     attendance_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
                              attendance_df,
@@ -409,22 +382,35 @@ def update_pastoral_attendance(filter_value):
         suffixes=("", "_y"))
     columns = [
         {
-            "name": "Given name",
-            "id": "given_name"
+            "title": "Given name",
+            "field": "given_name",
+            "headerFilter": True,
         },
         {
-            "name": "Family name",
-            "id": "family_name"
+            "title": "Family name",
+            "field": "family_name",
+            "headerFilter": True,
         },
     ]
     columns.extend([
         {
             #"name": data.format_date(d),
-            "name": d,
-            "id": d
+            "title": d,
+            "field": d,
+            "hozAlign": "right",
+            "headerFilter": True,
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
         } for d in attendance_pivot.columns[-3:-1]
     ])
-    columns.append({"name": "Year", "id": "cumulative_percent_present"})
+    columns.append({
+        "title": "Year",
+        "field": "cumulative_percent_present",
+        "hozAlign": "right",
+        "headerFilter": True,
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
+    })
 
     return columns, attendance_pivot.to_dict(
         orient='records'), last_week_percent, overall_percent
@@ -488,18 +474,11 @@ def update_pastoral_kudos(filter_value, current_figure):
 
 
 @app.callback(
-    [
         Output({
             "type": "table",
             "page": "pastoral",
             "tab": "concern",
         }, "data"),
-        Output({
-            "type": "table",
-            "page": "pastoral",
-            "tab": "concern",
-        }, "tooltip_data"),
-    ],
     [Input({
         "type": "filter-dropdown",
         "filter": ALL
@@ -526,8 +505,7 @@ def update_pastoral_concern(filter_value):
                           left_on="_id",
                           right_on="student_id").sort_values("date",
                                                              ascending=False)
-    tooltips = [{"description": d} for d in concern_df["description"].tolist()]
-    return concern_df.to_dict(orient="records"), tooltips
+    return concern_df.to_dict(orient="records")
 
 
 @app.callback([
@@ -562,7 +540,7 @@ def update_weekly_table(filter_value, picker_value):
     elif cohort:
         enrolment_docs = data.get_data("enrolment", "cohort", cohort)
     else:
-        return []
+        return [], ""
     student_ids = [s.get('_id') for s in enrolment_docs]
     enrolment_df = pd.DataFrame.from_records(enrolment_docs)
     # Get attendance for the latest week before the chosen date
@@ -577,13 +555,7 @@ def update_weekly_table(filter_value, picker_value):
     attendance_df.eval("pr = 100*actual/possible", inplace=True)
     attendance_df.eval("un = 100*unauthorised/possible", inplace=True)
     attendance_df.eval("au = 100*authorised/possible", inplace=True)
-    attendance_df.eval("la = 100*late/possible", inplace=True)
-    attendance_df.eval("ill = marks.str.count('I')", inplace=True)
-    attendance_df.eval("med = marks.str.count('M')", inplace=True)
-    attendance_df.eval(
-        "me = 100*(ill + med)/possible",
-        inplace=True)
-    attendance_df.eval("co = 100*marks.str.count('V')/possible", inplace=True)
+    attendance_df.eval("la = 100*late/actual", inplace=True)
     merged_df = pd.DataFrame.merge(enrolment_df,
                                    attendance_df.round(),
                                    how='left',
