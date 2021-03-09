@@ -238,6 +238,22 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
     } for g in groups]
     data.save_docs(assessments, dbname)
 
+def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
+    group = data.get_data("group", "subject_code", subject_code, dbname)
+    assessments = [{
+        "type": "assessment",
+        "subtype": scale_name,
+        "assessment": name,
+        "date": date,
+        "comment": "",
+        "grade": "",
+        "student_id": g.get("student_id"),
+        "group_id": g.get("group_id"),
+        "cohort": g.get("cohort"),
+        "subject_name": g.get("subject_name"),
+        "subject_code": subject_code
+    } for g in group]
+    data.save_docs(assessments, dbname)
 
 def sync_monthly_attendance(dbname, full=False, dry=True):
     config_object = ConfigParser()
@@ -524,3 +540,4 @@ if __name__ == "__main__":
     #fix_assessment_comments("ada")
     #fix_null_descriptions("ada")
     #fix_nan_comments("ada")
+    create_assessment("1921", "AL-MA", "testing testing", "2222-22-22", "alevel", "testing")
