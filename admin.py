@@ -525,6 +525,7 @@ def fix_nan_comments(db_name):
     data.save_docs(assessment_docs, db_name)
 
 
+
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
@@ -540,4 +541,10 @@ if __name__ == "__main__":
     #fix_assessment_comments("ada")
     #fix_null_descriptions("ada")
     #fix_nan_comments("ada")
-    create_assessment("1921", "AL-MA", "testing testing", "2222-22-22", "alevel", "testing")
+    #for subject_code in ["AL-BS", "AL-MA", "AL-GR", "AL-PS"]:
+    #    create_assessment("1921", subject_code, "13.2 Spring Assessment", "2021-03-16", "A-Level", "ada")
+    #create_assessment("1921", "ECS", "Unit 10", "2021-03-16", "BTEC-Single", "ada")
+    #create_assessment("1921", "ECS", "Unit 4", "2021-03-16", "BTEC-Single", "ada")
+    #create_assessment("1921", "L3-CM", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
+    #create_assessment("1921", "EPQ-L3DP", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 10"}, "subject_code": {"$eq": "ECS"}}, {"assessment": "Unit 10 Overall Prediction"}, "ada")
