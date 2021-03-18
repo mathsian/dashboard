@@ -348,28 +348,29 @@ def update_pastoral_attendance(filter_value):
     student_ids = [s.get('_id') for s in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
     attendance_df = pd.DataFrame.from_records(attendance_docs)
-    last_week_date = attendance_df["date"].max()
-    overall_totals = attendance_df.sum()
-    last_week_totals = attendance_df.query("date == @last_week_date").sum()
+    weekly_df = attendance_df.query("subtype == 'weekly'")
+    last_week_date = weekly_df["date"].max()
+    overall_totals = weekly_df.sum()
+    last_week_totals = weekly_df.query("date == @last_week_date").sum()
     overall_percent = round(
         100 * overall_totals['actual'] / overall_totals['possible'], 1)
     last_week_percent = round(
         100 * last_week_totals['actual'] / last_week_totals['possible'], 1)
     # Merge on student id
-    attendance_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
-                             attendance_df,
+    merged_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
+                             weekly_df,
                              left_on='_id',
                              right_on='student_id',
                              how='left')
     # Get per student totals
-    cumulative_df = attendance_df.groupby("student_id").sum().reset_index()
+    cumulative_df = merged_df.groupby("student_id").sum().reset_index()
     cumulative_df['cumulative_percent_present'] = round(
         100 * cumulative_df['actual'] / cumulative_df['possible'])
     # Calculate percent present
-    attendance_df['percent_present'] = round(100 * attendance_df['actual'] /
-                                             attendance_df['possible'])
+    merged_df['percent_present'] = round(100 * merged_df['actual'] /
+                                             merged_df['possible'])
     # Pivot to bring dates to columns
-    attendance_pivot = attendance_df.set_index(
+    attendance_pivot = merged_df.set_index(
         ["student_id", "given_name", "family_name",
          "date"])["percent_present"].unstack().reset_index()
     # Add the cumulative column
@@ -545,7 +546,7 @@ def update_weekly_table(filter_value, picker_value):
     enrolment_df = pd.DataFrame.from_records(enrolment_docs)
     # Get attendance for the latest week before the chosen date
     attendance_df = pd.DataFrame.from_records(
-        data.get_data("attendance", "student_id", student_ids)).query(
+        data.get_data("attendance", "student_id", student_ids)).query("subtype == 'weekly'").query(
             "date <= @picker_value").query("date == date.max()")
     # Picked too early a date?
     if attendance_df.empty:
