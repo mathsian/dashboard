@@ -205,11 +205,11 @@ def get_content(active_tab):
 def update_attendance_gauge(n_intervals, threshold):
     # All weekly attendance records
     weekly_df = pd.DataFrame.from_records(
-        data.get_data("all", "type_subtype", ["attendance", "weekly"]),
+        data.get_data("all", "type_subtype", [["attendance", "weekly"]]),
         columns=["date", "student_id", "actual", "possible"])
     # All monthly attendance records
     monthly_df = pd.DataFrame.from_records(
-        data.get_data("all", "type_subtype", ["attendance", "monthly"]),
+        data.get_data("all", "type_subtype", [["attendance", "monthly"]]),
         columns=["date", "student_id", "actual", "possible"])
     # For overall cumulative attendance
     overall_sum = monthly_df.sum()
