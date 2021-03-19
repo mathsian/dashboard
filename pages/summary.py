@@ -204,19 +204,19 @@ def get_content(active_tab):
 ])
 def update_attendance_gauge(n_intervals, threshold):
     # All weekly attendance records
-    attendance_df = pd.DataFrame.from_records(
-        data.get_data("all", "type", "attendance"),
-        columns=["student_id", "date", "actual", "possible"])
+    weekly_df = pd.DataFrame.from_records(
+        data.get_data("all", "type_subtype", ["attendance", "weekly"]),
+        columns=["date", "student_id", "actual", "possible"])
+    # All monthly attendance records
+    monthly_df = pd.DataFrame.from_records(
+        data.get_data("all", "type_subtype", ["attendance", "monthly"]),
+        columns=["date", "student_id", "actual", "possible"])
     # For overall cumulative attendance
-    overall_sum = attendance_df.sum()
+    overall_sum = monthly_df.sum()
     overall = round(100 * overall_sum['actual'] / overall_sum['possible'], 1)
     # For this week
-    last_sum = attendance_df.query("date == date.max()").sum()
+    last_sum = weekly_df.query("date == date.max()").sum()
     last = round(100 * last_sum['actual'] / last_sum['possible'], 1)
-    # Monthly attendance records
-    monthly_df = pd.DataFrame.from_records(
-        data.get_data("all", "type", "monthly"),
-        columns=["date", "student_id", "actual", "possible"])
     # For proportion of sts with cumulative low attendance
     grouped_df = monthly_df.groupby("student_id").sum()
     grouped_df.eval("percent = 100 * actual / possible", inplace=True)

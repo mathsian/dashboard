@@ -1,4 +1,5 @@
 import dash_tabulator
+import dash
 import plotly.express as px
 import plotly.subplots as sp
 import dash_core_components as dcc
@@ -165,14 +166,15 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
     # If the user hasn't selected a subject/assessment yet
     if not assessment_name:
         return [], []
+    trigger = dash.callback_context.triggered[0].get("prop_id")
     # If we're here because a cell has been edited
-    if changed:
+    if "cellEdited" in trigger:
         row = changed.get("row")
         doc = data.get_doc(row.get("_id_x"))
         doc.update({"grade": row.get("grade"),"comment": row.get("comment")})
         data.save_docs([doc])
-    # If we're here because data has been pasted
-    if row_data:
+    elif "clipboardPasted" in trigger:
+        # If we're here because data has been pasted
         assessment_docs = data.get_data("assessment", "assessment_subject", [(assessment_name, subject_code)])
         assessment_df = pd.DataFrame.from_records(assessment_docs)
         try:

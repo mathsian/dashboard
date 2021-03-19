@@ -463,12 +463,14 @@ def update_student_report(selected_student_ids):
             assessment_children.append(html.H4(subject_name))
             for assessment in assessment_df.loc[subject_name].index.unique():
                 assessment_children.append(html.H5(assessment))
-                assessment_children.append(assessment_df.loc[(subject_name, assessment), "grade"])
-                assessment_children.append(html.Blockquote(assessment_df.loc[(subject_name, assessment), "comment"]))
+                results = assessment_df.query("subject_name == @subject_name and assessment == @assessment")
+                for result in results.to_dict(orient='records'):
+                    assessment_children.append(result.get("grade", ""))
+                    assessment_children.append(html.Blockquote(result.get("comment", "")))
     kudos_docs = data.get_data("kudos", "student_id", student_id)
     concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
-    attendance_df = pd.DataFrame.from_records(attendance_docs)
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query("subtype == 'weekly'")
     attendance_df['percent'] = round(100 * attendance_df['actual'] /
                                      attendance_df['possible'])
     attendance_year = round(100*attendance_df['actual'].sum()/attendance_df['possible'].sum())

@@ -152,3 +152,11 @@ def get_doc(id, db_name=None):
     with Connection(db_name) as db:
         result = db[id]
     return result
+
+def find_and_replace(selector, replacement, db_name=None):
+    with Connection(db_name) as db:
+        docs = db.get_query_result(selector, raw_result=True)['docs']
+        for doc in docs:
+            print(docs)
+            doc.update(replacement)
+        save_docs(docs, db_name)
