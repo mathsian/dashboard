@@ -283,7 +283,7 @@ def sync_rems_attendance(period='weekly', dbname=None):
     }
     sql = sql_template.render(template_vars)
     rems_df = pd.read_sql(sql, conn).eval("date = date.astype('str')")
-    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype", ["attendance", period], dbname), columns=["_id", "_rev", "student_id", "date", "type", "subtype", "actual", "possible", "authorised", "unauthorised", "late", "marks"])
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype", [["attendance", period]], dbname), columns=["_id", "_rev", "student_id", "date", "type", "subtype", "actual", "possible", "authorised", "unauthorised", "late", "marks"])
     merged_df = pd.merge(rems_df,
                          our_df,
                          how='left',
@@ -396,10 +396,9 @@ def fix_nan_comments(db_name):
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
-    data.delete_all("attendance", "testing")
-    data.delete_all("monthly", "testing")
-    sync_rems_attendance("weekly", "testing")
-    sync_rems_attendance("monthly", "testing")
+    #data.delete_all("attendance", "ada")
+    sync_rems_attendance("weekly", "ada")
+    sync_rems_attendance("monthly", "ada")
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
     #sync_enrolment("ada", dry=False)
     #sync_group("ada", full=False, dry=False)
