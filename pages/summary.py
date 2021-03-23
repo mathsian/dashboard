@@ -1,3 +1,9 @@
+import dash_tabulator
+import datetime
+import pyodbc
+from os.path import abspath
+import jinja2
+from configparser import ConfigParser
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
@@ -6,11 +12,11 @@ from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-
+import curriculum
 from app import app
 import data
 
-tabs = ["Attendance"]
+tabs = ["Attendance", "Unauthorised"]
 content = [
     dbc.Card([
         dbc.CardHeader(
@@ -140,9 +146,47 @@ attendance_dashboard = dbc.Container(children=[
             "name": "low_cumulative"
         }),
 ])
-
-validation_layout = content + [attendance_dashboard]
-tab_map = {"summary-tab-attendance": [attendance_dashboard]}
+unauthorised_table = dash_tabulator.DashTabulator(
+    id={
+        "type": "table",
+        "page": "summary",
+        "tab": "unauthorised",
+    },
+    options={"resizableColumns": False, "layout": "fitData"},
+    theme='bootstrap/tabulator_bootstrap4',
+    columns=[
+        {
+            "title": "Date",
+            "field": "date"
+        },
+        {
+            "title": "Given name",
+            "field": "given_name"
+        },
+        {
+            "title": "Surname",
+            "field": "family_name"
+        },
+        {
+            "title": "Subject",
+            "field": "subject_code"
+        },
+        {
+            "title": "Day",
+            "field": "day"
+        },
+        {
+            "title": "Period",
+            "field": "period"
+        }
+    ]
+    )
+validation_layout = content + [attendance_dashboard, unauthorised_table]
+tab_map = {"summary-tab-attendance": [attendance_dashboard],
+           "summary-tab-unauthorised": [
+               dbc.Col(
+[html.H3("Last 10 days"), unauthorised_table]
+               )]}
 
 
 @app.callback([
@@ -152,6 +196,41 @@ def get_content(active_tab):
     return tab_map.get(active_tab)
 
 
+@app.callback(
+    Output(
+    {"type": "table",
+     "page": "summary",
+     "tab": "unauthorised",
+     }, "data"),
+[Input(
+{"type": "interval",
+ "page": "summary",
+ "tab": "attendance"},
+"n_intervals")])
+def update_unauthorised_table(n_intervals):
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(abspath('.'))
+    )
+    sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
+    date_end = datetime.date.today()
+    date_start = date_end - datetime.timedelta(days=10)
+    template_vars = {
+        "date_end": date_end.isoformat(),
+        "date_start": date_start.isoformat(),
+    }
+    sql = sql_template.render(template_vars)
+    df = pd.read_sql(sql, conn)
+    return df.to_dict(orient='records')
+ 
 @app.callback([
     Output(
         {
