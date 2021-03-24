@@ -16,7 +16,7 @@ import curriculum
 from app import app
 import data
 
-tabs = ["Attendance", "Unauthorised"]
+tabs = ["Attendance", "Unauthorised", "Missing"]
 content = [
     dbc.Card([
         dbc.CardHeader(
@@ -161,13 +161,16 @@ unauthorised_table = dash_tabulator.DashTabulator(
         },
         {
             "title": "Given name",
-            "field": "given_name"
+            "field": "given_name",
+            "headerFilter": True,
         },
         {
+            "headerFilter": True,
             "title": "Surname",
             "field": "family_name"
         },
         {
+            "headerFilter": True,
             "title": "Subject",
             "field": "subject_code"
         },
@@ -181,12 +184,43 @@ unauthorised_table = dash_tabulator.DashTabulator(
         }
     ]
     )
-validation_layout = content + [attendance_dashboard, unauthorised_table]
+missing_table = dash_tabulator.DashTabulator(
+    id={
+        "type": "table",
+        "page": "summary",
+        "tab": "missing",
+    },
+    options={"resizableColumns": False, "layout": "fitData"},
+    theme='bootstrap/tabulator_bootstrap4',
+    columns=[
+        {
+            "title": "Date",
+            "field": "date"
+        },
+        {
+            "title": "Register",
+            "field": "register"
+        },
+        {
+            "title": "Period",
+            "field": "period"
+        },
+        {
+            "title": "Lecturer",
+            "field": "lecturer"
+        }
+    ]
+    )
+validation_layout = content + [attendance_dashboard, unauthorised_table, missing_table]
 tab_map = {"summary-tab-attendance": [attendance_dashboard],
            "summary-tab-unauthorised": [
                dbc.Col(
 [html.H3("Last 10 days"), unauthorised_table]
-               )]}
+               )],
+           "summary-tab-missing": [
+               dbc.Col(
+               [html.H3("Missing registers"), missing_table])
+           ]}
 
 
 @app.callback([
@@ -194,6 +228,42 @@ tab_map = {"summary-tab-attendance": [attendance_dashboard],
 ], [Input(f"summary-tabs", "active_tab")])
 def get_content(active_tab):
     return tab_map.get(active_tab)
+
+
+@app.callback(
+    Output(
+    {"type": "table",
+     "page": "summary",
+     "tab": "missing",
+     }, "data"),
+[Input(
+{"type": "interval",
+ "page": "summary",
+ "tab": "attendance"},
+"n_intervals")])
+def update_missing_table(n_intervals):
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(abspath('.'))
+    )
+    sql_template = sql_jinja_env.get_template('sql/missing registers.sql')
+    date_end = datetime.date.today()
+    date_start = date_end - datetime.timedelta(days=10)
+    template_vars = {
+        "date_end": date_end.isoformat(),
+        "date_start": date_start.isoformat(),
+    }
+    sql = sql_template.render(template_vars)
+    df = pd.read_sql(sql, conn)
+    return df.to_dict(orient='records')
 
 
 @app.callback(
