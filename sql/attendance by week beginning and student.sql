@@ -17,9 +17,9 @@ join remslive.dbo.RGATAttendance
 	on REGD_Attendance_Mark = RGAT_Attendance_Code
 where REGS_Session_Date <= CAST ('{{ date_end }}' AS date)
 	and REGS_Session_Date > CAST('{{ date_start }}' AS date)	-- date(s) required
-	and '' = any (select STEN_Reason_ended
+	and '' = any (select STEN_Reason_ended      -- still enrolled (not withdrawn) on any course this year
 				from remslive.dbo.sten
 				where REGD_Student_ID = STEN_Student_ID
 					and sten_year = '{{ date_year }}'
-					and STEN_Funding_Stream <> '36')
+					and STEN_Funding_Stream <> '36')    -- not apprenticeship
 group by DATEADD(WK, DATEDIFF(WK, 0, REGS_Session_Date), 0), REGD_Student_ID
