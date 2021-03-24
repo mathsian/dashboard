@@ -2,7 +2,7 @@ select
 	format(REGS_Session_Date, 'dddd') as day
 	, format(REGS_Session_date, 'yyyy-MM-dd') as date
 	, STUD_Surname as family_name
-	, STUD_Known_As as given_name
+	, CASE WHEN STUD_Known_As = '' THEN STUD_Forename_1 ELSE STUD_Known_As END as given_name
 	, TTGP_Provision_Code as subject_code
 	, TTPD_Period_Description as period
 from remslive.dbo.REGDropin
@@ -20,4 +20,4 @@ join remslive.dbo.TTPDPeriods
 where REGS_Session_Date <= CAST('{{ date_end }}' as date)
 	and REGS_Session_Date >= CAST('{{ date_start }}' as date)
 	and REGD_Attendance_Mark = 'N'
-order by REGS_Session_Date desc, STUD_Surname, STUD_Known_As, TTGP_Provision_Code
+order by REGS_Session_Date desc, STUD_Surname, given_name, TTGP_Provision_Code

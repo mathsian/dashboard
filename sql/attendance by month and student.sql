@@ -1,5 +1,5 @@
 select
-	format(REGS_Session_Date, 'yyyy-MM') as date	-- month
+	format(REGS_Session_Date, 'yyyy-MM') as date	-- month beginning
   , TRIM(regd_Student_ID) as student_id
 	, SUM(CAST(RGAT_Actual as int)) as actual
 	, SUM(CAST(RGAT_Possible as int)) as possible
