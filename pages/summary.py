@@ -391,7 +391,7 @@ def update_attendance_gauge(n_intervals, threshold):
                        y=cumulative_df['cumulative'],
                        text=cumulative_df['cumulative'],
                        textposition='top center',
-                       marker_color='lightsteelblue',
+                       marker_color='gold',
                        name="Cumulative"),
         ],
         layout={
@@ -429,7 +429,7 @@ def update_attendance_gauge(n_intervals, threshold):
                        y=low_grouped['cumulative'],
                        text=low_grouped['cumulative'],
                        textposition='top center',
-                       marker_color='lightsteelblue',
+                       marker_color='gold',
                        name="Cumulative")
         ],
         layout={
