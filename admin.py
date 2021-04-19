@@ -276,12 +276,7 @@ def sync_rems_attendance(period='weekly', dbname=None):
         sql_template = sql_jinja_env.get_template('sql/attendance by month and student.sql')
     else:
         return False
-    template_vars = {
-        "date_end": datetime.date.today().isoformat(),
-        "date_start": curriculum.this_year_start,
-        "date_year": '2020'
-    }
-    sql = sql_template.render(template_vars)
+    sql = sql_template.render()
     rems_df = pd.read_sql(sql, conn).eval("date = date.astype('str')")
     our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype", [["attendance", period]], dbname), columns=["_id", "_rev", "student_id", "date", "type", "subtype", "actual", "possible", "authorised", "unauthorised", "late", "marks"])
     merged_df = pd.merge(rems_df,
