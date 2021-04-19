@@ -1,3 +1,4 @@
+from operator import itemgetter
 from os.path import abspath
 import jinja2
 from jinja2 import Template
@@ -16,23 +17,23 @@ def generate_report(student_id):
             a["grade"] = a.get("grade").replace("S", "A*")
         # Escape manually for now
         a["comment"] = a.get("comment").replace('%', '\%').replace('&', '\&')
-    academic_multiindex = pd.DataFrame.from_records(academic).set_index(["subject_name", "assessment"])[["grade", "date", "comment"]]
+    academic_multiindex = pd.DataFrame.from_records(academic, columns=["subject_name", "assessment", "grade", "date", "comment"]).set_index(["subject_name", "assessment"])[["grade", "date", "comment"]]
     academic_dict = {subject: academic_multiindex.xs(subject).to_dict('index') for subject in academic_multiindex.index.levels[0]}
-    kudos = data.get_data("kudos", "student_id", [student_id], "ada")
+    kudos = sorted(data.get_data("kudos", "student_id", [student_id], "ada"), key=itemgetter('date'), reverse=True)
     kudos_total = 0
     for k in kudos:
         k["description"] = k.get("description", "").replace('%', '\%').replace('&', '\&')
         k['date'] = data.format_date(k['date'])
         kudos_total += k['points']
-    concern = data.get_data("concern", "student_id", [student_id], "ada")
+    concern = sorted(data.get_data("concern", "student_id", [student_id], "ada"), key=itemgetter('date'), reverse=True)
     concern_total = len(concern)
     for c in concern:
         c["description"] = c.get("description", "").replace('%', '\%').replace('&', '\&')
         c['date'] = data.format_date(c['date'])
-    attendance = data.get_data("monthly", "student_id", [student_id], "ada")
+    attendance = data.get_data("attendance", "student_id", [student_id], "ada")
     student = data.get_student(student_id, "ada")
 
-    attendance_df = pd.DataFrame.from_records(attendance).sort_values(by='date', ascending=True).query("date < date.max()")
+    attendance_df = pd.DataFrame.from_records(attendance).query("subtype == 'monthly'").sort_values(by='date', ascending=True)
     attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_df['percent'] = round(100*(attendance_df['actual']-attendance_df['late'])/attendance_df['possible'])
     attendance_df['late'] = round(100*attendance_df['late']/attendance_df['possible'])
@@ -55,7 +56,7 @@ def generate_report(student_id):
     student_name = f"{student.get('given_name')} {student.get('family_name')}"
     with open(f"latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data={"name": student_name,
-                       "date": "February 2021",
+                       "date": "March 2021",
                        "team": student.get("team"),
                        "attendance_dates": attendance_dates,
                        "attendance_zip": attendance_zip,
@@ -76,5 +77,8 @@ def cohort_reports(cohort):
         generate_report(student.get('_id'))
 
 if __name__ == "__main__":
-    generate_report("200975")
-    #cohort_reports("2022")
+    generate_report("190794")
+    generate_report("190728")
+    generate_report("190801")
+    generate_report("190867")
+    #cohort_reports("1921")
