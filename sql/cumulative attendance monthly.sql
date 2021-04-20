@@ -1,8 +1,8 @@
 select 
 	format(t.Month_Start, 'yyyy-MM') as date
-	, round(100 * cast (sum(t.present) over (order by t.Month_Start) as float) / cast (sum(t.possible) over (order by t.Month_Start) as float), 2) cumulative
+	, round(100 * cast (sum(t.present) over (order by t.Month_Start) as float) / cast (sum(t.possible) over (order by t.Month_Start) as float), 1) cumulative
 from (
-	select 
+	select
 	Month_start,
 	sum(RGAT_Present) present,
 	sum(RGAT_Possible) possible

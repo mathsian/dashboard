@@ -146,13 +146,6 @@ attendance_dashboard = dbc.Container(children=[
                     },
                 ),
             ]),
-            html.Div(
-                id={
-                    "type": "text",
-                    "page": "summary",
-                    "tab": "attendance",
-                    "name": "low_cumulative"
-                }),
         ], ),
         align='start',
         justify='center',
@@ -335,13 +328,6 @@ def update_unauthorised_table(n_intervals):
             "tab": "attendance",
             "name": "low"
         }, "figure"),
-    Output(
-        {
-            "type": "text",
-            "page": "summary",
-            "tab": "attendance",
-            "name": "low_cumulative"
-        }, "children")
 ], [
     Input({
         "type": "interval",
@@ -376,7 +362,6 @@ def update_attendance_gauge(n_intervals, threshold):
         'sql/cumulative attendance monthly.sql')
     sql = sql_template.render()
     cumulative_df = pd.read_sql(sql, conn)
-    low_cumulative_text = f"low_cumulative of students have < {threshold}% overall attendance"
     # For monthly graph
     monthly_df = rems_df.query('date != "Year" & student_id == "All"')
     monthly_figure = go.Figure(
@@ -408,7 +393,7 @@ def update_attendance_gauge(n_intervals, threshold):
         "low": ["count", "sum"]
     }).reset_index()
     low_grouped['percent'] = round(
-        100 * low_grouped['low', 'sum'] / low_grouped['low', 'count'], 2)
+        100 * low_grouped['low', 'sum'] / low_grouped['low', 'count'], 1)
     low_grouped['low',
                 'cumcount'] = low_grouped['low',
                                           'count'].transform(pd.Series.cumsum)
@@ -416,7 +401,7 @@ def update_attendance_gauge(n_intervals, threshold):
                 'cumsum'] = low_grouped['low',
                                         'sum'].transform(pd.Series.cumsum)
     low_grouped['cumulative'] = round(
-        100 * low_grouped['low', 'cumsum'] / low_grouped['low', 'cumcount'], 2)
+        100 * low_grouped['low', 'cumsum'] / low_grouped['low', 'cumcount'], 1)
     low_figure = go.Figure(
         data=[
             go.Bar(x=low_grouped['date'],
@@ -440,4 +425,4 @@ def update_attendance_gauge(n_intervals, threshold):
         'student_id == "All" & date == "Year"')["attendance"].iat[0]
     last = rems_df.query('date != "Year"').query(
         'student_id == "All" & date == date.max()')["attendance"].iat[0]
-    return overall, last, monthly_figure, low_figure, low_cumulative_text
+    return overall, last, monthly_figure, low_figure
