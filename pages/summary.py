@@ -353,15 +353,14 @@ def update_attendance_gauge(n_intervals, threshold):
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
     sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.')))
-    sql_template = sql_jinja_env.get_template(
-        'sql/attendance by student monthly with subtotals.sql')
-    sql = sql_template.render()
-    rems_df = pd.read_sql(sql, conn)
+        loader=jinja2.FileSystemLoader(abspath('.'))
+    )
     sql_template = sql_jinja_env.get_template(
         'sql/cumulative attendance monthly.sql')
     sql = sql_template.render()
-    cumulative_df = pd.read_sql(sql, conn)
+    rems_df = pd.read_sql(sql, conn)
+    rems_df["low"] = (rems_df["attendance"] < threshold).astype('int')
+    rems_df["lowc"] = (rems_df["cumulative"] < threshold).astype('int')
     # For monthly graph
     monthly_df = rems_df.query('date != "Year" & student_id == "All"')
     monthly_figure = go.Figure(
@@ -372,9 +371,9 @@ def update_attendance_gauge(n_intervals, threshold):
                    textposition='auto',
                    marker_color='steelblue',
                    name="Monthly"),
-            go.Scatter(x=cumulative_df['date'],
-                       y=cumulative_df['cumulative'],
-                       text=cumulative_df['cumulative'],
+            go.Scatter(x=monthly_df['date'],
+                       y=monthly_df['cumulative'],
+                       text=monthly_df['cumulative'],
                        textposition='top center',
                        marker_color='gold',
                        name="Cumulative"),
@@ -388,20 +387,14 @@ def update_attendance_gauge(n_intervals, threshold):
     )
     # For low attendance graph
     low_df = rems_df.query("date != 'Year' and student_id != 'All'")
-    low_df["low"] = (low_df["attendance"] < threshold).astype('int')
     low_grouped = low_df.groupby("date").agg({
-        "low": ["count", "sum"]
+        "low": ["count", "sum"],
+        "lowc": ["count", "sum"]
     }).reset_index()
     low_grouped['percent'] = round(
         100 * low_grouped['low', 'sum'] / low_grouped['low', 'count'], 1)
-    low_grouped['low',
-                'cumcount'] = low_grouped['low',
-                                          'count'].transform(pd.Series.cumsum)
-    low_grouped['low',
-                'cumsum'] = low_grouped['low',
-                                        'sum'].transform(pd.Series.cumsum)
-    low_grouped['cumulative'] = round(
-        100 * low_grouped['low', 'cumsum'] / low_grouped['low', 'cumcount'], 1)
+    low_grouped['percentc'] = round(
+        100 * low_grouped['lowc', 'sum'] / low_grouped['lowc', 'count'], 1)
     low_figure = go.Figure(
         data=[
             go.Bar(x=low_grouped['date'],
@@ -411,8 +404,8 @@ def update_attendance_gauge(n_intervals, threshold):
                    marker_color='steelblue',
                    name="Monthly"),
             go.Scatter(x=low_grouped['date'],
-                       y=low_grouped['cumulative'],
-                       text=low_grouped['cumulative'],
+                       y=low_grouped['percentc'],
+                       text=low_grouped['percentc'],
                        textposition='top center',
                        marker_color='gold',
                        name="Cumulative")
