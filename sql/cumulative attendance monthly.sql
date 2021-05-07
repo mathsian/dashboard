@@ -18,7 +18,7 @@ from (
 	where past = 1
 	and StuType = 'SF'
 	and RGAT_Possible = 1
-	and REGT_Student_ID not like 'NE%'
+	and LiveStu = 1
 	group by cube(REGT_Student_ID, month_start)
 
 ) t

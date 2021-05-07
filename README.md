@@ -1,3 +1,6 @@
+# Architecture
+
+
 # Technologies
 
 ## CouchDB
@@ -31,32 +34,21 @@ The app definition, configuration and authorization logic. Imports content layou
 
 ## `index.py`
 
-Holds the content that is common to all tabs: the top level tabs, the containers for main, sidebar, and panel content.
+Defines the top level container, and holds the nav bar, filters and temporary data store objects. Runs the development server if executed.
 
-## `store.py`
-All the data required for all tab/subtabs is stored in the browser session whenever the cohort selection changes. This has the advantage of making transitions smooth but at the cost of higher browser memory demand. This may need to be reviewed. The alternative, of querying CouchDB on tab transitions would be fairly straightforward to implement but may result in slower transitions.
+## `nav.py`
 
-Also stored in the session is the ID of the currently selected student for use by the student report and kudos and concern forms.
+Links to the various pages of the dashboard. Callback on click sets the main content to the content of the appropriate page.
 
-## `pages` and `forms`
+## `filters.py`
 
-`pages` collects the modules responsible for top level division of content, or tabs.
+Hides and shows filters for cohort, subject and team.
 
-`forms` collects the modules responsible for form content.
+## `pages`
 
-In order to be able to register all the callbacks on initialisation, all the component IDs need to be in the layout from the start. Components that are not relevant to the current tab/subtab are then selectively hidden. Tabs are responsible for hiding their own content in their `register_callbacks` method.
+Collects the modules responsible for the content linked to from the navigation bar.
 
-Each tab, `cohort`, `team` and so on, has at least the following attributes, each of which is a list of html.Div:
-* `content` - the main content div(s)
-* `sidebar` - content for the left sidebar such as the student selection table
-* `panel` - content for the right hand panel, intended for subtab-specific content
-and an attribute `subtabs` which is a list of dcc.Tab.
-
-Each tab also implements a method `register_callbacks` which controls all the callback functionality specific to that tab.
-
-## `dispatch.py`
-
-The `dispatch` module is currently responsible for hiding filter dropdowns that are not relevant to the current context. By hiding rather than removing this content from the layout we ensure that dropdown selections are remembered between tab transitions.
+A typical page will have a list of tabs with callback logic to set the page content.
 
 ## `data.py`
 
@@ -77,3 +69,7 @@ One off methods for creating indices on the database
 ## `random_data.py`
 
 Generate random testing data and push to database
+
+## `static_report.py`
+
+Generate a pdf of a student report using `template.tex`
