@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 from app import app
 import filters
 import nav
-import store
 
 app.layout = html.Div([
     dcc.Location(id="url", refresh=False),
