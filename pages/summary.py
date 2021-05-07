@@ -15,6 +15,8 @@ import numpy as np
 import curriculum
 from app import app
 import data
+from dash_extensions.javascript import Namespace
+ns = Namespace("myNameSpace", "tabulator")
 
 tabs = ["Attendance", "Unauthorised", "Missing"]
 content = [
@@ -159,31 +161,43 @@ unauthorised_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        "layout": "fitData"
+        "layout": "fitData",
+        "groupBy": "date",
+        "groupHeader": ns("groupHeader"),
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[{
         "title": "Date",
-        "field": "date"
+        "field": "date",
+        "visible": False,
     }, {
         "title": "Given name",
         "field": "given_name",
         "headerFilter": True,
+        "widthGrow": 3,
     }, {
         "headerFilter": True,
         "title": "Surname",
-        "field": "family_name"
+        "field": "family_name",
+        "widthGrow": 3,
     }, {
-        "headerFilter": True,
-        "title": "Subject",
-        "field": "subject_code"
+        "title": "Marks",
+        "field": "marks",
+        "widthGrow": 1,
     }, {
-        "title": "Day",
-        "field": "day"
+        "title": "Alert",
+        "formatter": ns("alertIcon"),
+        "widthGrow": 1,
     }, {
-        "title": "Period",
-        "field": "period"
-    }])
+        "title": "Present same day",
+        "field": "present_today",
+        "visible": False,
+    }, {
+        "title": "Authorised same day",
+        "field": "authorised_today",
+        "visible": False,
+    }],
+)
 missing_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
@@ -214,7 +228,7 @@ validation_layout = content + [
 tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
     "summary-tab-unauthorised":
-    [dbc.Col([html.H3("Last 10 days"), unauthorised_table])],
+    [dbc.Col([unauthorised_table])],
     "summary-tab-missing":
     [dbc.Col([html.H3("Missing registers"), missing_table])]
 }
@@ -288,14 +302,9 @@ def update_unauthorised_table(n_intervals):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
-    date_end = datetime.date.today()
-    date_start = date_end - datetime.timedelta(days=10)
-    template_vars = {
-        "date_end": date_end.isoformat(),
-        "date_start": date_start.isoformat(),
-    }
-    sql = sql_template.render(template_vars)
+    sql = sql_template.render()
     df = pd.read_sql(sql, conn)
+    print(df)
     return df.to_dict(orient='records')
 
 
@@ -353,8 +362,7 @@ def update_attendance_gauge(n_intervals, threshold):
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
     sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.'))
-    )
+        loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template(
         'sql/cumulative attendance monthly.sql')
     sql = sql_template.render()

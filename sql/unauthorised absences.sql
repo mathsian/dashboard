@@ -1,23 +1,16 @@
-select
-	format(REGS_Session_Date, 'dddd') as day
-	, format(REGS_Session_date, 'yyyy-MM-dd') as date
-	, STUD_Surname as family_name
-	, CASE WHEN STUD_Known_As = '' THEN STUD_Forename_1 ELSE STUD_Known_As END as given_name
-	, TTGP_Provision_Code as subject_code
-	, TTPD_Period_Description as period
-from remslive.dbo.REGDropin
-join remslive.dbo.REGHrghdr
-	on REGD_REGH_ISN = REGH_ISN
-join remslive.dbo.REGSrgsessn
-	on REGD_REGH_ISN = REGS_REGH_ISN
-	and REGD_Session_No = REGS_Session_No
-join remslive.dbo.STUDstudent
-	on REGD_Student_ID = STUD_Student_ID
-join remslive.dbo.TTGPTimetableGroups
-	on TTGP_ISN = REGH_Group_ISN
-join remslive.dbo.TTPDPeriods
-	on TTPD_ISN = REGH_Period_ISN
-where REGS_Session_Date <= CAST('{{ date_end }}' as date)
-	and REGS_Session_Date >= CAST('{{ date_start }}' as date)
-	and REGD_Attendance_Mark = 'N'
-order by REGS_Session_Date desc, STUD_Surname, given_name, TTGP_Provision_Code
+select top (50) with ties 
+	STUD_Surname family_name
+	, CASE WHEN STUD_Known_As = '' THEN STUD_Forename_1 ELSE STUD_Known_As END given_name -- if no preferred name then use the forename field
+	, format(REGS_Session_Date, 'yyyy-MM-dd') date
+	, iif(sum(Authorised) > 0, 1, 0) authorised_today
+	, iif(sum(RGAT_Present) > 0, 1, 0) present_today
+	, string_agg(isnull(regd_attendance_mark, '_'), '') within group (order by regh_start_time) marks
+from reports.dash.vw_Current_Full_Marks
+left join remslive.dbo.STUDstudent
+	on REGT_Student_ID = STUD_Student_ID 
+where past=1
+	and StuType = 'SF'
+	and LiveStu = 1
+group by REGS_Session_Date, REGT_Student_ID, STUD_Surname, STUD_Forename_1, STUD_Known_As
+having 	charindex('N', string_agg(regd_attendance_mark, '')) > 0
+order by date desc
