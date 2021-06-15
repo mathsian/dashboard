@@ -206,6 +206,7 @@ missing_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
+        "groupBy": ["date", "period"],
         "layout": "fitData"
     },
     theme='bootstrap/tabulator_bootstrap4',
@@ -221,6 +222,9 @@ missing_table = dash_tabulator.DashTabulator(
     }, {
         "title": "Lecturer",
         "field": "lecturer"
+    }, {
+        "title": "Missing marks",
+        "field": "missing"
     }])
 validation_layout = content + [
     attendance_dashboard, unauthorised_table, missing_table
@@ -265,12 +269,8 @@ def update_missing_table(n_intervals):
     )
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
-    sql_template = sql_jinja_env.get_template('sql/missing registers.sql')
-    date_end = datetime.date.today()
-    date_start = date_end - datetime.timedelta(days=10)
+    sql_template = sql_jinja_env.get_template('sql/missing marks.sql')
     template_vars = {
-        "date_end": date_end.isoformat(),
-        "date_start": date_start.isoformat(),
     }
     sql = sql_template.render(template_vars)
     df = pd.read_sql(sql, conn)
