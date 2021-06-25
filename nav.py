@@ -4,59 +4,77 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State, ALL, MATCH
 from dash import callback_context as cc
 from app import app
-from pages import summary, pastoral, academic, student
+from pages import summary, pastoral, academic, student, my
 
 url_map = {
     "/": summary,
     "/pastoral": pastoral,
     "/academic": academic,
     "/student": student,
+    "/my": my,
 }
 
-layout = dbc.Nav(
-    children=[
-        dbc.NavItem(
-            children=dbc.NavLink(
-                id={"type": "nav", "pathname": "/"}, children="Summary", href="/"
-            ),
-        ),
-        dbc.NavItem(
-            children=dbc.NavLink(
-                id={"type": "nav", "pathname": "/pastoral"},
-                children="Pastoral",
-                href="/pastoral",
-            ),
-        ),
-        dbc.NavItem(
-            children=dbc.NavLink(
-                id={"type": "nav", "pathname": "/academic"},
-                children="Academic",
-                href="/academic",
-            ),
-        ),
-        dbc.NavItem(
-            children=dbc.NavLink(
-                id={"type": "nav", "pathname": "/student"},
-                children="Student",
-                href="/student",
-            ),
-        ),
-    ],
-    vertical=True,
-    justified=True,
-    pills=True,
-)
+layout = dbc.NavbarSimple(children=[
+    dbc.NavItem(children=dbc.NavLink(id={
+        "type": "nav",
+        "pathname": "/"
+    },
+                                     children="Summary",
+                                     href="/"), ),
+    dbc.NavItem(children=dbc.NavLink(
+        id={
+            "type": "nav",
+            "pathname": "/pastoral"
+        },
+        children="Pastoral",
+        href="/pastoral",
+    ), ),
+    dbc.NavItem(children=dbc.NavLink(
+        id={
+            "type": "nav",
+            "pathname": "/academic"
+        },
+        children="Academic",
+        href="/academic",
+    ), ),
+    dbc.NavItem(children=dbc.NavLink(
+        id={
+            "type": "nav",
+            "pathname": "/student"
+        },
+        children="Student",
+        href="/student",
+    ), ),
+    dbc.NavItem(children=dbc.NavLink(
+        id={
+            "type": "nav",
+            "pathname": "/my"
+        },
+        children="My stuff",
+        href="/my",
+    ), ),
+],
+                          brand="data@ada",
+                          brand_href="/",
+                          color='primary',
+                          sticky='top',
+                          dark=True)
+
 
 # Get the relevant page content based on the url
 @app.callback(
-    Output("content", "children"), [Input("url", "pathname")],
+    Output("content", "children"),
+    [Input("url", "pathname")],
 )
 def display_content(pathname):
     return url_map.get(pathname, summary).content
 
 
 @app.callback(
-    [Output({"type": "nav", "pathname": p}, "active") for p in url_map.keys()],
+    [Output({
+        "type": "nav",
+        "pathname": p
+    }, "active") for p in url_map.keys()],
     [Input("url", "pathname")],
 )
 def update_active_link(pathname):
