@@ -318,21 +318,21 @@ def update_concern_table(changed, dataChanged, deleted):
         row = deleted.get("row")
         doc = data.get_doc(row.get("_id"))
         data.delete_docs([doc])
-        concern_docs = data.get_data("concern", "from", [session.get('email')])
-        concern_df = pd.DataFrame(concern_docs)
-        student_ids = list(concern_df["student_id"].unique())
-        enrolment_docs = data.get_data("enrolment", "_id", student_ids)
-        enrolment_df = pd.DataFrame(enrolment_docs)
-        merged_df = concern_df.merge(enrolment_df,
-                                     left_on="student_id",
-                                     right_on="_id",
-                                     how="inner")
-        merged_df = merged_df.rename(columns={
-            "_id_x": "_id",
-            "type_x": "type",
-            "_rev_x": "_rev"
-        })[[
-            "_id", "_rev", "date", "given_name", "family_name", "category",
-            "discrimination", "description"
-        ]]
+    concern_docs = data.get_data("concern", "from", [session.get('email')])
+    concern_df = pd.DataFrame(concern_docs)
+    student_ids = list(concern_df["student_id"].unique())
+    enrolment_docs = data.get_data("enrolment", "_id", student_ids)
+    enrolment_df = pd.DataFrame(enrolment_docs)
+    merged_df = concern_df.merge(enrolment_df,
+                                    left_on="student_id",
+                                    right_on="_id",
+                                    how="inner")
+    merged_df = merged_df.rename(columns={
+        "_id_x": "_id",
+        "type_x": "type",
+        "_rev_x": "_rev"
+    })[[
+        "_id", "_rev", "date", "given_name", "family_name", "category",
+        "discrimination", "description"
+    ]]
     return merged_df.to_dict(orient='records')
