@@ -1,3 +1,4 @@
+import filters
 import dash_tabulator
 import dash
 import plotly.express as px
@@ -16,13 +17,9 @@ import data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
+
 ns = Namespace("myNameSpace", "tabulator")
 
-academic_header = html.H4(id={
-    "type": "text",
-    "page": "academic",
-    "name": "header"
-})
 assessment_filter = dcc.Dropdown(id={
     "type": "dropdown",
     "page": "academic",
@@ -31,31 +28,53 @@ assessment_filter = dcc.Dropdown(id={
 
 tabs = ["View", "Edit"]
 content = [
-    dbc.Card(
-        [dbc.CardHeader(academic_header),
-         dbc.CardBody(assessment_filter)]),
     dbc.Card([
-        dbc.CardHeader(
-            dbc.Tabs(
-                [
-                    dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
-                    for t in tabs
+        dbc.CardHeader([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Tabs([
+                        dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
+                        for t in tabs
+                    ],
+                             id=f"academic-tabs",
+                             card=True,
+                             active_tab=f"academic-tab-{tabs[0].lower()}")
                 ],
-                id=f"academic-tabs",
-                card=True,
-                active_tab=f"academic-tab-{tabs[0].lower()}",
-            )),
+                        align='end',
+                        width=7,
+                        lg=3),
+                dbc.Col([filters.cohort], width=7, lg=3),
+                dbc.Col([filters.subject], width=7, lg=3),
+                dbc.Col(assessment_filter),
+            ],
+                    align='end')
+        ]),
         dbc.CardBody(dbc.Row(id="academic-content")),
-    ])
+    ]),
 ]
+
 subject_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "academic",
         "tab": "edit"
     },
-    options={"placeholder": "Select a subject", "resizableColumns": False, "index": "_id", "layout": "fitDataStretch", "clipboard": True, "selectable": False, "clipboardPasteAction": ns("clipboardPasteAction"), "clipboardCopySelector": "table", "clipboardPasted": ns("clipboardPasted")},
-    downloadButtonType={"css": "btn btn-primary", "text": "Download", "type": "csv"},
+    options={
+        "placeholder": "Select a subject",
+        "resizableColumns": False,
+        "index": "_id",
+        "layout": "fitDataStretch",
+        "clipboard": True,
+        "selectable": False,
+        "clipboardPasteAction": ns("clipboardPasteAction"),
+        "clipboardCopySelector": "table",
+        "clipboardPasted": ns("clipboardPasted")
+    },
+    downloadButtonType={
+        "css": "btn btn-primary",
+        "text": "Download",
+        "type": "csv"
+    },
     theme='bootstrap/tabulator_bootstrap4',
 )
 
@@ -103,8 +122,7 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                           ],
                                           value="gc-ma")
 validation_layout = content + [
-    subject_table, assessment_graph,
-    assessment_colour_dropdown
+    subject_table, assessment_graph, assessment_colour_dropdown
 ]
 tab_map = {
     "academic-tab-view": [
@@ -162,7 +180,7 @@ def get_content(active_tab):
     "filter": ALL
 }, "value")])
 def update_subject_table(assessment_name, changed, row_data, filter_value):
-    _, _, subject_code = filter_value
+    cohort, subject_code = filter_value
     # If the user hasn't selected a subject/assessment yet
     if not assessment_name:
         return [], []
@@ -171,27 +189,32 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
     if "cellEdited" in trigger:
         row = changed.get("row")
         doc = data.get_doc(row.get("_id_x"))
-        doc.update({"grade": row.get("grade"),"comment": row.get("comment")})
+        doc.update({"grade": row.get("grade"), "comment": row.get("comment")})
         data.save_docs([doc])
     elif "clipboardPasted" in trigger:
         # If we're here because data has been pasted
-        assessment_docs = data.get_data("assessment", "assessment_subject", [(assessment_name, subject_code)])
+        assessment_docs = data.get_data("assessment", "assessment_subject",
+                                        [(assessment_name, subject_code)])
         assessment_df = pd.DataFrame.from_records(assessment_docs)
         try:
-            pasted_df = pd.DataFrame.from_records(row_data)[["student_id", "grade", "comment"]]
+            pasted_df = pd.DataFrame.from_records(row_data)[[
+                "student_id", "grade", "comment"
+            ]]
         except KeyError:
             # Silently fail if student_id, grade, and comment fields were not present
             print("Problematic row data: ", row_data)
         else:
             pasted_df = pasted_df.replace('\r', '', regex=True)
-            merged_df = pd.merge(assessment_df,
-                                pasted_df,
-                                on="student_id")
-            merged_df = merged_df.rename(columns={"grade_y": "grade", "comment_y": "comment"}).drop(["grade_x", "comment_x"], axis=1)
+            merged_df = pd.merge(assessment_df, pasted_df, on="student_id")
+            merged_df = merged_df.rename(columns={
+                "grade_y": "grade",
+                "comment_y": "comment"
+            }).drop(["grade_x", "comment_x"], axis=1)
             merged_docs = merged_df.to_dict(orient='records')
             data.save_docs(merged_docs)
 
-    assessment_docs = data.get_data("assessment", "assessment_subject", [(assessment_name, subject_code)])
+    assessment_docs = data.get_data("assessment", "assessment_subject",
+                                    [(assessment_name, subject_code)])
     assessment_df = pd.DataFrame.from_records(assessment_docs)
     student_ids = assessment_df["student_id"].tolist()
     enrolment_df = pd.DataFrame.from_records(
@@ -240,7 +263,9 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
             "title": "Comment",
             "field": "comment",
             "editor": "textarea",
-            "editorParams": {"verticalNavigation": "hybrid"},
+            "editorParams": {
+                "verticalNavigation": "hybrid"
+            },
             "formatter": "plaintext",
         },
     ]
@@ -273,7 +298,7 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
         "filter": ALL
     }, "value")])
 def update_subject_graph(assessment_name, colour_code, filter_value):
-    _, _, subject_code = filter_value
+    cohort, subject_code = filter_value
     if not assessment_name:
         return {
             "layout": {
@@ -368,26 +393,48 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         "page": "academic",
         "name": "assessment"
     }, "value"),
-    Output({
-        "type": "text",
-        "page": "academic",
-        "name": "header"
-    }, "children"),
 ], [Input({
     "type": "filter-dropdown",
     "filter": ALL
 }, "value")])
 def update_assessment_dropdown(filter_value):
-    cohort, _, subject_code = filter_value
+    cohort, subject_code = filter_value
     if not (cohort and subject_code):
-        return [], "", f"Cohort {cohort}"
+        return [], ""
     assessment_df = pd.DataFrame.from_records(
         data.get_data("assessment", "subject_code", subject_code))
     group_docs = data.get_data("group", "subject_code", subject_code)
     subject = group_docs[0].get("subject_name")
     if assessment_df.empty:
-        return [], "", f"Cohort {cohort}, {subject}"
+        return [], ""
     assessment_list = assessment_df.sort_values(
         by="date", ascending=False)["assessment"].unique().tolist()
     options = [{"label": a, "value": a} for a in assessment_list]
-    return options, options[0].get("value"), f"Cohort {cohort}, {subject}"
+    return options, options[0].get("value")
+
+
+@app.callback(
+    [
+        Output({
+            "type": "filter-dropdown",
+            "filter": "subject"
+        }, "options"),
+        Output({
+            "type": "filter-dropdown",
+            "filter": "subject"
+        }, "value"),
+    ],
+    [Input({
+        "type": "filter-dropdown",
+        "filter": "cohort"
+    }, "value")],
+)
+def update_subject_filter(cohort_value):
+    subjects = data.get_subjects(cohort_value)
+    return [
+        [{
+            "label": s[0],
+            "value": s[0]
+        } for s in subjects],
+        None,
+    ]

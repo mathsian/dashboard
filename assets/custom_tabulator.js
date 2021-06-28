@@ -13,6 +13,15 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
             formatted = moment(value, "YYYY-MM-DD").format("dddd MMMM Do yyyy") + ", (" + count + ")";
             return formatted;
             },
+        groupHeader2: [
+            function(value, count, data) {
+                formatted = moment(value, "YYYY-MM-DD").format("dddd MMMM Do yyyy") + ", (" + count + ")";
+                return formatted;
+            },
+            function(value, count, data) {
+                return value + ", (" + count + ")";
+            }
+        ],
         alertIcon: function(cell, formatterParams, onRendered) {
             data = cell.getData();
             value = "";
@@ -23,6 +32,12 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
                 value += "<i class='fas fa-question'></i>";
             }
             return value;
+        },
+        deleteRow: function(e, cell) {
+            row = cell.getRow();
+            if(this.confirm("Delete this concern about " + row.getData()["given_name"]+"?")){
+                row.delete();
+            }
         }
     }
 });

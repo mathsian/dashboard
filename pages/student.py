@@ -1,3 +1,4 @@
+import filters
 from flask import session
 import dash_core_components as dcc
 import dash_html_components as html
@@ -292,23 +293,10 @@ concern_form = dbc.Row(children=[
 
 tabs = ["Report", "Kudos", "Concern"]
 content = [
-    dbc.Row([
-        dbc.Col(
-            width=4,
-            children=dbc.Card([
-                dbc.CardHeader("Student list"),
-                dbc.CardBody(children=[
-                    html.Div(student_list),
-                    html.Br(),
-                    html.Div(student_list_clear_button),
-                ])
-            ],
-                              style={"height": "95vh"}),
-        ),
-        dbc.Col(
-            width=8,
-            children=dbc.Card([
-                dbc.CardHeader(
+    dbc.Card([
+        dbc.CardHeader([
+            dbc.Row([
+                dbc.Col([
                     dbc.Tabs(
                         [
                             dbc.Tab(label=t, tab_id=f"student-tab-{t.lower()}")
@@ -317,9 +305,21 @@ content = [
                         id=f"student-tabs",
                         card=True,
                         active_tab=f"student-tab-{tabs[0].lower()}",
-                    )),
-                dbc.CardBody(id=f"student-content", children=[]),
-            ]))
+                    )
+                ], align='end'),
+                dbc.Col([filters.cohort]),
+                dbc.Col([filters.team]),
+            ])
+        ]),
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    student_list_clear_button,
+                    student_list
+                ], width=3),
+                dbc.Col([html.Div(id=f"student-content")])
+            ])
+        ])
     ])
 ]
 
@@ -385,7 +385,7 @@ def update_student_list_badge(selected_student_ids):
     ],
 )
 def update_student_table(filter_value, n_clicks):
-    cohort, team, _ = filter_value
+    cohort, team = filter_value
     if cohort and team:
         enrolment_docs = data.get_data("enrolment", "cohort_team",
                                        (cohort, team))

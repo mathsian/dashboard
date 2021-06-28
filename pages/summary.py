@@ -41,118 +41,111 @@ content = [
                  interval=60_000,
                  n_intervals=0),
 ]
-attendance_dashboard = dbc.Container(children=[
-    dbc.Row(
-        [
-            dbc.Col(daq.Gauge(
-                id={
-                    "type": "gauge",
-                    "page": "summary",
-                    "tab": "attendance",
-                    "name": "last"
-                },
-                label="This month",
-                labelPosition="bottom",
-                size=200,
-                scale={
-                    "start": 0,
-                    "interval": 5,
-                    "labelInterval": 2,
-                },
-                showCurrentValue=True,
-                units="%",
-                value=0,
-                min=0,
-                max=100,
-            ),
-                    width=4),
-            dbc.Col(daq.Gauge(
-                id={
-                    "type": "gauge",
-                    "page": "summary",
-                    "tab": "attendance",
-                    "name": "cumulative"
-                },
-                label="Overall",
-                labelPosition="bottom",
-                size=200,
-                scale={
-                    "start": 0,
-                    "interval": 5,
-                    "labelInterval": 2,
-                },
-                showCurrentValue=True,
-                units="%",
-                value=0,
-                min=0,
-                max=100,
-            ),
-                    width=4)
-        ],
-        align='center',
-        justify='center',
-    ),
-    dbc.Row(
-        dbc.Col([
-            dcc.Graph(id={
-                "type": "graph",
-                "page": "summary",
-                "tab": "attendance",
-                "name": "monthly"
-            },
-                      figure={
-                          "layout": {
-                              "xaxis": {
-                                  "visible": False
-                              },
-                              "yaxis": {
-                                  "visible": False
+gauge_last = daq.Gauge(
+    id={
+        "type": "gauge",
+        "page": "summary",
+        "tab": "attendance",
+        "name": "last"
+    },
+    label="This month",
+    labelPosition="bottom",
+    size=200,
+    scale={
+        "start": 0,
+        "interval": 5,
+        "labelInterval": 2,
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+)
+gauge_cumulative = daq.Gauge(
+    id={
+        "type": "gauge",
+        "page": "summary",
+        "tab": "attendance",
+        "name": "cumulative"
+    },
+    label="Overall",
+    labelPosition="bottom",
+    size=200,
+    scale={
+        "start": 0,
+        "interval": 5,
+        "labelInterval": 2,
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+)
+graph_monthly = dcc.Graph(id={
+    "type": "graph",
+    "page": "summary",
+    "tab": "attendance",
+    "name": "monthly"
+},
+                          figure={
+                              "layout": {
+                                  "xaxis": {
+                                      "visible": False
+                                  },
+                                  "yaxis": {
+                                      "visible": False
+                                  }
                               }
-                          }
-                      },
-                      config={"displayModeBar": False}),
-            dcc.Graph(id={
-                "type": "graph",
-                "page": "summary",
-                "tab": "attendance",
-                "name": "low"
-            },
-                      figure={
-                          "layout": {
-                              "xaxis": {
-                                  "visible": False
-                              },
-                              "yaxis": {
-                                  "visible": False
-                              }
-                          }
-                      },
-                      config={"displayModeBar": False}),
-            html.Div([
-                dcc.Slider(
-                    id={
-                        "type": "slider",
-                        "page": "summary",
-                        "tab": "attendance",
-                        "name": "threshold",
-                    },
-                    min=0,
-                    max=100,
-                    value=92,
-                    marks={
-                        60: '60',
-                        80: '80',
-                        90: '90',
-                        92: '92',
-                        95: '95',
-                    },
-                ),
-            ]),
-        ], ),
-        align='start',
-        justify='center',
-    )
-])
+                          },
+                          config={"displayModeBar": False})
+graph_threshold = dcc.Graph(id={
+    "type": "graph",
+    "page": "summary",
+    "tab": "attendance",
+    "name": "low"
+},
+                            figure={
+                                "layout": {
+                                    "xaxis": {
+                                        "visible": False
+                                    },
+                                    "yaxis": {
+                                        "visible": False
+                                    }
+                                }
+                            },
+                            config={"displayModeBar": False})
+threshold_slider = dcc.Slider(
+    id={
+        "type": "slider",
+        "page": "summary",
+        "tab": "attendance",
+        "name": "threshold",
+    },
+    min=0,
+    max=100,
+    value=92,
+    marks={
+        60: '60',
+        80: '80',
+        90: '90',
+        92: '92',
+        95: '95',
+    },
+)
+attendance_dashboard = [
+    dbc.Row([
+        dbc.Col(gauge_last),
+        dbc.Col(gauge_cumulative, style={"float": "left"})
+    ],
+            align='center',
+            justify='center'),
+    dbc.Row(dbc.Col([graph_monthly, graph_threshold, threshold_slider]),
+            align='start',
+            justify='center')
+]
 unauthorised_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
@@ -207,18 +200,21 @@ missing_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": False,
         "groupBy": ["date", "period"],
+        "groupHeader": ns("groupHeader2"),
         "layout": "fitData"
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[{
         "title": "Date",
-        "field": "date"
+        "field": "date",
+        "visible": False,
     }, {
         "title": "Register",
         "field": "register"
     }, {
         "title": "Period",
-        "field": "period"
+        "field": "period",
+        "visible": False,
     }, {
         "title": "Lecturer",
         "field": "lecturer"
@@ -231,10 +227,9 @@ validation_layout = content + [
 ]
 tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
-    "summary-tab-unauthorised":
-    [dbc.Col([unauthorised_table])],
+    "summary-tab-unauthorised": [dbc.Col([unauthorised_table])],
     "summary-tab-missing":
-    [dbc.Col([html.H3("Missing registers"), missing_table])]
+    [dbc.Col([html.H3("Missing marks"), missing_table])]
 }
 
 
@@ -270,8 +265,7 @@ def update_missing_table(n_intervals):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template('sql/missing marks.sql')
-    template_vars = {
-    }
+    template_vars = {}
     sql = sql_template.render(template_vars)
     df = pd.read_sql(sql, conn)
     return df.to_dict(orient='records')
@@ -304,7 +298,6 @@ def update_unauthorised_table(n_intervals):
     sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
     sql = sql_template.render()
     df = pd.read_sql(sql, conn)
-    print(df)
     return df.to_dict(orient='records')
 
 

@@ -6,38 +6,20 @@ from app import app
 import filters
 import nav
 
-app.layout = html.Div([
+app.layout = dbc.Container([
     dcc.Location(id="url", refresh=False),
-    dbc.Container(
-        dbc.Row(children=[
-            dbc.Col(
-                dbc.Nav(
-                    [
-                        dbc.Card([
-                            dbc.CardHeader("data@ada"),
-                            dbc.CardBody(nav.layout)
-                        ]),
-                        html.Br(),
-                        dbc.Card([
-                            dbc.CardHeader("Filter"),
-                            dbc.CardBody(filters.layout)
-                        ]),
-                    ],
-                    style={"position": "fixed"},
-                    vertical=True
-                ),
-                width=2,
-            ),
-            dbc.Col(id="content", width=10),
-        ]),
-        fluid=True,
-    ),
+    dbc.Row(children=[
+        dbc.Col([
+                nav.layout,
+            html.Div(id="content")
+            ]),
+    ]),
     dcc.Store(id="store-data", data={}),
     dcc.Store(id="selected-student-ids", data=[]),
-])
+], fluid=True)
 
 # Get all content in the validation layout to avoid callback errors
-app.validation_layout = [nav.layout, filters.layout] + [
+app.validation_layout = [nav.layout] + [
     page.validation_layout for page in nav.url_map.values()
 ]
 
