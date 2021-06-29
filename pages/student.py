@@ -11,63 +11,50 @@ from plotly.subplots import make_subplots
 from dash import callback_context as cc
 import datetime
 from flask import session
-
+import dash_tabulator
 from app import app
 import data
 import curriculum
 
 # The student list is on a separate card alongside the tabs
 # so that it isn't updated when the tab changes
-student_list = dash_table.DataTable(
+student_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "student"
     },
+    options={
+        "resizableColumns": False,
+        "selectable": "true",
+    },
+    theme='bootstrap/tabulator_bootstrap4',
     columns=[
         {
-            "name": "Given Name",
-            "id": "given_name"
+            "formatter": "rowSelection",
+            "titleFormatter": "rowSelection",
+            "horizAlign": "center",
+            "headerSort": False,
+            "widthGrow": 1,
         },
         {
-            "name": "Family Name",
-            "id": "family_name"
+            "title": "Student ID",
+            "field": "student_id",
+            "visible": False,
+        },
+        {
+            "title": "Given name",
+            "field": "given_name",
+            "widthGrow": 3,
+            "headerFilter": True,
+        },
+        {
+            "title": "Family name",
+            "field": "family_name",
+            "widthGrow": 6,
+            "headerFilter": True,
         },
     ],
-    style_table={
-        "overflowY": "auto",
-        "height": "70vh",
-    },
-    style_cell={
-        "maxWidth": "20px",
-        "textAlign": "left",
-        "overflow": "hidden",
-    },
-    style_as_list_view=True,
-    row_selectable="multi",
-    sort_action="native",
-    filter_action="native",
-    sort_by=[{
-        "column_id": "given_name",
-        "direction": "asc"
-    }],
 )
-student_list_clear_button = dbc.Button(id={
-    "type": "button",
-    "page": "student",
-    "name": "clear"
-},
-                                       children=[
-                                           "Clear",
-                                           dbc.Badge(id={
-                                               "type": "badge",
-                                               "page": "student",
-                                               "name": "clear"
-                                           },
-                                                     children="0",
-                                                     color="light",
-                                                     className="ml-1")
-                                       ],
-                                       color="secondary")
 blank_attendance = {
     "layout": {
         "xaxis": {
@@ -306,26 +293,22 @@ content = [
                         card=True,
                         active_tab=f"student-tab-{tabs[0].lower()}",
                     )
-                ], align='end'),
+                ],
+                        align='end'),
                 dbc.Col([filters.cohort]),
                 dbc.Col([filters.team]),
             ])
         ]),
         dbc.CardBody([
             dbc.Row([
-                dbc.Col([
-                    student_list_clear_button,
-                    student_list
-                ], width=3),
-                dbc.Col([html.Div(id=f"student-content")])
+                dbc.Col([student_table], width=3),
+                dbc.Col([html.Div(id=f"student-content")], width=9)
             ])
         ])
     ])
 ]
 
-validation_layout = content + report + [
-    kudos_form, concern_form
-]
+validation_layout = content + report + [kudos_form, concern_form]
 tab_map = {
     "student-tab-report": report,
     "student-tab-kudos": kudos_form,
@@ -341,50 +324,19 @@ def get_content(active_tab):
     return tab_map.get(active_tab)
 
 
-@app.callback([
-    Output({
-        "type": "badge",
-        "page": "student",
-        "name": "clear"
-    }, "children"),
-    Output({
-        "type": "button",
-        "page": "student",
-        "name": "clear"
-    }, "color")
-], [Input("selected-student-ids", "data")])
-def update_student_list_badge(selected_student_ids):
-    l = len(selected_student_ids)
-    if l == 0:
-        return 0, "secondary"
-    else:
-        return l, "primary"
-
-
 @app.callback(
-    [
-        Output({
-            "type": "table",
-            "page": "student"
-        }, "data"),
-        Output({
-            "type": "table",
-            "page": "student"
-        }, "selected_rows"),
-    ],
+    Output({
+        "type": "table",
+        "page": "student"
+    }, "data"),
     [
         Input({
             "type": "filter-dropdown",
             "filter": ALL
         }, "value"),
-        Input({
-            "type": "button",
-            "page": "student",
-            "name": "clear",
-        }, "n_clicks")
     ],
 )
-def update_student_table(filter_value, n_clicks):
+def update_student_table(filter_value):
     cohort, team = filter_value
     if cohort and team:
         enrolment_docs = data.get_data("enrolment", "cohort_team",
@@ -394,8 +346,8 @@ def update_student_table(filter_value, n_clicks):
     else:
         return [], []
     for doc in enrolment_docs:
-        doc["id"] = doc["_id"]
-    return enrolment_docs, []
+        doc["student_id"] = doc["_id"]
+    return enrolment_docs
 
 
 @app.callback([
@@ -458,22 +410,28 @@ def update_student_report(selected_student_ids):
     assessment_docs = data.get_data("assessment", "student_id", student_id)
     assessment_children = []
     if len(assessment_docs) > 0:
-        assessment_df = pd.DataFrame.from_records(assessment_docs).set_index(['subject_name', 'assessment'])
+        assessment_df = pd.DataFrame.from_records(assessment_docs).set_index(
+            ['subject_name', 'assessment'])
         for subject_name in assessment_df.index.unique(level=0):
             assessment_children.append(html.H4(subject_name))
             for assessment in assessment_df.loc[subject_name].index.unique():
                 assessment_children.append(html.H5(assessment))
-                results = assessment_df.query("subject_name == @subject_name and assessment == @assessment")
+                results = assessment_df.query(
+                    "subject_name == @subject_name and assessment == @assessment"
+                )
                 for result in results.to_dict(orient='records'):
                     assessment_children.append(result.get("grade", ""))
-                    assessment_children.append(html.Blockquote(result.get("comment", "")))
+                    assessment_children.append(
+                        html.Blockquote(result.get("comment", "")))
     kudos_docs = data.get_data("kudos", "student_id", student_id)
     concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
-    attendance_df = pd.DataFrame.from_records(attendance_docs).query("subtype == 'weekly'")
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
+        "subtype == 'weekly'")
     attendance_df['percent'] = round(100 * attendance_df['actual'] /
                                      attendance_df['possible'])
-    attendance_year = round(100*attendance_df['actual'].sum()/attendance_df['possible'].sum())
+    attendance_year = round(100 * attendance_df['actual'].sum() /
+                            attendance_df['possible'].sum())
     attendance_figure = go.Figure()
     attendance_figure.add_trace(
         go.Bar(x=attendance_df["date"],
@@ -540,7 +498,8 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
                          n_clicks, button_color):
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
-        intro = html.Div(f'Award {points} {ada_value} kudos from {session.get("email")} to')
+        intro = html.Div(
+            f'Award {points} {ada_value} kudos from {session.get("email")} to')
         desc = html.Div(["For ", html.Blockquote(description)
                          ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
