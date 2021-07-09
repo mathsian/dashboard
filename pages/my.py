@@ -20,7 +20,12 @@ content = [
                 id="my-tabs",
                 card=True,
                 active_tab=f"my-tab-{tabs[0].lower()}")),
-        dbc.CardBody(dbc.Row(id="my-content"))
+        dbc.CardBody(dbc.Row(id="my-content"),
+style={
+        "max-height": "70vh",
+        "overflow-y": "auto"
+    },
+        )
     ])
 ]
 
@@ -108,6 +113,7 @@ kudos_table = dash_tabulator.DashTabulator(
     ],
     theme='bootstrap/tabulator_bootstrap4',
     options={
+        "maxHeight": "95%",
         "index": "_id",
     },
 )
@@ -199,6 +205,7 @@ concern_table = dash_tabulator.DashTabulator(
     ],
     theme='bootstrap/tabulator_bootstrap4',
     options={
+        "maxHeight": "95%",
         "index": "_id",
     },
 )

@@ -11,7 +11,7 @@
 \setromanfont{FSSinclair-Medium}
 
 % smaller margins
-\usepackage[margin=1cm]{geometry}
+\usepackage[margin=0.6cm]{geometry}
 
 % customise sections
 % need explicit to access parameter number to get the section on the left
@@ -68,41 +68,8 @@
         Team \VAR{team}}}
 \tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
 \end{center}
-% Attendance bar chart
-\section*{\VAR{attendance_cumulative}\% Attendance}
-\begin{tikzpicture}[scale=1]
-  \begin{axis}[
-  width=10cm,
-  height=5cm,
-  ybar stacked,
-  legend style={{at=(1.2,0.5)},anchor=west},
-  legend cell align={left},
-  axis y line*=left,
-  axis x line*=bottom,
-  symbolic x coords={0,\VAR{attendance_dates},1},
-  xtick ={\VAR{attendance_dates}},
-  tick align=outside,
-  x tick label style={rotate=90,anchor=east},
-  y tick label style={anchor=east},
-  ymin = 0,
-  ymax = 100,
-  ytick = {95, 100},
-  yticklabels = {},
-  xticklabels = {\VAR{attendance_dates}},
-  xmin = 0,
-  xmax = 1,
-  ylabel = \% sessions attended,
-  grid=major,
-  clip=false,
-  ]
-  \addplot[adaBlue, bar width=14pt, fill=adaBlue] coordinates {\VAR{attendance_zip}};
-  \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{punctuality_zip}};
-  \node at (axis cs:1,95) [anchor=west] {{\sffamily Target 95\%}};
-  \legend{Present,Present but late}
-\end{axis}
-\end{tikzpicture}
 % Academic
-\section*{Academic}
+\section*{Academic progress}
 {\sffamily
   \begin{tabularx}{\linewidth}{l l l X}
 %% for subject, assessment in academic.items()
@@ -110,11 +77,12 @@
 %% for assessment_name, assessment_details in assessment.items()
 & \VAR{assessment_name}& \VAR{assessment_details['grade']}& {\em \VAR{assessment_details['comment']}}\\
 %% endfor
+    \\
 %% endfor
   \end{tabularx}
 }
 % Kudos
-\section*{\VAR{kudos_total} Kudos}
+\section*{Kudos points (\VAR{kudos_total})}
 {\sffamily
 %% if kudos|length > 0
   \begin{tabularx}{\linewidth}{l l X}
@@ -128,24 +96,12 @@
 No kudos points recorded
 %% endif
 }
-% Concern
-\section*{\VAR{concern_total} Concerns}
-{\sffamily
-%% if concerns|length > 0
-  \begin{tabularx}{\linewidth}{l l X}
-%% for concern in concerns
- \VAR{concern.date}& \VAR{concern.category} & {\em \VAR{concern.description}} -- \VAR{concern.from}\\
-  %% endfor
-     \end{tabularx}
-  %% else
-
-  No concerns recorded
-  %% endif
-  }
 \section*{Coming up}
 {\sffamily
 \begin{tabularx}{\linewidth}{l l l X}
   9th July & & & Last day of Summer term \\
+           & & & Deloitte Project finale \\
+           & & & Return laptops \\
            & & & End of year celebration \\
   27th Aug & & & Re-enrolment day \\
   31st Aug & -- & 17th Dec & Autumn term \\

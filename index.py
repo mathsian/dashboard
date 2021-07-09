@@ -10,10 +10,7 @@ import store
 app.layout = dbc.Container([
     dcc.Location(id="url", refresh=False),
     dbc.Row(children=[
-        dbc.Col([
-                nav.layout,
-            html.Div(id="content")
-            ]),
+        dbc.Col([nav.layout, html.Div(id="content")]),
     ]),
     dcc.Store(id="store-data", data={}),
     dcc.Store(id="selected-student-ids", data=[]),

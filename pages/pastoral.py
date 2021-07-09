@@ -39,8 +39,15 @@ content = [
                 dbc.Col([filters.team])
             ],
                     align='end')
-        ]),
-        dbc.CardBody(dbc.Row(id=f"pastoral-content", children=[])),
+        ],
+                       style={"max-height": "10vh"}),
+        dbc.CardBody(
+            dbc.Row(id=f"pastoral-content", children=[]),
+            style={
+                "max-height": "70vh",
+                "overflow-y": "auto"
+            },
+        ),
     ])
 ]
 # Attendance tab content
@@ -53,13 +60,13 @@ attendance_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": False,
         "layout": "fitData",
+        "maxHeight": "60vh",
         "clipboard": "copy"
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
-attendance_summary = [
-    dbc.Col(width=6,
-            children=daq.Gauge(
+
+gauge_last = daq.Gauge(
                 id={
                     "type": "gauge",
                     "page": "pastoral",
@@ -69,7 +76,7 @@ attendance_summary = [
                 label="This week",
                 scale={
                     "start": 0,
-                    "interval": 5,
+                    "interval": 10,
                     "labelInterval": 2,
                 },
                 showCurrentValue=True,
@@ -77,19 +84,18 @@ attendance_summary = [
                 value=0,
                 min=0,
                 max=100,
-            )),
-    dbc.Col(width=6,
-            children=daq.Gauge(
+            ),
+gauge_overall = daq.Gauge(
                 id={
                     "type": "gauge",
                     "page": "pastoral",
                     "tab": "attendance",
                     "name": "overall"
                 },
-                label="Overall",
+                label="This year",
                 scale={
                     "start": 0,
-                    "interval": 5,
+                    "interval": 10,
                     "labelInterval": 2,
                 },
                 showCurrentValue=True,
@@ -97,8 +103,7 @@ attendance_summary = [
                 value=0,
                 min=0,
                 max=100,
-            )),
-]
+            )
 # Weekly tab content
 weekly_header = html.H4(children=[
     "Week beginning ",
@@ -119,6 +124,7 @@ weekly_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": False,
         "layout": "fitData",
+        "maxHeight": "50vh",
         "clipboard": "copy"
     },
     columns=[
@@ -188,21 +194,22 @@ kudos_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": False,
         "layout": "fitData",
+        "maxHeight": "60vh",
         "clipboard": "copy"
     },
     columns=[
         {
-            "title": "Given name",
             "field": "given_name",
             "headerFilter": True,
+            "headerFilterPlaceholder": "search",
         },
         {
-            "title": "Family name",
             "field": "family_name",
             "headerFilter": True,
+            "headerFilterPlaceholder": "search",
         },
     ] + [{
-        "title": v[:3],
+        "title": v[:2],
         "field": v,
         "hozAlign": "right",
     } for v in curriculum.values] + [{
@@ -218,7 +225,7 @@ fig.add_trace(
                     r=[0 for v in curriculum.values],
                     subplot="polar",
                     fill="toself"), 1, 1)
-fig.update_layout(autosize=True, polar=dict(radialaxis=dict(visible=False)))
+fig.update_layout(polar=dict(radialaxis=dict(visible=False)), height=300)
 
 kudos_radar = dcc.Graph(id={
     "type": "graph",
@@ -265,29 +272,32 @@ concern_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": False,
         "layout": "fitDataStretch",
+        "maxHeight": "60vh",
         "clipboard": "copy"
     },
 )
 
 # Validation layout contains everything needed to validate all callbacks
 validation_layout = content + [
-    attendance_table, attendance_summary, weekly_header, weekly_table,
+    attendance_table, gauge_last, gauge_overall, weekly_header, weekly_table,
     weekly_picker, kudos_table, kudos_radar, concern_table
 ]
 # Associate each tab with its content
 tab_map = {
     "pastoral-tab-attendance":
-    [dbc.Col(children=[dbc.Row(attendance_summary), attendance_table])],
+    [dbc.Col(gauge_overall, width=2), dbc.Col(gauge_last), dbc.Col(attendance_table)],
     "pastoral-tab-weekly":
     dbc.Col([
         dbc.Row(children=[
             dbc.Col(width=3, children=weekly_picker),
             dbc.Col(weekly_header)
-        ]),
+        ],
+                style={"max-height": "10vh"}),
         dbc.Row(dbc.Col(weekly_table)),
     ]),
     "pastoral-tab-kudos":
-    [dbc.Col(width=12, children=[kudos_radar, kudos_table])],
+    [dbc.Col(width=4, children=[kudos_radar]),
+     dbc.Col(width=8, children=[kudos_table])],
     "pastoral-tab-concern": [
         dbc.Col(width=12, children=concern_table),
     ],

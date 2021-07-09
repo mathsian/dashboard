@@ -21,17 +21,21 @@ ns = Namespace("myNameSpace", "tabulator")
 tabs = ["Attendance", "Unauthorised", "Missing"]
 content = [
     dbc.Card([
-        dbc.CardHeader(
-            dbc.Tabs(
-                [
-                    dbc.Tab(label=t, tab_id=f"summary-tab-{t.lower()}")
-                    for t in tabs
-                ],
-                id=f"summary-tabs",
-                card=True,
-                active_tab=f"summary-tab-{tabs[0].lower()}",
-            )),
-        dbc.CardBody(id="summary-content", ),
+        dbc.CardHeader(dbc.Tabs(
+            [
+                dbc.Tab(label=t, tab_id=f"summary-tab-{t.lower()}")
+                for t in tabs
+            ],
+            id=f"summary-tabs",
+            card=True,
+            active_tab=f"summary-tab-{tabs[0].lower()}",
+        ),
+),
+        dbc.CardBody(id="summary-content",
+                     style={
+                         "max-height": "75vh",
+                         "overflow-y": "auto",
+                     }),
     ]),
     dcc.Interval(id={
         "type": "interval",
@@ -156,6 +160,7 @@ unauthorised_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "layout": "fitData",
         "groupBy": "date",
+        "maxHeight": "60vh",
         "groupHeader": ns("groupHeader"),
     },
     theme='bootstrap/tabulator_bootstrap4',
@@ -201,6 +206,7 @@ missing_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "groupBy": ["date", "period"],
         "groupHeader": ns("groupHeader2"),
+        "maxHeight": "60vh",
         "layout": "fitData"
     },
     theme='bootstrap/tabulator_bootstrap4',
@@ -229,7 +235,7 @@ tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
     "summary-tab-unauthorised": [dbc.Col([unauthorised_table])],
     "summary-tab-missing":
-    [dbc.Col([html.H3("Missing marks"), missing_table])]
+    [dbc.Col([missing_table])]
 }
 
 
