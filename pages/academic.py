@@ -41,15 +41,19 @@ content = [
                              active_tab=f"academic-tab-{tabs[0].lower()}")
                 ],
                         align='end',
-                        width=7,
-                        lg=3),
-                dbc.Col([filters.cohort], width=7, lg=3),
-                dbc.Col([filters.subject], width=7, lg=3),
+                        width=6,
+                        lg=4),
+                dbc.Col([filters.cohort], width=2, lg=2),
+                dbc.Col([filters.subject], width=2, lg=2),
                 dbc.Col(assessment_filter),
             ],
                     align='end')
         ]),
-        dbc.CardBody(dbc.Row(id="academic-content")),
+        dbc.CardBody(dbc.Row(id="academic-content"),
+                     style={
+                         "max-height": "70vh",
+                         "overflow-y": "auto"
+                     }),
     ]),
 ]
 
@@ -60,6 +64,7 @@ subject_table = dash_tabulator.DashTabulator(
         "tab": "edit"
     },
     options={
+        "maxHeight": "60vh",
         "placeholder": "Select a subject",
         "resizableColumns": False,
         "index": "_id",
@@ -78,28 +83,26 @@ subject_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
 )
 
-assessment_graph = dcc.Graph(
-    id={
-        "type": "graph",
-        "page": "academic",
-        "tab": "view",
-        "name": "bar"
-    },
-    figure={
-        "layout": {
-            "xaxis": {
-                "visible": False
-            },
-            "yaxis": {
-                "visible": False
-            }
-        }
-    },
-    config={
-        "displayModeBar": False,
-    },
-    style={'height': '350px'},
-)
+assessment_graph = dcc.Graph(id={
+    "type": "graph",
+    "page": "academic",
+    "tab": "view",
+    "name": "bar"
+},
+                             config={
+                                 "displayModeBar": False,
+                             },
+                             figure={
+                                 "layout": {
+                                     "xaxis": {
+                                         "visible": False
+                                     },
+                                     "yaxis": {
+                                         "visible": False
+                                     },
+                                     "height": 320
+                                 }
+                             })
 assessment_colour_dropdown = dcc.Dropdown(id={
     "page": "academic",
     "tab": "view",
@@ -215,7 +218,8 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
 
     assessment_docs = data.get_data("assessment", "assessment_subject",
                                     [(assessment_name, subject_code)])
-    assessment_df = pd.DataFrame.from_records(assessment_docs)
+    assessment_df = pd.DataFrame.from_records(assessment_docs).sort_values(
+        by='student_id')
     student_ids = assessment_df["student_id"].tolist()
     enrolment_df = pd.DataFrame.from_records(
         data.get_data("enrolment", "_id", student_ids))
@@ -307,7 +311,8 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
                 },
                 "yaxis": {
                     "visible": False
-                }
+                },
+                "height": 320
             }
         }
     assessment_df = pd.DataFrame.from_records(
@@ -326,7 +331,7 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         cols=2,
         shared_yaxes=True,
         shared_xaxes=False,
-        column_widths=[0.2, 0.8],
+        column_widths=[3, 7],
     )
     scatter_trace = go.Scatter(
         x=merged_df["aps"],
@@ -359,8 +364,6 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         showlegend=False,
         hovertemplate="%{y} %{x:.1f}<extra></extra>",
     )
-    fig.add_trace(bar_trace, row=1, col=1)
-    fig.add_trace(scatter_trace, row=1, col=2)
     fig.update_yaxes(
         categoryorder='array',
         categoryarray=curriculum.scales.get(subtype),
@@ -375,10 +378,15 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         row=1,
         col=1,
     )
-    fig.update_layout(margin={'t': 0},
-                      autosize=True,
-                      plot_bgcolor="#FFF",
-                      yaxis_title="Grade")
+    fig.update_layout(plot_bgcolor='#FFF',
+                      height=320,
+                      margin={
+                          "pad": 10,
+                          "t": 0,
+                          "autoexpand": False
+                      })
+    fig.add_trace(bar_trace, row=1, col=1)
+    fig.add_trace(scatter_trace, row=1, col=2)
     return fig
 
 

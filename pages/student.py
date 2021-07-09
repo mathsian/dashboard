@@ -25,7 +25,8 @@ student_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        "selectable": "true",
+        "selectable": True,
+        "maxHeight": "60vh",
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[
@@ -42,18 +43,21 @@ student_table = dash_tabulator.DashTabulator(
             "visible": False,
         },
         {
-            "title": "Given name",
             "field": "given_name",
-            "widthGrow": 3,
+            "widthGrow": 4,
             "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
         },
         {
-            "title": "Family name",
             "field": "family_name",
             "widthGrow": 6,
             "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
         },
     ],
+)
+student_table_container = html.Div(
+    [student_table],
 )
 blank_attendance = {
     "layout": {
@@ -65,7 +69,7 @@ blank_attendance = {
         }
     }
 }
-report = [
+report = html.Div([
     html.H2(id={
         "type": "text",
         "page": "student",
@@ -175,7 +179,7 @@ report = [
                 "whiteSpace": "normal",
             },
         )),
-]
+], style={"max-height": "60vh", "overflow-y": "auto"})
 kudos_form = dbc.Row(children=[
     dbc.Col([
         dcc.Dropdown(
@@ -301,14 +305,19 @@ content = [
         ]),
         dbc.CardBody([
             dbc.Row([
-                dbc.Col([student_table], width=3),
-                dbc.Col([html.Div(id=f"student-content")], width=9)
-            ])
-        ])
-    ])
+                dbc.Col([student_table_container], width=4),
+                dbc.Col([html.Div(id=f"student-content")], width=8)
+            ], ),
+        ],
+                     style={
+#                         "max-height": "70vh",
+#                         "overflow-y": "auto"
+                     }
+        )
+    ], )
 ]
 
-validation_layout = content + report + [kudos_form, concern_form]
+validation_layout = content + [report, kudos_form, concern_form]
 tab_map = {
     "student-tab-report": report,
     "student-tab-kudos": kudos_form,
@@ -345,9 +354,10 @@ def update_student_table(filter_value):
         enrolment_docs = data.get_data("enrolment", "cohort", cohort)
     else:
         return [], []
-    for doc in enrolment_docs:
-        doc["student_id"] = doc["_id"]
-    return enrolment_docs
+    enrolment_df = pd.DataFrame(enrolment_docs).sort_values(
+        by=["given_name", "family_name"])
+    enrolment_df["student_id"] = enrolment_df["_id"]
+    return enrolment_df.to_dict(orient='records')
 
 
 @app.callback([
