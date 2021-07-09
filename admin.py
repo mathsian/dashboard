@@ -402,10 +402,26 @@ if __name__ == "__main__":
     #fix_assessment_comments("ada")
     #fix_null_descriptions("ada")
     #fix_nan_comments("ada")
+#    for subject_code in ["BUS-L3AL", "MAT-L3AL", "GRA-L3AL", "PSY-L3AL", "FMA-L3AL"]:
     #for subject_code in ["AL-BS", "AL-MA", "AL-GR", "AL-PS"]:
     #    create_assessment("1921", subject_code, "13.2 Spring Assessment", "2021-03-16", "A-Level", "ada")
+#        create_assessment("2022", subject_code, "12.3 June Assessment", "2021-06-25", "A-Level", "ada")
     #create_assessment("1921", "ECS", "Unit 10", "2021-03-16", "BTEC-Single", "ada")
     #create_assessment("1921", "ECS", "Unit 4", "2021-03-16", "BTEC-Single", "ada")
     #create_assessment("1921", "L3-CM", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
+    #create_assessment("2022", "MAT-L2GC", "12.2 May Assessment", "2021-05-06", "GCSE-Number", "ada")
+    #create_assessment("2022", "MAT-L2GC", "12.3 June Assessment", "2021-07-06", "GCSE-Number", "ada")
+    #create_assessment("2022", "ENG-L2GC", "12.2 May Assessment", "2021-05-06", "GCSE-Number", "ada")
+    #create_assessment("2022", "ENG-L2GC", "12.3 June Assessment", "2021-07-06", "GCSE-Number", "ada")
     #create_assessment("1921", "EPQ-L3DP", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 10"}, "subject_code": {"$eq": "ECS"}}, {"assessment": "Unit 10 Overall Prediction"}, "ada")
+    #result = data.find_and_replace({"type": {"$eq": "assessment"}}, {"report": 1}, "ada")
+    #result = data.find_and_replace({"type": {"$eq": "assessment"}, "subtype": {"$eq": "Expectations"}}, {"report": 2}, "ada")
+    #result = data.find_and_replace({"type": {"$eq": "assessment"},
+    #                                "subject_code": {"$regex": "BUS"},
+    #                                "assessment": {"$regex": "12.2"}
+    #}, {"report": 2}, "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EX"}}, {"date": "2021-07-05"}, "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-04"}, "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-05"}, "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-04"}, "ada")
+    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-05"}, "ada")
