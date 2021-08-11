@@ -1,0 +1,111 @@
+\errorcontextlines 10000
+\documentclass[a4paper,12pt]{memoir}
+\usepackage{etoolbox}
+% for flexible tables
+\usepackage{tabularx}
+\usepackage{ltablex}
+% set up fonts
+\usepackage{fontspec}
+\setsansfont{Titillium-Regular}
+\setmainfont{Titillium-Regular}
+\setromanfont{FSSinclair-Medium}
+
+% smaller margins
+\usepackage[margin=0.6cm]{geometry}
+
+% customise sections
+% need explicit to access parameter number to get the section on the left
+\usepackage[explicit]{titlesec}
+\titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
+% drawing packages
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+\usetikzlibrary{decorations.text}
+\usepackage{pgfplots}
+\pgfplotsset{
+  compat = newest,
+  tick label style = {font=\sffamily},
+  every axis label = {font=\sffamily},
+  legend style = {font=\sffamily\small, draw=none},
+  y axis line style = {draw=none},
+  label style = {font=\sffamily}
+}
+
+% custom colours
+\definecolor{adaYellow}{RGB}{245,225,52}
+\definecolor{adaPurple}{RGB}{149,96,159}
+\definecolor{adaGreen}{RGB}{161,200,84}
+\definecolor{adaCoral}{RGB}{236,98,113}
+\definecolor{adaBlue}{RGB}{108,184,231}
+\definecolor{adaOrange}{RGB}{246,131,82}
+
+\definecolor{adaBlack}{RGB}{9,20,8}
+\definecolor{adaGrey}{RGB}{134,136,140}
+\definecolor{adaLightGrey}{RGB}{211,212,211}
+\definecolor{adaWhite}{RGB}{255,255,255}
+
+\definecolor{clr1}{RGB}{149,96,159}
+\definecolor{clr2}{RGB}{161,200,84}
+\definecolor{clr3}{RGB}{236,98,113}
+\definecolor{clr4}{RGB}{108,184,231}
+\definecolor{clr5}{RGB}{246,131,82}
+
+% Declare layers
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\setlength{\columnsep}{1em}
+\renewcommand{\arraystretch}{1.2}
+
+\begin{document}
+% no page numbers
+\pagestyle{empty}
+% title
+\begin{center}
+    {\rmfamily\uppercase{
+        {\large \VAR{name}}\\
+        \VAR{date}\\
+        Team \VAR{team}}}
+\tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
+\end{center}
+% Academic
+\section*{Academic progress}
+{\sffamily
+  \begin{tabularx}{\linewidth}{l l l X}
+%% for subject, assessment in academic.items()
+\multicolumn{4}{l}{\rmfamily \VAR{subject}}\\
+%% for assessment_name, assessment_details in assessment.items()
+& \VAR{assessment_name}& \VAR{assessment_details['grade']}& {\em \VAR{assessment_details['comment']}}\\
+%% endfor
+    \\
+%% endfor
+  \end{tabularx}
+}
+% Kudos
+\section*{Kudos points (\VAR{kudos_total})}
+{\sffamily
+%% if kudos|length > 0
+  \begin{tabularx}{\linewidth}{l l X}
+%% for kudo in kudos
+\VAR{kudo.date}& $\VAR{kudo.points}\times$ \VAR{kudo.ada_value} & {\em
+                                                                  \VAR{kudo.description}}
+                                                                  \mbox{-- \VAR{kudo.from}}\\
+%% endfor
+    \end{tabularx}
+%% else
+No kudos points recorded
+%% endif
+}
+\section*{Coming up}
+{\sffamily
+\begin{tabularx}{\linewidth}{l l l X}
+  9th July & & & Last day of Summer term \\
+           & & & Deloitte Project finale \\
+           & & & Return laptops \\
+           & & & End of year celebration \\
+  27th Aug & & & Re-enrolment day \\
+  31st Aug & -- & 17th Dec & Autumn term \\
+  18th Oct & -- & 29th Oct & Half term break
+\end{tabularx}
+}
+\end{document}

@@ -1,0 +1,11 @@
+.Select-menu-outer {
+    display: block !important;
+    margin-bottom: 3rem !important;
+}
+.dash-table-container .row {
+    display: block;
+    margin: 0;
+}
+table {
+    width: 99%;
+}

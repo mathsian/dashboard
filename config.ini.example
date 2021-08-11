@@ -1,0 +1,14 @@
+[COUCHDB]
+user = username
+pwd = password
+ip = address
+port = port
+db = db
+[OAUTH]
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
+authorized_emails = LIST_AUTHORIZED_EMAILS
+[REMS]
+ip = server
+uid = username
+pwd = password
