@@ -363,7 +363,7 @@ def update_attendance_gauge(n_intervals, threshold):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template(
-        'sql/cumulative attendance monthly.sql')
+        'sql/cumulative the long way.sql')
     sql = sql_template.render()
     rems_df = pd.read_sql(sql, conn)
     rems_df["low"] = (rems_df["attendance"] < threshold).astype('int')
