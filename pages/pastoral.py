@@ -356,9 +356,11 @@ def update_pastoral_attendance(filter_value):
     elif cohort:
         enrolment_docs = data.get_data("enrolment", "cohort", cohort)
     else:
-        return [], {}, 0, 0
+        return [], [], 0, 0
     student_ids = [s.get('_id') for s in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
+    if not attendance_docs:
+        return [], [], 0, 0
     attendance_df = pd.DataFrame.from_records(attendance_docs)
     weekly_df = attendance_df.query("subtype == 'weekly'")
     last_week_date = weekly_df["date"].max()
@@ -508,7 +510,7 @@ def update_pastoral_concern(filter_value):
     else:
         return []
     student_ids = [s.get('_id') for s in enrolment_docs]
-    # Build kudos dataframe
+    # Build concern dataframe
     concern_docs = data.get_data("concern", "student_id", student_ids)
     if not concern_docs:
         return []
