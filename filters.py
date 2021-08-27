@@ -14,7 +14,7 @@ cohort = dcc.Dropdown(
     options=[{
         "label": s,
         "value": s
-    } for s in ["1921", "2022"]],
+    } for s in ["1921", "2022", "2123"]],
     value="1921",
     clearable=False,
     persistence=True,
