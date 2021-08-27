@@ -5,13 +5,12 @@ import pandas as pd
 def csv_to_couchdb(file_name, dbname=None):
     print(file_name)
     print(dbname)
-    df = pd.read_csv(file_name).fillna("")
-    if "_id" in df.columns:
-        df["_id"] = df["_id"].astype(str)
-    if "cohort" in df.columns:
-        df["cohort"] = df["cohort"].astype(str)
-    if "student_id" in df.columns:
-        df["student_id"] = df["student_id"].astype(str)
+    dtype_dict = {
+        "_id": str,
+        "cohort": str,
+        "student_id": str
+    }
+    df = pd.read_csv(file_name, dtype=dtype_dict).fillna("")
     print(f"{len(df)} rows")
     print(df.columns)
     pd.set_option("display.max_columns", None)
