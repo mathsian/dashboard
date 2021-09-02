@@ -149,4 +149,4 @@ def location_change(pathname, active_tab, history):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8001)
