@@ -361,7 +361,8 @@ def update_pastoral_attendance(filter_value):
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
     if not attendance_docs:
         return [], [], 0, 0
-    attendance_df = pd.DataFrame.from_records(attendance_docs)
+    this_year_start = curriculum.this_year_start
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query('date > @this_year_start')
     weekly_df = attendance_df.query("subtype == 'weekly'")
     last_week_date = weekly_df["date"].max()
     overall_totals = weekly_df.sum()
@@ -416,7 +417,7 @@ def update_pastoral_attendance(filter_value):
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in attendance_pivot.columns[-3:-1]
+        } for d in attendance_pivot.columns[-2:-1]
     ])
     columns.append({
         "title": "Year",

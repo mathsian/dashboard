@@ -363,13 +363,14 @@ def update_attendance_gauge(n_intervals, threshold):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template(
-        'sql/cumulative the long way.sql')
+        'sql/cumulative attendance monthly.sql')
     sql = sql_template.render()
     rems_df = pd.read_sql(sql, conn)
     rems_df["low"] = (rems_df["attendance"] < threshold).astype('int')
     rems_df["lowc"] = (rems_df["cumulative"] < threshold).astype('int')
     # For monthly graph
     monthly_df = rems_df.query('date != "Year" & student_id == "All"')
+    months = list(monthly_df['date'])
     monthly_figure = go.Figure(
         data=[
             go.Bar(x=monthly_df['date'],
@@ -389,6 +390,11 @@ def update_attendance_gauge(n_intervals, threshold):
             "title": "Monthly average student attendance",
             "yaxis": {
                 "range": [60, 100]
+            },
+            "xaxis": {
+                "tickmode": "array",
+                "tickvals": months,
+                # "ticktext": months
             }
         },
     )
@@ -418,6 +424,11 @@ def update_attendance_gauge(n_intervals, threshold):
                        name="Cumulative")
         ],
         layout={
+            "xaxis": {
+                "tickmode": "array",
+                "tickvals": months,
+                # "ticktext": months
+            },
             "title": f"Proportion of students with < {threshold}% attendance"
         },
     )

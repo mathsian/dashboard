@@ -205,6 +205,7 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
                 "student_id", "grade", "comment"
             ]]
         except KeyError:
+            pass
             # Silently fail if student_id, grade, and comment fields were not present
         else:
             pasted_df = pasted_df.replace('\r', '', regex=True)

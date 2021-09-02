@@ -26,7 +26,7 @@ register_marks = {
     'Z': {'name': 'asleep', 'possible': 0, 'actual': 0},
 }
 
-this_year_start = "2020-08-31"
+this_year_start = "2021-08-01"
 
 concern_categories = ["Conduct", "Academic"]
 concern_categories_dropdown = {
