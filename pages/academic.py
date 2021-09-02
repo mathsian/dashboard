@@ -183,7 +183,6 @@ def get_content(active_tab):
     "filter": ALL
 }, "value")])
 def update_subject_table(assessment_name, changed, row_data, filter_value):
-    print(f'Getting results for {filter_value}, {assessment_name}')
     cohort, subject_code = filter_value
     # If the user hasn't selected a subject/assessment yet
     if not assessment_name:
@@ -207,7 +206,6 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
             ]]
         except KeyError:
             # Silently fail if student_id, grade, and comment fields were not present
-            print("Problematic row data: ", row_data)
         else:
             pasted_df = pasted_df.replace('\r', '', regex=True)
             merged_df = pd.merge(assessment_df, pasted_df, on="student_id")
@@ -219,7 +217,7 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
             data.save_docs(merged_docs)
 
     assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
-                                    [[assessment_name, subject_code, cohort]])
+                                    [(assessment_name, subject_code, cohort)])
     assessment_df = pd.DataFrame.from_records(assessment_docs).sort_values(
         by='student_id')
     student_ids = assessment_df["student_id"].tolist()
@@ -408,14 +406,13 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
     "filter": ALL
 }, "value")])
 def update_assessment_dropdown(filter_value):
-    print(f'Getting assessments for {filter_value}')
     cohort, subject_code = filter_value
     if not (cohort and subject_code):
         return [], ""
-    assessment_df = pd.DataFrame.from_records(
-        data.get_data("assessment", "subject_cohort",
-        [subject_code, cohort])
-    group_docs = data.get_data("group", "subject_cohort", [subject_code, cohort]
+    assessment_docs = data.get_data("assessment", "subject_cohort",
+                      (subject_code, cohort))
+    assessment_df = pd.DataFrame.from_records(assessment_docs)
+    group_docs = data.get_data("group", "subject_cohort", (subject_code, cohort))
     subject = group_docs[0].get("subject_name")
     if assessment_df.empty:
         return [], ""
@@ -442,7 +439,6 @@ def update_assessment_dropdown(filter_value):
     }, "value")],
 )
 def update_subject_filter(cohort_value):
-    print(f'Getting subjects for cohort {cohort_value}')
     subjects = data.get_subjects(cohort_value)
     return [
         [{
