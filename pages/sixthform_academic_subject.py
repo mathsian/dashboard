@@ -20,43 +20,6 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-assessment_filter = dcc.Dropdown(id={
-    "type": "dropdown",
-    "page": "academic",
-    "name": "assessment"
-}, )
-
-tabs = ["View", "Edit"]
-content = [
-    dbc.Card([
-        dbc.CardHeader([
-            dbc.Row([
-                dbc.Col([
-                    dbc.Tabs([
-                        dbc.Tab(label=t, tab_id=f"academic-tab-{t.lower()}")
-                        for t in tabs
-                    ],
-                             id=f"academic-tabs",
-                             card=True,
-                             active_tab=f"academic-tab-{tabs[0].lower()}")
-                ],
-                        align='end',
-                        width=6,
-                        lg=4),
-                dbc.Col([filters.cohort], width=2, lg=2),
-                dbc.Col([filters.subject], width=2, lg=2),
-                dbc.Col(assessment_filter),
-            ],
-                    align='end')
-        ]),
-        dbc.CardBody(dbc.Row(id="academic-content"),
-                     style={
-                         "max-height": "70vh",
-                         "overflow-y": "auto"
-                     }),
-    ]),
-]
-
 subject_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
@@ -124,31 +87,24 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                               },
                                           ],
                                           value="gc-ma")
-validation_layout = content + [
-    subject_table, assessment_graph, assessment_colour_dropdown
-]
-tab_map = {
-    "academic-tab-view": [
+
+layout = [
+    dbc.Row([
+        dbc.Col([filters.subject], width=3),
+        dbc.Col([filters.assessment], width=3),
+    ]),
+    dbc.Row([
         dbc.Col([
-            assessment_graph,
-        ], width=10),
-        dbc.Col([html.Div("Colour by GCSE "), assessment_colour_dropdown],
-                width=2)
-    ],
-    "academic-tab-edit": [
-        dbc.Col(subject_table, width=12),
-    ]
-}
-
-
-@app.callback(
-    Output(f"academic-content", "children"),
-    [
-        Input(f"academic-tabs", "active_tab"),
-    ],
-)
-def get_content(active_tab):
-    return tab_map.get(active_tab)
+            dbc.Row([
+                dbc.Col([assessment_graph])
+            ]),
+            dbc.Row([
+                dbc.Col([assessment_colour_dropdown], width=1)
+            ])]
+            , width=6),
+        dbc.Col([subject_table], width=6),
+    ])
+]
 
 
 @app.callback([
@@ -391,60 +347,4 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
     return fig
 
 
-@app.callback([
-    Output({
-        "type": "dropdown",
-        "page": "academic",
-        "name": "assessment"
-    }, "options"),
-    Output({
-        "type": "dropdown",
-        "page": "academic",
-        "name": "assessment"
-    }, "value"),
-], [Input({
-    "type": "filter-dropdown",
-    "filter": ALL
-}, "value")])
-def update_assessment_dropdown(filter_value):
-    cohort, subject_code = filter_value
-    if not (cohort and subject_code):
-        return [], ""
-    assessment_docs = data.get_data("assessment", "subject_cohort",
-                      (subject_code, cohort))
-    assessment_df = pd.DataFrame.from_records(assessment_docs)
-    group_docs = data.get_data("group", "subject_cohort", (subject_code, cohort))
-    subject = group_docs[0].get("subject_name")
-    if assessment_df.empty:
-        return [], ""
-    assessment_list = assessment_df.sort_values(
-        by="date", ascending=False)["assessment"].unique().tolist()
-    options = [{"label": a, "value": a} for a in assessment_list]
-    return options, options[0].get("value")
 
-
-@app.callback(
-    [
-        Output({
-            "type": "filter-dropdown",
-            "filter": "subject"
-        }, "options"),
-        Output({
-            "type": "filter-dropdown",
-            "filter": "subject"
-        }, "value"),
-    ],
-    [Input({
-        "type": "filter-dropdown",
-        "filter": "cohort"
-    }, "value")],
-)
-def update_subject_filter(cohort_value):
-    subjects = data.get_subjects(cohort_value)
-    return [
-        [{
-            "label": s[0],
-            "value": s[0]
-        } for s in subjects],
-        None,
-    ]

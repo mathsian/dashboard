@@ -18,33 +18,6 @@ import data
 from dash_extensions.javascript import Namespace
 ns = Namespace("myNameSpace", "tabulator")
 
-tabs = ["Attendance", "Unauthorised", "Missing"]
-content = [
-    dbc.Card([
-        dbc.CardHeader(dbc.Tabs(
-            [
-                dbc.Tab(label=t, tab_id=f"summary-tab-{t.lower()}")
-                for t in tabs
-            ],
-            id=f"summary-tabs",
-            card=True,
-            active_tab=f"summary-tab-{tabs[0].lower()}",
-        ),
-),
-        dbc.CardBody(id="summary-content",
-                     style={
-                         "max-height": "75vh",
-                         "overflow-y": "auto",
-                     }),
-    ]),
-    dcc.Interval(id={
-        "type": "interval",
-        "page": "summary",
-        "tab": "attendance"
-    },
-                 interval=60_000,
-                 n_intervals=0),
-]
 gauge_last = daq.Gauge(
     id={
         "type": "gauge",
@@ -139,7 +112,14 @@ threshold_slider = dcc.Slider(
         95: '95',
     },
 )
-attendance_dashboard = [
+layout = [
+    dcc.Interval(id={
+        "type": "interval",
+        "page": "summary",
+        "tab": "attendance"
+    },
+                 interval=60_000,
+                 n_intervals=0),
     dbc.Row([
         dbc.Col(gauge_last),
         dbc.Col(gauge_cumulative, style={"float": "left"})
@@ -150,161 +130,8 @@ attendance_dashboard = [
             align='start',
             justify='center')
 ]
-unauthorised_table = dash_tabulator.DashTabulator(
-    id={
-        "type": "table",
-        "page": "summary",
-        "tab": "unauthorised",
-    },
-    options={
-        "resizableColumns": False,
-        "layout": "fitData",
-        "groupBy": "date",
-        "maxHeight": "60vh",
-        "groupHeader": ns("groupHeader"),
-    },
-    theme='bootstrap/tabulator_bootstrap4',
-    columns=[{
-        "title": "Date",
-        "field": "date",
-        "visible": False,
-    }, {
-        "title": "Given name",
-        "field": "given_name",
-        "headerFilter": True,
-        "widthGrow": 3,
-    }, {
-        "headerFilter": True,
-        "title": "Surname",
-        "field": "family_name",
-        "widthGrow": 3,
-    }, {
-        "title": "Marks",
-        "field": "marks",
-        "widthGrow": 1,
-    }, {
-        "title": "Alert",
-        "formatter": ns("alertIcon"),
-        "widthGrow": 1,
-    }, {
-        "title": "Present same day",
-        "field": "present_today",
-        "visible": False,
-    }, {
-        "title": "Authorised same day",
-        "field": "authorised_today",
-        "visible": False,
-    }],
-)
-missing_table = dash_tabulator.DashTabulator(
-    id={
-        "type": "table",
-        "page": "summary",
-        "tab": "missing",
-    },
-    options={
-        "resizableColumns": False,
-        "groupBy": ["date", "period"],
-        "groupHeader": ns("groupHeader2"),
-        "maxHeight": "60vh",
-        "layout": "fitData"
-    },
-    theme='bootstrap/tabulator_bootstrap4',
-    columns=[{
-        "title": "Date",
-        "field": "date",
-        "visible": False,
-    }, {
-        "title": "Register",
-        "field": "register"
-    }, {
-        "title": "Period",
-        "field": "period",
-        "visible": False,
-    }, {
-        "title": "Lecturer",
-        "field": "lecturer"
-    }, {
-        "title": "Missing marks",
-        "field": "missing"
-    }])
-validation_layout = content + [
-    attendance_dashboard, unauthorised_table, missing_table
-]
-tab_map = {
-    "summary-tab-attendance": [attendance_dashboard],
-    "summary-tab-unauthorised": [dbc.Col([unauthorised_table])],
-    "summary-tab-missing":
-    [dbc.Col([missing_table])]
-}
 
-
-@app.callback([
-    Output(f"summary-content", "children"),
-], [Input(f"summary-tabs", "active_tab")])
-def get_content(active_tab):
-    return tab_map.get(active_tab)
-
-
-@app.callback(
-    Output({
-        "type": "table",
-        "page": "summary",
-        "tab": "missing",
-    }, "data"), [
-        Input({
-            "type": "interval",
-            "page": "summary",
-            "tab": "attendance"
-        }, "n_intervals")
-    ])
-def update_missing_table(n_intervals):
-    config_object = ConfigParser()
-    config_object.read("config.ini")
-    rems_settings = config_object["REMS"]
-    rems_server = rems_settings["ip"]
-    rems_uid = rems_settings["uid"]
-    rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
-    )
-    sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.')))
-    sql_template = sql_jinja_env.get_template('sql/missing marks.sql')
-    template_vars = {}
-    sql = sql_template.render(template_vars)
-    df = pd.read_sql(sql, conn)
-    return df.to_dict(orient='records')
-
-
-@app.callback(
-    Output({
-        "type": "table",
-        "page": "summary",
-        "tab": "unauthorised",
-    }, "data"), [
-        Input({
-            "type": "interval",
-            "page": "summary",
-            "tab": "attendance"
-        }, "n_intervals")
-    ])
-def update_unauthorised_table(n_intervals):
-    config_object = ConfigParser()
-    config_object.read("config.ini")
-    rems_settings = config_object["REMS"]
-    rems_server = rems_settings["ip"]
-    rems_uid = rems_settings["uid"]
-    rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
-    )
-    sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.')))
-    sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
-    sql = sql_template.render()
-    df = pd.read_sql(sql, conn)
-    return df.to_dict(orient='records')
+callbacks = []
 
 
 @app.callback([
@@ -338,10 +165,11 @@ def update_unauthorised_table(n_intervals):
         }, "figure"),
 ], [
     Input({
-        "type": "interval",
-        "page": "summary",
-        "tab": "attendance"
-    }, "n_intervals"),
+        "type": "button",
+        "section": "sixthform",
+        "page": "attendance",
+        "name": "update"
+    }, "n_clicks"),
     Input(
         {
             "type": "slider",
@@ -350,7 +178,7 @@ def update_unauthorised_table(n_intervals):
             "name": "threshold",
         }, "value")
 ])
-def update_attendance_gauge(n_intervals, threshold):
+def update_attendance_dashboard(n_clicks, threshold):
     config_object = ConfigParser()
     config_object.read("config.ini")
     rems_settings = config_object["REMS"]
