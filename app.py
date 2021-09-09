@@ -31,6 +31,8 @@ app = dash.Dash(__name__, server=server,
                 suppress_callback_exceptions=True)
 app.title = "data@ada"
 
+app.enable_dev_tools(debug=True, dev_tools_ui=True, dev_tools_props_check=True, dev_tools_serve_dev_bundles=True, dev_tools_hot_reload=True,)
+
 # wrap in google oauth
 auth = GoogleOAuth(app=app,
                    authorized_emails=authorized_emails,

@@ -1,7 +1,17 @@
 import dash_html_components as html
 
 from pages import (
-                      sixthform_pastoral_attendance,
+    sixthform_attendance,
+    sixthform_attendance_year,
+    sixthform_attendance_unauthorized,
+    sixthform_attendance_missing,
+    sixthform_pastoral,
+    sixthform_pastoral_attendance,
+    sixthform_pastoral_weekly,
+    sixthform_pastoral_kudos,
+    sixthform_pastoral_concern,
+    sixthform_academic,
+    sixthform_academic_subject
 )
 
 
@@ -78,17 +88,25 @@ content_dict = {
                     ("Academic", "academic", html.Div("Summary, Apprenticeships, Academic"), None)
                 ],
         },
-    ("Sixth Form", "sixthform", html.Div("Sixth Form"), None):
+    ("Sixth Form", "sixthform", html.Div(""), None):
         {
-            ("Pastoral", "pastoral", html.Div("Sixth Form, Pastoral"), None):
+            ("Attendance", "attendance", sixthform_attendance.layout, None):
+            [
+                ("Year", "year", sixthform_attendance_year.layout, None),
+                ("Unauthorized", "unauthorized", sixthform_attendance_unauthorized.layout, None),
+                ("Missing registers", "missing", sixthform_attendance_missing.layout, None)
+        ],
+            ("Pastoral", "pastoral", sixthform_pastoral.layout, None):
                 [
                     ("Attendance", "attendance", sixthform_pastoral_attendance.layout, None),
-                    ("Kudos", "kudos", html.Div("Sixth Form, Pastoral, Kudos"), None)
+                    ("Weekly attendance", "weekly", sixthform_pastoral_weekly.layout, None),
+                    ("Kudos", "kudos", sixthform_pastoral_kudos.layout, None),
+                    ("Concern", "concern", sixthform_pastoral_concern.layout, None),
                 ],
-            ("Academic", "academic", html.Div("Sixth Form, Academic"), None):
+            ("Academic", "academic", sixthform_academic.layout, None):
                 [
                     ("Cohort", "cohort", html.Div("Sixth Form, Academic, Cohort"), None),
-                    ("Subject", "subject", html.Div("Sixth Form, Academic, Subject"), None)
+                    ("Subject", "subject", sixthform_academic_subject.layout, None)
                 ],
         },
     ("Apprenticeships", "apprenticeships", html.Div("Apprenticeships"), None):

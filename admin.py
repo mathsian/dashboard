@@ -234,7 +234,8 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
         "date": date,
         "comment": "",
         "student_id": g.get("student_id"),
-        "subject": g.get("name"),
+        "subject_code": g.get("subject_code"),
+        "subject_name": g.get("subject_name"),
         "cohort": cohort,
         "grade": curriculum.scales.get(scale_name)[2]
     } for g in groups]
@@ -395,7 +396,8 @@ if __name__ == "__main__":
     sync_rems_attendance("weekly", "ada")
     sync_rems_attendance("monthly", "ada")
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
-    #sync_enrolment("ada", dry=False)
+    # sync_enrolment("ada", dry=True)
+    sync_group("ada", dry=True)
     #sync_group("ada", full=False, dry=False)
     #fix_assessments("ada")
     #fix_group_cohorts("ada", dry=True)
@@ -425,3 +427,5 @@ if __name__ == "__main__":
     #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-05"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-04"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-05"}, "ada")
+    # create_assessment_all("2123", "Week 1", "2021-09-06", "Expectations", "ada")
+    # create_assessment("2123", "ENG-L2GC", "Week 1", "2021-09-06", "Expectations", "ada")
