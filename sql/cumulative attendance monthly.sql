@@ -11,9 +11,9 @@ from (
 	select
 	Month_start,
 	REGT_Student_Id,
-	sum(RGAT_Present) present,
-	sum(RGAT_Possible) possible,
-	round(100 * cast (sum(RGAT_Present) as float) / cast (sum(RGAT_Possible) as float), 1) attendance
+	sum(RGAT_Present * REGH_Duration) present,
+	sum(RGAT_Possible * REGH_Duration) possible,
+	round(100 * cast (sum(RGAT_Present * REGH_Duration) as float) / cast (sum(RGAT_Possible * REGH_Duration) as float), 1) attendance
 	from reports.DASH.vw_Current_Full_Marks
 	where past = 1
 	and StuType = 'SF'
