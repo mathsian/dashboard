@@ -148,6 +148,12 @@ def get_subjects(cohort, db_name=None):
                                     group=True)[[cohort, None]:[cohort, 'ZZZ']]
     return [(r['key'][1], r['value']) for r in result]
 
+def get_assessments(cohort, subject, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result('assessment', 'unique_cohort_subject_assessments',
+                                    group=True)[[cohort, subject]:[cohort, subject, 'ZZZ']]
+    return [r['key'][2] for r in result]
+
 def get_doc(id, db_name=None):
     with Connection(db_name) as db:
         result = db[id]
@@ -160,3 +166,13 @@ def find_and_replace(selector, replacement, db_name=None):
             doc.update(replacement)
         result = save_docs(docs, db_name)
         return result
+
+def get_enrolment_by_cohort_team(cohort, team, db_name=None):
+    if cohort != 'All' and team != 'All':
+        enrolment_docs = get_data("enrolment", "cohort_team",
+                                       (cohort, team))
+    elif cohort != 'All':
+        enrolment_docs = get_data("enrolment", "cohort", cohort)
+    else:
+        enrolment_docs = get_data("enrolment", "cohort", ["2022", "2123"])
+    return enrolment_docs
