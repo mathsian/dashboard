@@ -1,10 +1,11 @@
 from collections import deque
-from urllib import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs
 
 
 class History(deque):
 
     def get_match(self, pathname, search):
+        return False
         match = False
         max_path_match = 0
         max_search_match = 0
