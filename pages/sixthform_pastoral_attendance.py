@@ -1,4 +1,3 @@
-import filters
 import dash_tabulator
 import dash_core_components as dcc
 import dash_html_components as html
@@ -115,23 +114,12 @@ layout = dbc.Row([
             }, "value"),
     ],
     [
-        Input({
-            "type": "filter-dropdown",
-            "filter": ALL
-        }, "value"),
+        Input("sixthform-pastoral", "data")
     ],
 )
-def update_pastoral_attendance(filter_value):
-    cohort, team = filter_value
-    if cohort and team:
-        enrolment_docs = data.get_data("enrolment", "cohort_team",
-                                       (cohort, team))
-    elif cohort:
-        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
-    else:
-        return [], [], 0, 0
-    student_ids = [s.get('_id') for s in enrolment_docs]
-    attendance_docs = data.get_data("attendance", "student_id", student_ids)
+def update_pastoral_attendance(store_data):
+    enrolment_docs = store_data.get('enrolment_docs')
+    attendance_docs = store_data.get('attendance_docs')
     if not attendance_docs:
         return [], [], 0, 0
     this_year_start = curriculum.this_year_start

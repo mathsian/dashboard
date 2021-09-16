@@ -4,7 +4,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -14,7 +13,6 @@ from datetime import date
 from app import app
 import data
 import curriculum
-
 
 # Kudos tab content
 kudos_table = dash_tabulator.DashTabulator(
@@ -86,28 +84,16 @@ layout = dbc.Row([
             "page": "pastoral",
             "tab": "kudos",
         }, "figure")
-    ], [Input({
-        "type": "filter-dropdown",
-        "filter": ALL
-    }, "value")],
+    ], [Input("sixthform-pastoral", "data"),
+    ],
     [State({
         "type": "graph",
         "page": "pastoral",
         "tab": "kudos",
     }, "figure")])
-def update_pastoral_kudos(filter_value, current_figure):
-    # Get list of relevant students
-    cohort, team = filter_value
-    if cohort and team:
-        enrolment_docs = data.get_data("enrolment", "cohort_team",
-                                       (cohort, team))
-    elif cohort:
-        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
-    else:
-        return [], current_figure
-    student_ids = [s.get('_id') for s in enrolment_docs]
-    # Build kudos dataframe
-    kudos_docs = data.get_data("kudos", "student_id", student_ids)
+def update_pastoral_kudos(store_data, current_figure):
+    enrolment_docs = store_data.get('enrolment_docs')
+    kudos_docs = store_data.get('kudos_docs')
     if not kudos_docs:
         current_figure["data"][0]["r"] = [0 for v in curriculum.values]
         return [], current_figure
@@ -129,4 +115,3 @@ def update_pastoral_kudos(filter_value, current_figure):
     r = [kudos_pivot_df[v].sum() for v in curriculum.values]
     current_figure["data"][0]["r"] = r
     return kudos_pivot_df.to_dict(orient='records'), current_figure
-

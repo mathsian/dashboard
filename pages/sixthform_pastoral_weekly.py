@@ -118,33 +118,19 @@ layout = [
         "name": "wb"
     }, "children"),
 ], [
-    Input({
-        "type": "filter-dropdown",
-        "filter": ALL
-    }, "value"),
+    Input("sixthform-pastoral", "data"),
     Input({
         "type": "picker",
         "page": "pastoral",
         "tab": "weekly"
     }, "date")
 ])
-def update_weekly_table(filter_value, picker_value):
-    # Get list of relevant students
-    cohort, team = filter_value
-    if cohort and team:
-        enrolment_docs = data.get_data("enrolment", "cohort_team",
-                                       (cohort, team))
-    elif cohort:
-        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
-    else:
-        return [], ""
-    student_ids = [s.get('_id') for s in enrolment_docs]
+def update_weekly_table(store_data, picker_value):
+    enrolment_docs = store_data.get('enrolment_docs')
+    attendance_docs = store_data.get('attendance_docs')
     enrolment_df = pd.DataFrame.from_records(enrolment_docs)
     # Get attendance for the latest week before the chosen date
-    attendance_df = pd.DataFrame.from_records(
-        data.get_data("attendance", "student_id",
-                      student_ids)).query("subtype == 'weekly'").query(
-                          "date <= @picker_value").query("date == date.max()")
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query("subtype == 'weekly'").query("date <= @picker_value").query("date == date.max()")
     # Picked too early a date?
     if attendance_df.empty:
         attendance_df = pd.DataFrame.from_records(

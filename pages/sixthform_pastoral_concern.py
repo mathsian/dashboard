@@ -57,7 +57,8 @@ concern_table = dash_tabulator.DashTabulator(
     },
 )
 
-layout = dbc.Col(width=12, children=concern_table)
+layout = dbc.Container(concern_table)
+
 
 @app.callback(
     Output({
@@ -65,24 +66,13 @@ layout = dbc.Col(width=12, children=concern_table)
         "page": "pastoral",
         "tab": "concern",
     }, "data"),
-    [Input({
-        "type": "filter-dropdown",
-        "filter": ALL
-    }, "value")],
+    [
+        Input("sixthform-pastoral", "data"),
+    ],
 )
-def update_pastoral_concern(filter_value):
-    # Get list of relevant students
-    cohort, team = filter_value
-    if cohort and team:
-        enrolment_docs = data.get_data("enrolment", "cohort_team",
-                                       (cohort, team))
-    elif cohort:
-        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
-    else:
-        return []
-    student_ids = [s.get('_id') for s in enrolment_docs]
-    # Build concern dataframe
-    concern_docs = data.get_data("concern", "student_id", student_ids)
+def update_pastoral_concern(store_data):
+    enrolment_docs = store_data.get('enrolment_docs')
+    concern_docs = store_data.get('concern_docs')
     if not concern_docs:
         return []
     concern_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
@@ -92,4 +82,3 @@ def update_pastoral_concern(filter_value):
                           right_on="student_id").sort_values("date",
                                                              ascending=False)
     return concern_df.to_dict(orient="records")
-
