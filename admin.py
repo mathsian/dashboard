@@ -7,6 +7,7 @@ import jinja2
 from os.path import abspath
 import curriculum
 
+
 def sync_group(dbname=None, full=False, dry=True):
     # Get connection settings
     config_object = ConfigParser()
@@ -237,9 +238,11 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
         "subject_code": g.get("subject_code"),
         "subject_name": g.get("subject_name"),
         "cohort": cohort,
-        "grade": curriculum.scales.get(scale_name)[2]
+        # "grade": curriculum.scales.get(scale_name)[2]
+        "grade": "TBA"
     } for g in groups]
     data.save_docs(assessments, dbname)
+
 
 def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
     group = data.get_data("group", "subject_code", subject_code, dbname)
@@ -258,6 +261,7 @@ def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
     } for g in group]
     data.save_docs(assessments, dbname)
 
+
 def sync_rems_attendance(period='weekly', dbname=None):
     config_object = ConfigParser()
     config_object.read("config.ini")
@@ -269,28 +273,46 @@ def sync_rems_attendance(period='weekly', dbname=None):
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
     sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.'))
-    )
+        loader=jinja2.FileSystemLoader(abspath('.')))
     if period == 'weekly':
-        sql_template = sql_jinja_env.get_template('sql/attendance by week beginning and student.sql')
+        sql_template = sql_jinja_env.get_template(
+            'sql/attendance by week beginning and student.sql')
     elif period == 'monthly':
-        sql_template = sql_jinja_env.get_template('sql/attendance by month and student.sql')
+        sql_template = sql_jinja_env.get_template(
+            'sql/attendance by month and student.sql')
     else:
         return False
     sql = sql_template.render()
     rems_df = pd.read_sql(sql, conn).eval("date = date.astype('str')")
-    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype", [["attendance", period]], dbname), columns=["_id", "_rev", "student_id", "date", "type", "subtype", "actual", "possible", "authorised", "unauthorised", "late", "marks"])
-    merged_df = pd.merge(rems_df,
-                         our_df,
-                         how='left',
-                         suffixes=['','_right'],
-                         left_on=['student_id', 'date'],
-                         right_on=['student_id', 'date'],
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype",
+                                                     [["attendance", period]],
+                                                     dbname),
+                                       columns=[
+                                           "_id", "_rev", "student_id", "date",
+                                           "type", "subtype", "actual",
+                                           "possible", "authorised",
+                                           "unauthorised", "late", "marks"
+                                       ])
+    merged_df = pd.merge(
+        rems_df,
+        our_df,
+        how='left',
+        suffixes=['', '_right'],
+        left_on=['student_id', 'date'],
+        right_on=['student_id', 'date'],
     )
-    to_add = merged_df.query("_id.isna()")[["type", "subtype", "date", "student_id", "actual", "possible", "authorised", "unauthorised", "late", "marks"]].eval("type = 'attendance'").eval("subtype = @period")
+    to_add = merged_df.query("_id.isna()")[[
+        "type", "subtype", "date", "student_id", "actual", "possible",
+        "authorised", "unauthorised", "late", "marks"
+    ]].eval("type = 'attendance'").eval("subtype = @period")
     print(len(to_add), " to add")
     data.save_docs(to_add.to_dict(orient='records'), dbname)
-    to_update = merged_df.query("_id.notna() and (actual != actual_right or late != late_right or possible != possible_right or authorised != authorised_right)")[["_id", "_rev", "type", "subtype", "date", "student_id", "actual", "possible", "authorised", "unauthorised", "late", "marks"]]
+    to_update = merged_df.query(
+        "_id.notna() and (actual != actual_right or late != late_right or possible != possible_right or authorised != authorised_right)"
+    )[[
+        "_id", "_rev", "type", "subtype", "date", "student_id", "actual",
+        "possible", "authorised", "unauthorised", "late", "marks"
+    ]]
     print(len(to_update), "to update")
     data.save_docs(to_update.to_dict(orient='records'), dbname)
 
@@ -388,7 +410,6 @@ def fix_nan_comments(db_name):
     data.save_docs(assessment_docs, db_name)
 
 
-
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
@@ -397,17 +418,17 @@ if __name__ == "__main__":
     sync_rems_attendance("monthly", "ada")
     #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
     # sync_enrolment("ada", dry=True)
-    sync_group("ada", dry=True)
+    # sync_group("ada", dry=True)
     #sync_group("ada", full=False, dry=False)
     #fix_assessments("ada")
     #fix_group_cohorts("ada", dry=True)
     #fix_assessment_comments("ada")
     #fix_null_descriptions("ada")
     #fix_nan_comments("ada")
-#    for subject_code in ["BUS-L3AL", "MAT-L3AL", "GRA-L3AL", "PSY-L3AL", "FMA-L3AL"]:
+    #    for subject_code in ["BUS-L3AL", "MAT-L3AL", "GRA-L3AL", "PSY-L3AL", "FMA-L3AL"]:
     #for subject_code in ["AL-BS", "AL-MA", "AL-GR", "AL-PS"]:
     #    create_assessment("1921", subject_code, "13.2 Spring Assessment", "2021-03-16", "A-Level", "ada")
-#        create_assessment("2022", subject_code, "12.3 June Assessment", "2021-06-25", "A-Level", "ada")
+    #        create_assessment("2022", subject_code, "12.3 June Assessment", "2021-06-25", "A-Level", "ada")
     #create_assessment("1921", "ECS", "Unit 10", "2021-03-16", "BTEC-Single", "ada")
     #create_assessment("1921", "ECS", "Unit 4", "2021-03-16", "BTEC-Single", "ada")
     #create_assessment("1921", "L3-CM", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
@@ -422,10 +443,15 @@ if __name__ == "__main__":
     #                                "subject_code": {"$regex": "BUS"},
     #                                "assessment": {"$regex": "12.2"}
     #}, {"report": 2}, "ada")
+    #data.find_and_replace({"team": {"$regex": "MARGOT"}}, {"team": "Margot"}, "ada")
+    #data.find_and_replace({"team": {"$regex": "TOM"}}, {"team": "TomM"}, "ada")
+    #data.find_and_replace({"team": {"$regex": "MARK B"}}, {"team": "MarkB"}, "ada")
+    #data.find_and_replace({"team": {"$regex": "Mark B"}}, {"team": "MarkB"}, "ada")
+    #data.find_and_replace({"team": {"$regex": "STEVE"}}, {"team": "Steve"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EX"}}, {"date": "2021-07-05"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-04"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-05"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-04"}, "ada")
     #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-05"}, "ada")
-    # create_assessment_all("2123", "Week 1", "2021-09-06", "Expectations", "ada")
+    # create_assessment_all("2123", "Week 3", "2021-09-20", "Expectations", "ada")
     # create_assessment("2123", "ENG-L2GC", "Week 1", "2021-09-06", "Expectations", "ada")
