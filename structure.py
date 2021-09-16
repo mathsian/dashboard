@@ -6,12 +6,18 @@ from pages import (
     sixthform_attendance_unauthorized,
     sixthform_attendance_missing,
     sixthform_pastoral,
+    sixthform_pastoral_progress,
     sixthform_pastoral_attendance,
     sixthform_pastoral_weekly,
     sixthform_pastoral_kudos,
     sixthform_pastoral_concern,
     sixthform_academic,
-    sixthform_academic_subject
+    sixthform_academic_view,
+    sixthform_academic_edit,
+    sixthform_student,
+    sixthform_student_report,
+    sixthform_student_kudos,
+    sixthform_student_concern
 )
 
 
@@ -28,39 +34,39 @@ class IncompleteError(Exception):
 class Container(object):
     """Base class for sections, pages and tabs"""
 
-    def __init__(self, name, path, layout, callbacks):
-        if not (name and path and layout):
-            raise IncompleteError
+    def __init__(self, name, path):
         self.name = name
-        self.layout = layout
-        self.callbacks = callbacks
         self.children = {}
         self.path = path
 
-    def add_child(self, name, path, layout, callbacks):
-        child = Section(name, "/" + path, layout, callbacks)
+    def add_child(self, name, path):
+        child = Section(name, "/" + path)
         self.children[child.path] = child
         return child
 
 
 class Section(Container):
     """Class for sections.
-    It's children are tabs.
-    Any content is displayed in the card header"""
+    It's children are pages.
+    Any content is ..."""
 
-    def add_child(self, name, path, layout, callbacks):
-        child = Page(name, self.path + "/" + path, layout, callbacks)
+    def add_child(self, name, path, cardheader_layout, sidebar_layout):
+        child = Page(name, self.path + "/" + path, cardheader_layout, sidebar_layout)
         self.children[child.path] = child
         return child
 
 
-class Page(Section):
+class Page(Container):
     """A page of the dashboard.
-    Owns a list of tabs.
-    Any content is displayed in the sidebar"""
+    Owns a list of tabs. Sidebar content and cardheader content"""
 
-    def add_tab(self, name, path, layout, callbacks):
-        child = Tab(name, self.path + "/" + path, layout, callbacks)
+    def __init__(self, name, path, cardheader_layout, sidebar_layout):
+        super().__init__(name, path)
+        self.cardheader_layout = cardheader_layout
+        self.sidebar_layout = sidebar_layout
+
+    def add_child(self, name, path, layout):
+        child = Tab(name, self.path + "/" + path, layout)
         if path in self.children:
             raise PathExistsError
         else:
@@ -68,64 +74,74 @@ class Page(Section):
         return child
 
 
-class Tab(Page):
+class Tab(Container):
     """The lowest division of content.
     Content is displayed in the main content area"""
 
-    def add_child(self, *args):
-        pass
+    def __init__(self, name, path, layout):
+        super().__init__(name, path)
+        self.layout = layout
 
 
 content_dict = {
-    ("Summary", "summary", html.Div("Summary"), None):
+    ("Summary", "summary"):
         {
-            ("Sixth Form", "sixthform", html.Div("Summary, Sixth Form"), None):
+            ("Sixth Form", "sixthform", html.Div("Summary, Sixth Form"), html.Div("Summary, Sixth Form side")):
                 [
-                    ("Academic", "academic", html.Div("Summary, Sixth Form, Academic"), None)
+                    ("Academic", "academic", html.Div("Summary, Sixth Form, Academic")),
+                    ("Pastoral", "pastoral", html.Div("Summary, Sixth Form, Pastoral"))
                 ],
-            ("Apprenticeships", "apprenticeships", html.Div("Summary, Apprenticeships"), None):
+            ("Apprenticeships", "apprenticeships", html.Div("Summary, Apprenticeships"), html.Div("Summary, Apprenticeships")):
                 [
-                    ("Academic", "academic", html.Div("Summary, Apprenticeships, Academic"), None)
+                    ("Academic", "academic", html.Div("Summary, Apprenticeships, Academic")),
+                    ("Pastoral", "pastoral", html.Div("Summary, Apprenticeships, Pastoral"))
                 ],
         },
-    ("Sixth Form", "sixthform", html.Div(""), None):
+    ("Sixth Form", "sixthform"):
         {
-            ("Attendance", "attendance", sixthform_attendance.layout, None):
+            ("Attendance", "attendance", sixthform_attendance.cardheader_layout, sixthform_attendance.sidebar_layout):
             [
-                ("Year", "year", sixthform_attendance_year.layout, None),
-                ("Unauthorized", "unauthorized", sixthform_attendance_unauthorized.layout, None),
-                ("Missing registers", "missing", sixthform_attendance_missing.layout, None)
+                ("Year", "year", sixthform_attendance_year.layout),
+                ("Unauthorized", "unauthorized", sixthform_attendance_unauthorized.layout),
+                ("Missing registers", "missing", sixthform_attendance_missing.layout)
         ],
-            ("Pastoral", "pastoral", sixthform_pastoral.layout, None):
+            ("Pastoral", "pastoral", sixthform_pastoral.cardheader_layout, sixthform_pastoral.sidebar_layout):
                 [
-                    ("Attendance", "attendance", sixthform_pastoral_attendance.layout, None),
-                    ("Weekly attendance", "weekly", sixthform_pastoral_weekly.layout, None),
-                    ("Kudos", "kudos", sixthform_pastoral_kudos.layout, None),
-                    ("Concern", "concern", sixthform_pastoral_concern.layout, None),
+                    ("Progress", "progress", sixthform_pastoral_progress.layout),
+                    ("Attendance", "attendance", sixthform_pastoral_attendance.layout),
+                    ("Weekly attendance", "weekly", sixthform_pastoral_weekly.layout),
+                    ("Kudos", "kudos", sixthform_pastoral_kudos.layout),
+                    ("Concern", "concern", sixthform_pastoral_concern.layout),
                 ],
-            ("Academic", "academic", sixthform_academic.layout, None):
+            ("Academic", "academic", sixthform_academic.cardheader_layout, sixthform_academic.sidebar_layout):
                 [
-                    ("Cohort", "cohort", html.Div("Sixth Form, Academic, Cohort"), None),
-                    ("Subject", "subject", sixthform_academic_subject.layout, None)
+                    ("Edit", "edit", sixthform_academic_edit.layout),
+                    ("View", "view", sixthform_academic_view.layout)
                 ],
+            ("Student", "student", sixthform_student.cardheader_layout, sixthform_student.sidebar_layout):
+            [
+                ("Report", "report", sixthform_student_report.layout),
+                ("Kudos", "kudos", sixthform_student_kudos.layout),
+                ("Concern", "concern", sixthform_student_concern.layout)
+            ]
         },
-    ("Apprenticeships", "apprenticeships", html.Div("Apprenticeships"), None):
+    ("Apprenticeships", "apprenticeships"):
         {
-            ("Pastoral", "pastoral", html.Div("Apprenticeships, Pastoral"), None):
+            ("Pastoral", "pastoral", html.Div("Apprenticeships, Pastoral"), html.Div("Apprenticeships, Pastoral")):
                 [
-                    ("Attendance", "attendance", html.Div("Apprenticeships, Pastoral, Attendance"), None),
-                    ("Kudos", "kudos", html.Div("Apprenticeships, Pastoral, Kudos"), None)
+                    ("Attendance", "attendance", html.Div("Apprenticeships, Pastoral, Attendance")),
+                    ("Kudos", "kudos", html.Div("Apprenticeships, Pastoral, Kudos"))
                 ],
-            ("Academic", "academic", html.Div("Apprenticeships, Academic"), None):
+            ("Academic", "academic", html.Div("Apprenticeships, Academic"), html.Div("Apprenticeships, Academic")):
                 [
-                    ("Cohort", "cohort", html.Div("Apprenticeships, Academic, Cohort"), None),
-                    ("Subject", "subject", html.Div("Apprenticeships, Academic, Subject"), None)
+                    ("Cohort", "cohort", html.Div("Apprenticeships, Academic, Cohort")),
+                    ("Subject", "subject", html.Div("Apprenticeships, Academic, Subject"))
                 ],
         }
 }
 
 # The root container. Has no content of its own
-home = Container("Home", "/", "Home", None)
+home = Container("Home", "/")
 
 for s in content_dict.keys():
     section = home.add_child(*s)
