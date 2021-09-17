@@ -19,57 +19,66 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-cohort_dropdown = dbc.DropdownMenu(id="academic-cohort-dropdown", label="Cohort")
+cohort_dropdown = dbc.DropdownMenu(id="academic-cohort-dropdown", nav=True)
 
-subject_dropdown = dbc.DropdownMenu(
-    id = "subject-dropdown",
-    label = "Subject"
+subject_dropdown = dbc.DropdownMenu(id="subject-dropdown", nav=True)
+
+cardheader_layout = dbc.Nav([
+    dcc.Store("sixthform-academic-store", storage_type='memory'),
+    dbc.NavItem(cohort_dropdown),
+    dbc.NavItem(subject_dropdown),
+],
+                            fill=True)
+
+sidebar_layout = dbc.Nav(id={
+    "type": "nav",
+    "section": "sixthform",
+    "page": "academic",
+    "name": "assessments"
+},
+                         pills=True,
+                         vertical=True,
 )
-assessment_dropdown = dbc.DropdownMenu(
-    id = "assessment-dropdown",
-    label = "Assessment"
-)
-
-cardheader_layout = dbc.Row([
-    dbc.Col(html.Div("Cohort")),
-    dbc.Col(cohort_dropdown),
-    dbc.Col(html.Div("Subject")),
-    dbc.Col(subject_dropdown),
-    dbc.Col(html.Div("Assessment")),
-    dbc.Col(assessment_dropdown)
-])
-
-sidebar_layout = html.Div("SF academic sidebar")
-
-
 @app.callback([
     Output("academic-cohort-dropdown", "label"),
     Output("academic-cohort-dropdown", "children"),
     Output("subject-dropdown", "label"),
     Output("subject-dropdown", "children"),
-    Output("assessment-dropdown", "label"),
-    Output("assessment-dropdown", "children"),
+    Output(
+        {
+            "type": "nav",
+            "section": "sixthform",
+            "page": "academic",
+            "name": "assessments"
+        }, "children"),
+    Output("sixthform-academic-store", "data")
 ], [
     Input("location", "pathname"),
     Input("location", "search"),
 ], [
     State("subject-dropdown", "label"),
-    State("assessment-dropdown", "label"),
 ])
-def update_assessments(pathname, search, subject, assessment):
+def update_assessments(pathname, search, subject):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
     cohort = search_dict.get('cohort', ['2123'])[0]
-    print(f"Cohort {cohort}")
     subjects = [s_c for s_c, s_n in data.get_subjects(cohort)]
     subject = search_dict.get("subject", subjects)[0]
-    print(f"Subject {subject}")
     assessments = data.get_assessments(cohort, subject)
-    assessment = search_dict.get("assessment", assessments)[0].replace('+', ' ')
+    assessment = search_dict.get("assessment",
+                                 assessments)[0].replace('+', ' ')
     assessment_items = []
     for ass in assessments:
-        s = urlencode(query={'cohort': cohort, 'subject': subject, 'assessment': ass})
-        assessment_items.append(dbc.DropdownMenuItem(ass, href=f'{pathname}?{s}'))
+        s = urlencode(query={
+            'cohort': cohort,
+            'subject': subject,
+            'assessment': ass
+        })
+        active = 'exact' if ass == assessment else False
+        assessment_items.append(
+            dbc.NavItem(dbc.NavLink(ass, href=f'{pathname}?{s}',
+                                    active=bool(active)),
+                        active=active))
     subject_items = []
     for sub in subjects:
         s = urlencode(query={'cohort': cohort, 'subject': sub})
@@ -78,4 +87,13 @@ def update_assessments(pathname, search, subject, assessment):
     for c in ['2022', '2123']:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    return (cohort, cohort_items, subject, subject_items, assessment, assessment_items)
+    assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
+                                    [(assessment, subject, cohort)])
+    enrolment_docs = data.get_data("enrolment", "_id", [d.get("student_id") for d in assessment_docs])
+    store_data = {
+        "enrolment_docs": enrolment_docs,
+        "assessment_docs": assessment_docs,
+        "assessment_name": assessment
+        }
+    return (cohort, cohort_items, subject, subject_items, assessment_items,
+            store_data)

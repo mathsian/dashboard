@@ -60,14 +60,10 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                           ],
                                           value="gc-ma")
 
-layout = [
-    dbc.Row([
-        dbc.Col([
+layout = dbc.Container([
+            dbc.Row([dbc.Col([assessment_colour_dropdown], width=3)], justify='end'),
             dbc.Row([dbc.Col([assessment_graph])]),
-            dbc.Row([dbc.Col([assessment_colour_dropdown], width=3)])
         ])
-    ])
-]
 
 
 @app.callback(
@@ -79,7 +75,7 @@ layout = [
             "name": "bar",
         }, "figure"),
     [
-        Input("assessment-dropdown", "label"),
+        Input("sixthform-academic-store", "data"),
         Input(
             {
                 "type": "dropdown",
@@ -88,10 +84,10 @@ layout = [
                 "name": "colour"
             }, "value"),
     ], [
-        State("academic-cohort-dropdown", "label"),
         State("subject-dropdown", "label"),
         ])
-def update_subject_graph(assessment_name, colour_code, cohort, subject_code):
+def update_subject_graph(store_data, colour_code, subject_code):
+    assessment_name = store_data.get("assessment_name")
     if not assessment_name:
         return {
             "layout": {
@@ -104,13 +100,9 @@ def update_subject_graph(assessment_name, colour_code, cohort, subject_code):
                 "height": 320
             }
         }
-    assessment_df = pd.DataFrame.from_records(
-        data.get_data("assessment", "assessment_subject_cohort",
-                      [(assessment_name, subject_code, cohort)]))
+    assessment_df = pd.DataFrame.from_records(store_data.get("assessment_docs"))
     subtype = assessment_df.iloc[0]["subtype"]
-    enrolment_df = pd.DataFrame.from_records(
-        data.get_data("enrolment", "_id",
-                      assessment_df["student_id"].to_list()))
+    enrolment_df = pd.DataFrame.from_records(store_data.get("enrolment_docs"))
     merged_df = assessment_df.merge(enrolment_df,
                                     left_on="student_id",
                                     right_on="_id",
@@ -129,7 +121,7 @@ def update_subject_graph(assessment_name, colour_code, cohort, subject_code):
             color=merged_df[colour_code],
             colorbar=dict(tickmode='array',
                           tickvals=list(range(-1, 10)),
-                          ticktext=["missing"] + list(range(10))),
+                          ticktext=["n/a"] + list(range(10))),
             cmin=-1,
             cmax=9,
             colorscale=px.colors.sequential.thermal,
@@ -172,7 +164,7 @@ def update_subject_graph(assessment_name, colour_code, cohort, subject_code):
                       margin={
                           "pad": 10,
                           "t": 0,
-                          "autoexpand": False
+                          "autoexpand": True
                       })
     fig.add_trace(bar_trace, row=1, col=1)
     fig.add_trace(scatter_trace, row=1, col=2)

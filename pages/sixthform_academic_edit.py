@@ -27,11 +27,11 @@ subject_table = dash_tabulator.DashTabulator(
         "tab": "edit"
     },
     options={
-        "maxHeight": "60vh",
         "placeholder": "Select a subject",
+        # "layout": "fitDataStretch",
+        # "maxHeight": "60vh",
         "resizableColumns": False,
         "index": "_id",
-        "layout": "fitDataStretch",
         "clipboard": True,
         "selectable": False,
         "clipboardPasteAction": ns("clipboardPasteAction"),
@@ -59,7 +59,7 @@ layout=dbc.Row(dbc.Col([subject_table]))
         "tab": "edit"
     }, "columns"),
 ], [
-    Input("assessment-dropdown", "label"),
+    Input("sixthform-academic-store", "data"),
     Input({
         "type": "table",
         "page": "academic",
@@ -72,13 +72,11 @@ layout=dbc.Row(dbc.Col([subject_table]))
     }, "clipboardPasted")
 ],
               [
-                  State("academic-cohort-dropdown", "label"),
                   State("subject-dropdown", "label"),
               ]
 )
-def update_subject_table(assessment_name, changed, row_data, cohort, subject_code):
-    # If the user hasn't selected a subject/assessment yet
-    if not assessment_name:
+def update_subject_table(store_data, changed, row_data, cohort):
+    if not store_data:
         return [], []
     trigger = dash.callback_context.triggered[0].get("prop_id")
     # If we're here because a cell has been edited
@@ -89,9 +87,7 @@ def update_subject_table(assessment_name, changed, row_data, cohort, subject_cod
         data.save_docs([doc])
     elif "clipboardPasted" in trigger:
         # If we're here because data has been pasted
-        assessment_docs = data.get_data(
-            "assessment", "assessment_subject_cohort",
-            [(assessment_name, subject_code, cohort)])
+        assessment_docs = store_data.get("assessment_docs")
         assessment_df = pd.DataFrame.from_records(assessment_docs)
         try:
             pasted_df = pd.DataFrame.from_records(row_data)[[
@@ -110,18 +106,13 @@ def update_subject_table(assessment_name, changed, row_data, cohort, subject_cod
             merged_docs = merged_df.to_dict(orient='records')
             data.save_docs(merged_docs)
 
-    assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
-                                    [(assessment_name, subject_code, cohort)])
-    assessment_df = pd.DataFrame.from_records(assessment_docs).sort_values(
-        by='student_id')
-    student_ids = assessment_df["student_id"].tolist()
-    enrolment_df = pd.DataFrame.from_records(
-        data.get_data("enrolment", "_id", student_ids))
+    assessment_df = pd.DataFrame.from_records(store_data.get("assessment_docs"))
+    enrolment_df = pd.DataFrame.from_records(store_data.get("enrolment_docs"))
     merged_df = pd.merge(assessment_df,
                          enrolment_df,
                          left_on='student_id',
                          right_on='_id',
-                         how='inner')
+                         how='inner').sort_values(by=["family_name", "given_name"])
     subtype = merged_df.iloc[0]["subtype"]
     columns = [
         {
