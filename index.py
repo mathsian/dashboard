@@ -20,7 +20,9 @@ navbar = dbc.Navbar([
             dbc.DropdownMenu(id="history_links", label="History", nav=True))),
             width=2),
     dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links"))), width=2)
-], style={"margin-bottom": 10})
+],
+                    # style={"margin-bottom": 10}
+)
 
 cardheader = dbc.CardHeader(
     dbc.Row([
@@ -31,14 +33,14 @@ card = dbc.Card(children=[cardheader, cardbody])
 
 sidebar_header = dbc.Row(dbc.Col(id="cardheader_content"))
 sidebar_content = dbc.Row(dbc.Col(id="sidebar_content"))
-sidebar = dbc.Container([sidebar_header, sidebar_content])
+sidebar = dbc.Card(dbc.CardBody([sidebar_header, sidebar_content]), body=True)
 
-app.layout = html.Div([
+app.layout = dbc.Container([
         dcc.Location(id="location", refresh=False),
         dcc.Store(id="history", storage_type='local'),
         dbc.Row(dbc.Col(navbar)),
-        dbc.Row([dbc.Col(sidebar, width=3), dbc.Col(card, width=9)], no_gutters=False)
-    ])
+        dbc.Row([dbc.Col(sidebar, width=3), dbc.Col(card, width=9)], no_gutters=True)
+    ], fluid=True)
 # app.layout = dbc.Container(children=layout, fluid=True)
 
 
