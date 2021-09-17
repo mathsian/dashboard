@@ -27,9 +27,9 @@ unauthorised_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        "layout": "fitData",
         "groupBy": "date",
-        "maxHeight": "70vh",
+        # "layout": "fitData",
+        # "maxHeight": "70vh",
         "groupHeader": ns("groupHeader"),
     },
     theme='bootstrap/tabulator_bootstrap4',

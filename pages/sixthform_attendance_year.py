@@ -61,7 +61,7 @@ threshold_slider = dcc.Slider(
     },
     min=0,
     max=100,
-    value=92,
+    value=90,
     marks={
         60: '60',
         80: '80',

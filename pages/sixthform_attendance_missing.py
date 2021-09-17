@@ -29,8 +29,8 @@ missing_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "groupBy": ["date", "period"],
         "groupHeader": ns("groupHeader2"),
-        "maxHeight": "70vh",
-        "layout": "fitData"
+        # "maxHeight": "70vh",
+        # "layout": "fitData"
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[{
