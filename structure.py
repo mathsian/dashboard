@@ -103,7 +103,7 @@ content_dict = {
             [
                 ("Year", "year", sixthform_attendance_year.layout),
                 ("Unauthorized", "unauthorized", sixthform_attendance_unauthorized.layout),
-                ("Missing registers", "missing", sixthform_attendance_missing.layout)
+                ("Missing marks", "missing", sixthform_attendance_missing.layout)
         ],
             ("Pastoral", "pastoral", sixthform_pastoral.cardheader_layout, sixthform_pastoral.sidebar_layout):
                 [
