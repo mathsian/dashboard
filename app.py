@@ -34,23 +34,23 @@ app.title = "data@ada"
 app.enable_dev_tools(debug=True, dev_tools_ui=True, dev_tools_props_check=True, dev_tools_serve_dev_bundles=True, dev_tools_hot_reload=True,)
 
 # wrap in google oauth
-auth = GoogleOAuth(app=app,
-                   authorized_emails=authorized_emails,
-                   additional_scopes=['openid'])
+# auth = GoogleOAuth(app=app,
+#                    authorized_emails=authorized_emails,
+#                    additional_scopes=['openid'])
 
 # fix cors problems resulting from the redirect below
 CORS(server)
 # Redirect if unauthorized
-@server.before_request
-def before_request_fun():
-    #print(f"Accessing {request.path}")
-    #print(f"Authorized: {auth.is_authorized()}")
-    if not auth.is_authorized() and request.path != "/login/google/authorized":
-        #print("Not authorized")
-        if request.path != '/login/google':
-            #print("Redirecting")
-            return redirect('/login/google')
-        else:
-            pass
-            #print("Not redirecting")
-    #print("Authorized")
+# @server.before_request
+# def before_request_fun():
+#     #print(f"Accessing {request.path}")
+#     #print(f"Authorized: {auth.is_authorized()}")
+#     if not auth.is_authorized() and request.path != "/login/google/authorized":
+#         #print("Not authorized")
+#         if request.path != '/login/google':
+#             #print("Redirecting")
+#             return redirect('/login/google')
+#         else:
+#             pass
+#             #print("Not redirecting")
+#     #print("Authorized")
