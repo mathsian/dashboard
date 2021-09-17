@@ -19,33 +19,33 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-cohort_dropdown = dbc.DropdownMenu(id="student-cohort-dropdown")
-team_dropdown = dbc.DropdownMenu(id="student-team-dropdown")
+cohort_dropdown = dbc.DropdownMenu(id="report-cohort-dropdown",
+                                   nav=True,)
+team_dropdown = dbc.DropdownMenu(id="report-team-dropdown", nav=True)
 
-cardheader_layout = dbc.Row([
-    dbc.Col(html.Div("Cohort"), width=2, align='center'),
-    dbc.Col([cohort_dropdown], width=2, align='end'),
-    dbc.Col(html.Div("Team"), width=2, align='center'),
-    dbc.Col([team_dropdown], width=2, align='end')
+cardheader_layout = dbc.Nav([
+    dcc.Store(id="sixthform-student-store", storage_type='memory'),
+    dbc.NavItem(cohort_dropdown),
+    dbc.NavItem(team_dropdown)
 ],
-                 justify='start')
+                            fill=True)
 
 # The student list is on a separate card alongside the tabs
 # so that it isn't updated when the tab changes
 student_table = dash_tabulator.DashTabulator(
-    id={
-        "type": "table",
-        "page": "student"
-    },
+    id="this_table_right_here",
     options={
         "resizableColumns": False,
         "selectable": True,
-        "maxHeight": "60vh",
+        "maxHeight": "70vh",
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[
         {
-            "formatter": "rowSelection",
+            "title": "Selected",
+            "field": "selected",
+            "formatter": "tickCross",
+            "formatterParams": {"crossElement": False},
             "titleFormatter": "rowSelection",
             "horizAlign": "center",
             "headerSort": False,
@@ -71,27 +71,25 @@ student_table = dash_tabulator.DashTabulator(
     ],
 )
 
-sidebar_layout = student_table
+sidebar_layout = dbc.Container(student_table)
 
 
 @app.callback([
-    Output("student-cohort-dropdown", "label"),
-    Output("student-cohort-dropdown", "children"),
-    Output("student-team-dropdown", "label"),
-    Output("student-team-dropdown", "children"),
+    Output("report-cohort-dropdown", "label"),
+    Output("report-cohort-dropdown", "children"),
+    Output("report-team-dropdown", "label"),
+    Output("report-team-dropdown", "children"),
+    Output("sixthform-student-store", "data")
 ], [
     Input("location", "pathname"),
     Input("location", "search"),
-], [State("student-team-dropdown", "label")])
+], [State("report-team-dropdown", "label")])
 def update_teams(pathname, search, team):
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
-    cohort = search_dict.get('cohort', ['All'])[0]
-    if cohort == 'All':
-        teams = data.get_teams(['2022', '2123'])
-    else:
-        teams = data.get_teams(cohort)
+    cohort = search_dict.get('cohort', ['2123'])[0]
+    teams = data.get_teams(cohort)
     # Get list of teams
     team = search_dict.get("team", ['All'])[0]
     # Populate the dropdowns
@@ -100,31 +98,74 @@ def update_teams(pathname, search, team):
         s = urlencode(query={'cohort': cohort, 'team': t})
         team_items.append(dbc.DropdownMenuItem(t, href=f'{pathname}?{s}'))
     cohort_items = []
-    for c in ['All', '2022', '2123']:
+    for c in ['2022', '2123']:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    return (cohort, cohort_items, team, team_items)
+    # Get data in scope
+    enrolment_docs = data.get_enrolment_by_cohort_team(cohort, team)
+    student_ids = [e.get('_id') for e in enrolment_docs]
+    attendance_docs = data.get_data("attendance", "student_id", student_ids)
+    assessment_docs = data.get_data("assessment", "student_id", student_ids)
+    # Kudos processing
+    kudos_docs = data.get_data("kudos", "student_id", student_ids)
+    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
+                        pd.DataFrame.from_records(kudos_docs),
+                        how="left",
+                        left_on="_id",
+                        right_on="student_id")
+    kudos_pivot_df = pd.pivot_table(
+        kudos_df,
+        values="points",
+        index=["student_id", "given_name", "family_name"],
+        columns="ada_value",
+        aggfunc=sum,
+        fill_value=0,
+    ).reindex(curriculum.values, axis=1, fill_value=0)
+    kudos_pivot_df["total"] = kudos_pivot_df.sum(axis=1)
+    kudos_pivot_df = kudos_pivot_df.reset_index()
+    kudos_pivot_docs = kudos_pivot_df.to_dict(orient='records')
+
+    concern_docs = data.get_data("concern", "student_id", student_ids)
+    store_data = {
+        "student_ids": student_ids,
+        "enrolment_docs": enrolment_docs,
+        "attendance_docs": attendance_docs,
+        "assessment_docs": assessment_docs,
+        "kudos_docs": kudos_docs,
+        "kudos_pivot_docs": kudos_pivot_docs,
+        "concern_docs": concern_docs,
+    }
+    return (cohort, cohort_items, team, team_items, store_data)
+
 
 @app.callback(
-    Output({
-        "type": "table",
-        "page": "student"
-    }, "data"),
-    [
-        Input("student-cohort-dropdown", "label"),
-        Input("student-team-dropdown", "label")
-    ],
-)
-def update_student_table(cohort, team):
-    if cohort != 'All' and team != 'All':
-        enrolment_docs = data.get_data("enrolment", "cohort_team",
-                                       (cohort, team))
-    elif cohort != 'All':
-        enrolment_docs = data.get_data("enrolment", "cohort", cohort)
-    else:
-        enrolment_docs = data.get_data("all", "type", "enrolment")
-    enrolment_df = pd.DataFrame(enrolment_docs).sort_values(
-        by=["given_name", "family_name"])
-    enrolment_df["student_id"] = enrolment_df["_id"]
-    return enrolment_df.to_dict(orient='records')
+    Output("this_table_right_here", "data"),
+[
+    Input("sixthform-student-store", "data")
+])
+def update_student_table(store_data):
+    enrolment_docs = store_data.get("enrolment_docs")
+    for enrolment_doc in enrolment_docs:
+        enrolment_doc["selected"] = 0
+    return enrolment_docs
 
+
+@app.callback(
+[
+    Output("location", "hash"),
+    Output("this_table_right_here", "rowClick")
+], [
+    Input("location", "hash"),
+    Input("this_table_right_here", "multiRowsClicked") 
+], [
+    State("this_table_right_here", "data")])
+def sync_hash_with_selections(query_hash, multiRowsClicked, table_data):
+    ctx = dash.callback_context
+    input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if "location" in input_id:
+        student_ids = query_hash.removeprefix('#').split(',')
+    else:
+        print(table_data)
+        student_ids = [row.get('_id') for row in multiRowsClicked]
+        query_hash = "#" + ",".join(student_ids)
+    return query_hash, student_ids
