@@ -18,7 +18,7 @@ import data
 from dash_extensions.javascript import Namespace
 ns = Namespace("myNameSpace", "tabulator")
 
-tabs = ["Attendance", "Unauthorised", "Missing"]
+tabs = ["Attendance", "Unauthorised", "Missing", "Progress"]
 content = [
     dbc.Card([
         dbc.CardHeader(dbc.Tabs(
@@ -31,18 +31,14 @@ content = [
             active_tab=f"summary-tab-{tabs[0].lower()}",
         ),
 ),
-        dbc.CardBody(id="summary-content",
-                     style={
-                         "max-height": "75vh",
-                         "overflow-y": "auto",
-                     }),
+        dbc.CardBody(id="summary-content"),
     ]),
     dcc.Interval(id={
         "type": "interval",
         "page": "summary",
         "tab": "attendance"
     },
-                 interval=60_000,
+                 interval=600_000,
                  n_intervals=0),
 ]
 gauge_last = daq.Gauge(
@@ -228,14 +224,37 @@ missing_table = dash_tabulator.DashTabulator(
         "title": "Missing marks",
         "field": "missing"
     }])
+
+progress_table = dash_tabulator.DashTabulator(
+    id={
+        "type": "table",
+        "page": "summary",
+        "tab": "progress"
+    },
+    options={
+        "resizableColumns": True,
+        "maxHeight": "70vh",
+    },
+    theme='bootstrap/tabulator_bootstrap4',
+    downloadButtonType={
+        "css": "btn btn-primary",
+        "text": "Download",
+        "type": "csv"
+    },
+)
+
+progress_cohort = dcc.Dropdown(id='progress-cohort-dropdown', options=[{'label': c, 'value': c} for c in ['2022', '2123']], value='2123')
+
 validation_layout = content + [
-    attendance_dashboard, unauthorised_table, missing_table
+    attendance_dashboard, unauthorised_table, missing_table, progress_cohort, progress_table
 ]
 tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
     "summary-tab-unauthorised": [dbc.Col([unauthorised_table])],
     "summary-tab-missing":
-    [dbc.Col([missing_table])]
+    [dbc.Col([missing_table])],
+    "summary-tab-progress":
+    [dbc.Col(dbc.Row([dbc.Col(progress_cohort, width=1), dbc.Col(progress_table)]))]
 }
 
 
@@ -437,3 +456,35 @@ def update_attendance_gauge(n_intervals, threshold):
     last = rems_df.query('date != "Year"').query(
         'student_id == "All" & date == date.max()')["attendance"].iat[0]
     return overall, last, monthly_figure, low_figure
+
+
+@app.callback(
+    [
+    Output({
+        "type": "table",
+        "page": "summary",
+        "tab": "progress"
+    }, "data"),
+    Output({
+        "type": "table",
+        "page": "summary",
+        "tab": "progress"
+    }, "columns"),
+    ], [
+    Input("progress-cohort-dropdown", "value")
+])
+def update_progress_table(cohort):
+    enrolment_docs = data.get_data("enrolment", "cohort", cohort)
+    student_ids = [doc.get("_id") for doc in enrolment_docs]
+    assessment_docs = data.get_data("assessment", "student_id", student_ids)
+    merged_df = pd.merge(
+        pd.DataFrame.from_records(enrolment_docs, columns=["_id", "given_name", "family_name"]),
+        pd.DataFrame.from_records(assessment_docs, columns=["student_id", "subject_name", "assessment", "grade"]),
+        how='right', left_on='_id', right_on='student_id'
+    ).set_index(['given_name', 'family_name', 'subject_name', 'assessment']).drop(['_id', 'student_id'], axis=1)
+    pivot_df = merged_df.unstack(level=-1).reset_index()
+    flattened_columns = [a if not b else b for a,b in pivot_df.columns]
+    pivot_df.columns = flattened_columns
+    columns = [{"title": c.replace('_', ' ').title(), "field": c, "widthGrow": 1, "headerFilter": "input"} for c in pivot_df.columns]
+    columns[2].update({"widthGrow": 2})
+    return pivot_df.to_dict(orient='records'), columns
