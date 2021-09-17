@@ -4,6 +4,7 @@ from app import app
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
+import dash_daq as daq
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objects as go
@@ -13,9 +14,8 @@ import data
 import curriculum
 
 cohort_dropdown = dbc.DropdownMenu(id="cohort-dropdown",
-                                   nav=True,
-                                   bs_size='sm')
-team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True, bs_size='sm')
+                                   nav=True,)
+team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True)
 
 fig = make_subplots(specs=[[{"type": "polar"}]])
 fig.add_trace(
@@ -32,17 +32,62 @@ kudos_radar = dcc.Graph(id={
     "name": "kudos",
 },
                         config={"displayModeBar": False},
-                        figure=fig)
+                        figure=fig,
+)
+
+# gauge_last = daq.Gauge(
+#     id={
+#         "type": "gauge",
+#         "section": "sixthform",
+#         "page": "pastoral",
+#         "tab": "attendance",
+#         "name": "last_week"
+#     },
+#     label="This week",
+#     scale={
+#         "start": 0,
+#         "interval": 10,
+#         "labelInterval": 2,
+#     },
+#     size=180,
+#     showCurrentValue=True,
+#     units="%",
+#     value=0,
+#     min=0,
+#     max=100,
+# ),
+gauge_overall = daq.Gauge(
+    id={
+        "type": "gauge",
+        "section": "sixthform",
+        "page": "pastoral",
+        "name": "year"
+    },
+    label="This year",
+    scale={
+        "start": 0,
+        "interval": 10,
+        "labelInterval": 2,
+    },
+    size=180,
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+    style={'margin-bottom': -50}
+)
 
 cardheader_layout = dbc.Nav([
     dcc.Store(id="sixthform-pastoral", storage_type='memory'),
     dbc.NavItem(cohort_dropdown),
     dbc.NavItem(team_dropdown)
 ],
-                            card=True,
                             fill=True)
 
-sidebar_layout = dbc.Container(kudos_radar)
+sidebar_layout = dbc.Container([
+    dbc.Row(dbc.Col(gauge_overall)),
+    dbc.Row(dbc.Col(kudos_radar))])
 
 
 @app.callback([
@@ -102,6 +147,7 @@ def update_teams(pathname, search, team):
         "enrolment_docs": enrolment_docs,
         "attendance_docs": attendance_docs,
         "assessment_docs": assessment_docs,
+        "kudos_docs": kudos_docs,
         "kudos_pivot_docs": kudos_pivot_docs,
         "concern_docs": concern_docs,
     }
@@ -130,4 +176,36 @@ def update_kudos_radar(store_data, current_figure):
     kudos_pivot_df = pd.DataFrame.from_records(kudos_pivot_docs)
     r = [kudos_pivot_df[v].sum() for v in curriculum.values]
     current_figure["data"][0]["r"] = r
+    total_kudos = sum(r)
     return current_figure
+
+
+@app.callback(
+Output(
+{
+        "type": "gauge",
+        "section": "sixthform",
+        "page": "pastoral",
+        "name": "year"
+    }, "value"
+),
+   [
+        Input("sixthform-pastoral", "data")
+    ]
+)
+def update_year_gauge(store_data):
+    attendance_docs = store_data.get('attendance_docs')
+    if not attendance_docs:
+        return 0
+    this_year_start = curriculum.this_year_start
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
+        'date > @this_year_start')
+    weekly_df = attendance_df.query("subtype == 'weekly'")
+    # last_week_date = weekly_df["date"].max()
+    overall_totals = weekly_df.sum()
+    # last_week_totals = weekly_df.query("date == @last_week_date").sum()
+    overall_percent = round(
+        100 * overall_totals['actual'] / overall_totals['possible'], 1)
+    # last_week_percent = round(
+    #     100 * last_week_totals['actual'] / last_week_totals['possible'], 1)
+    return overall_percent

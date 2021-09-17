@@ -23,66 +23,13 @@ attendance_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        "layout": "fitData",
-        "maxHeight": "70vh",
+        # "layout": "fitData",
+        # "maxHeight": "70vh",
         "clipboard": "copy"
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
-
-gauge_last = daq.Gauge(
-    id={
-        "type": "gauge",
-        "section": "sixthform",
-        "page": "pastoral",
-        "tab": "attendance",
-        "name": "last_week"
-    },
-    label="This week",
-    scale={
-        "start": 0,
-        "interval": 10,
-        "labelInterval": 2,
-    },
-    size=180,
-    showCurrentValue=True,
-    units="%",
-    value=0,
-    min=0,
-    max=100,
-),
-gauge_overall = daq.Gauge(
-    id={
-        "type": "gauge",
-        "section": "sixthform",
-        "page": "pastoral",
-        "tab": "attendance",
-        "name": "overall"
-    },
-    label="This year",
-    scale={
-        "start": 0,
-        "interval": 10,
-        "labelInterval": 2,
-    },
-    size=180,
-    showCurrentValue=True,
-    units="%",
-    value=0,
-    min=0,
-    max=100,
-)
-
-layout = dbc.Row([
-    dbc.Col([
-        dbc.Row([
-            dbc.Col(gauge_last),
-            dbc.Col(gauge_overall)
-        ])
-    ]),
-     dbc.Col(attendance_table)
-    ])
-
+layout = dbc.Container(attendance_table)
 
 @app.callback(
     [
@@ -96,23 +43,7 @@ layout = dbc.Row([
             "page": "pastoral",
             "tab": "attendance"
         }, "data"),
-        Output(
-            {
-                "type": "gauge",
-        "section": "sixthform",
-                "page": "pastoral",
-                "tab": "attendance",
-                "name": "last_week",
-            }, "value"),
-        Output(
-            {
-                "type": "gauge",
-        "section": "sixthform",
-                "page": "pastoral",
-                "tab": "attendance",
-                "name": "overall",
-            }, "value"),
-    ],
+   ],
     [
         Input("sixthform-pastoral", "data")
     ],
@@ -121,18 +52,11 @@ def update_pastoral_attendance(store_data):
     enrolment_docs = store_data.get('enrolment_docs')
     attendance_docs = store_data.get('attendance_docs')
     if not attendance_docs:
-        return [], [], 0, 0
+        return [], []
     this_year_start = curriculum.this_year_start
     attendance_df = pd.DataFrame.from_records(attendance_docs).query(
         'date > @this_year_start')
     weekly_df = attendance_df.query("subtype == 'weekly'")
-    last_week_date = weekly_df["date"].max()
-    overall_totals = weekly_df.sum()
-    last_week_totals = weekly_df.query("date == @last_week_date").sum()
-    overall_percent = round(
-        100 * overall_totals['actual'] / overall_totals['possible'], 1)
-    last_week_percent = round(
-        100 * last_week_totals['actual'] / last_week_totals['possible'], 1)
     # Merge on student id
     merged_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
                          weekly_df,
@@ -173,8 +97,9 @@ def update_pastoral_attendance(store_data):
     columns.extend([
         {
             #"name": data.format_date(d),
-            "title": d,
+            "title": "This week",
             "field": d,
+            "headerHozAlign": "right",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": "<",
@@ -182,13 +107,13 @@ def update_pastoral_attendance(store_data):
         } for d in attendance_pivot.columns[-2:-1]
     ])
     columns.append({
-        "title": "Year",
+        "title": "This year",
         "field": "cumulative_percent_present",
+        "headerHozAlign": "right",
         "hozAlign": "right",
         "headerFilter": True,
         "headerFilterFunc": "<",
         "headerFilterPlaceholder": "Less than",
     })
 
-    return columns, attendance_pivot.to_dict(
-        orient='records'), last_week_percent, overall_percent
+    return columns, attendance_pivot.to_dict(orient='records')

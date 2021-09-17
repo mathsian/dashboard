@@ -23,8 +23,8 @@ kudos_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
     options={
         "resizableColumns": False,
-        "layout": "fitData",
-        "maxHeight": "60vh",
+#        "layout": "fitData",
+#        "maxHeight": "60vh",
         "clipboard": "copy"
     },
     columns=[
@@ -39,17 +39,21 @@ kudos_table = dash_tabulator.DashTabulator(
             "headerFilterPlaceholder": "search",
         },
     ] + [{
-        "title": v[:2],
+        "title": v,
         "field": v,
+        "headerHozAlign": "right",
         "hozAlign": "right",
+        "topCalc": "sum"
     } for v in curriculum.values] + [{
         "title": "Total",
         "field": "total",
+        "headerHozAlign": "right",
         "hozAlign": "right",
+        "topCalc": "sum"
     }],
 )
 
-layout = dbc.Container(kudos_table)
+layout = dbc.Row(dbc.Col(kudos_table))
 
 @app.callback(
     Output(

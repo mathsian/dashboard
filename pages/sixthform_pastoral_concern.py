@@ -51,8 +51,8 @@ concern_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
     options={
         "resizableColumns": False,
-        "layout": "fitDataStretch",
-        "maxHeight": "70vh",
+        # "layout": "fitDataStretch",
+        # "maxHeight": "70vh",
         "clipboard": "copy"
     },
 )

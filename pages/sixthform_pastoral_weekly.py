@@ -34,8 +34,8 @@ weekly_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        "layout": "fitData",
-        "maxHeight": "70vh",
+        # "layout": "fitData",
+        # "maxHeight": "70vh",
         "clipboard": "copy"
     },
     columns=[
