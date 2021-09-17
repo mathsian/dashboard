@@ -45,18 +45,18 @@ def store_student_data(cohort_value, n_clicks, subject_table_data):
     return result
 
 
-@app.callback(
-    Output("selected-student-ids", "data"),
-[
-    Input(
-    {"type": "table",
-     "page": "student"},
-        "multiRowsClicked"),
-     Input({"type": "filter-dropdown", "filter": ALL}, "value"),
-])
-def store_student_ids(multiRowsClicked, filter_value):
-    if cc.triggered and "multiRowsClicked" not in cc.triggered[0]["prop_id"]:
-        return []
-    else:
-        return [row.get("student_id") for row in multiRowsClicked]
-
+# @app.callback(
+#     Output("selected-student-ids", "data"),
+# [
+#     Input(
+#     {"type": "table",
+#      "page": "student"},
+#         "multiRowsClicked"),
+#      Input({"type": "filter-dropdown", "filter": ALL}, "value"),
+# ])
+# def store_student_ids(multiRowsClicked, filter_value):
+#     if cc.triggered and "multiRowsClicked" not in cc.triggered[0]["prop_id"]:
+#         return []
+#     else:
+#         return [row.get("student_id") for row in multiRowsClicked]
+# 
