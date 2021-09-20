@@ -67,43 +67,43 @@ attendance_table = dash_tabulator.DashTabulator(
 )
 
 gauge_last = daq.Gauge(
-                id={
-                    "type": "gauge",
-                    "page": "pastoral",
-                    "tab": "attendance",
-                    "name": "last_week"
-                },
-                label="This week",
-                scale={
-                    "start": 0,
-                    "interval": 10,
-                    "labelInterval": 2,
-                },
-                showCurrentValue=True,
-                units="%",
-                value=0,
-                min=0,
-                max=100,
-            ),
+    id={
+        "type": "gauge",
+        "page": "pastoral",
+        "tab": "attendance",
+        "name": "last_week"
+    },
+    label="This week",
+    scale={
+        "start": 0,
+        "interval": 10,
+        "labelInterval": 2,
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+),
 gauge_overall = daq.Gauge(
-                id={
-                    "type": "gauge",
-                    "page": "pastoral",
-                    "tab": "attendance",
-                    "name": "overall"
-                },
-                label="This year",
-                scale={
-                    "start": 0,
-                    "interval": 10,
-                    "labelInterval": 2,
-                },
-                showCurrentValue=True,
-                units="%",
-                value=0,
-                min=0,
-                max=100,
-            )
+    id={
+        "type": "gauge",
+        "page": "pastoral",
+        "tab": "attendance",
+        "name": "overall"
+    },
+    label="This year",
+    scale={
+        "start": 0,
+        "interval": 10,
+        "labelInterval": 2,
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+)
 # Weekly tab content
 weekly_header = html.H4(children=[
     "Week beginning ",
@@ -244,34 +244,88 @@ concern_table = dash_tabulator.DashTabulator(
     },
     columns=[
         {
-            "title": "Given name",
-            "field": "given_name"
+            "title": "Student ID",
+            "field": "student_id",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
         },
         {
-            "title": "Family name",
-            "field": "family_name"
+            "title": "Email",
+            "field": "student_email",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
         },
         {
             "title": "Date",
-            "field": "date"
+            "field": "date",
+            "width": "10%"
+        },
+        {
+            "title": "Given name",
+            "field": "given_name",
+            "width": "10%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
+        },
+        {
+            "title": "Family name",
+            "field": "family_name",
+            "width": "10%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
         },
         {
             "title": "Category",
-            "field": "category"
+            "field": "category",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_categories
+            },
+            "headerFilterPlaceholder": "filter",
         },
         {
-            "title": "Raised by",
-            "field": "from"
+            "title": "Stage",
+            "field": "stage",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_stages
+            },
+            "headerFilterPlaceholder": "filter",
         },
         {
             "title": "Description",
-            "field": "description"
+            "field": "description",
+            # "formatter": "plaintext",
+            "width": "20%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
+        },
+        {
+            "title": "Raised by",
+            "field": "from",
+            "width": "10%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
+        },
+        {
+            "title": "Additional",
+            "field": "discrimination",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_discrimination
+            },
+            "headerFilterPlaceholder": "filter",
         },
     ],
     theme='bootstrap/tabulator_bootstrap4',
     options={
         "resizableColumns": False,
-        "layout": "fitDataStretch",
+        "layout": "fitData",
         "maxHeight": "60vh",
         "clipboard": "copy"
     },
@@ -284,8 +338,11 @@ validation_layout = content + [
 ]
 # Associate each tab with its content
 tab_map = {
-    "pastoral-tab-attendance":
-    [dbc.Col(gauge_overall, width=2), dbc.Col(gauge_last), dbc.Col(attendance_table)],
+    "pastoral-tab-attendance": [
+        dbc.Col(gauge_overall, width=2),
+        dbc.Col(gauge_last),
+        dbc.Col(attendance_table)
+    ],
     "pastoral-tab-weekly":
     dbc.Col([
         dbc.Row(children=[
@@ -295,9 +352,10 @@ tab_map = {
                 style={"max-height": "10vh"}),
         dbc.Row(dbc.Col(weekly_table)),
     ]),
-    "pastoral-tab-kudos":
-    [dbc.Col(width=4, children=[kudos_radar]),
-     dbc.Col(width=8, children=[kudos_table])],
+    "pastoral-tab-kudos": [
+        dbc.Col(width=4, children=[kudos_radar]),
+        dbc.Col(width=8, children=[kudos_table])
+    ],
     "pastoral-tab-concern": [
         dbc.Col(width=12, children=concern_table),
     ],
@@ -362,7 +420,8 @@ def update_pastoral_attendance(filter_value):
     if not attendance_docs:
         return [], [], 0, 0
     this_year_start = curriculum.this_year_start
-    attendance_df = pd.DataFrame.from_records(attendance_docs).query('date > @this_year_start')
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
+        'date > @this_year_start')
     weekly_df = attendance_df.query("subtype == 'weekly'")
     last_week_date = weekly_df["date"].max()
     overall_totals = weekly_df.sum()
