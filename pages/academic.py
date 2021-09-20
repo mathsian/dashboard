@@ -230,6 +230,8 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
                          right_on='_id',
                          how='inner')
     subtype = merged_df.iloc[0]["subtype"]
+    grade_editor = "number" if subtype == 'Percentage' else "select"
+    grade_editorParams = {"min": 0, "max": 100} if subtype == 'Percentage' else {"values": curriculum.scales.get(subtype)}
     columns = [
         {
             "title": "Student ID",
@@ -248,20 +250,18 @@ def update_subject_table(assessment_name, changed, row_data, filter_value):
         {
             "title": "Given name",
             "field": "given_name",
-            "width": "20%"
+            "width": "10%"
         },
         {
             "title": "Family name",
             "field": "family_name",
-            "width": "20%"
+            "width": "15%"
         },
         {
             "title": "Grade",
             "field": "grade",
-            "editor": "select",
-            "editorParams": {
-                "values": curriculum.scales.get(subtype)
-            },
+            "editor": grade_editor,
+            "editorParams": grade_editorParams,
             "width": "15%"
         },
         {
@@ -365,10 +365,16 @@ def update_subject_graph(assessment_name, colour_code, filter_value):
         showlegend=False,
         hovertemplate="%{y} %{x:.1f}<extra></extra>",
     )
-    fig.update_yaxes(
-        categoryorder='array',
-        categoryarray=curriculum.scales.get(subtype),
-    )
+    # We need to care whether these are grade scales or percentage
+    if subtype == 'Percentage':
+        fig.update_yaxes(
+            range=[0, 100]
+        )
+    else:
+        fig.update_yaxes(
+            categoryorder='array',
+            categoryarray=curriculum.scales.get(subtype),
+        )
     fig.update_xaxes(
         title_text="GCSE Average Point Score",
         row=1,
