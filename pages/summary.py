@@ -234,6 +234,7 @@ progress_table = dash_tabulator.DashTabulator(
     options={
         "resizableColumns": True,
         "maxHeight": "70vh",
+        "nestedFieldSeparator": "|" # Default is . which conflicts with some assessment names
     },
     theme='bootstrap/tabulator_bootstrap4',
     downloadButtonType={
@@ -482,7 +483,7 @@ def update_progress_table(cohort):
         pd.DataFrame.from_records(assessment_docs, columns=["student_id", "subject_name", "assessment", "grade"]),
         how='right', left_on='_id', right_on='student_id'
     ).set_index(['given_name', 'family_name', 'subject_name', 'assessment']).drop(['_id', 'student_id'], axis=1)
-    pivot_df = merged_df.unstack(level=-1).reset_index()
+    pivot_df = merged_df.unstack(level=-1).reset_index().fillna("").astype(str)
     flattened_columns = [a if not b else b for a,b in pivot_df.columns]
     pivot_df.columns = flattened_columns
     columns = [{"title": c.replace('_', ' ').title(), "field": c, "widthGrow": 1, "headerFilter": "input"} for c in pivot_df.columns]
