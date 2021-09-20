@@ -172,6 +172,20 @@ concern_table = dash_tabulator.DashTabulator(
             "headerFilterPlaceholder": "filter",
         },
         {
+            "title": "Stage",
+            "field": "stage",
+            "editor": "select",
+            "editorParams": {
+                "values": curriculum.concern_stages
+            },
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_stages
+            },
+            "headerFilterPlaceholder": "filter",
+        },
+        {
             "title": "Description",
             "field": "description",
             "editor": "textarea",
@@ -308,6 +322,7 @@ def update_concern_table(changed, dataChanged, deleted):
         doc.update({
             "description": row.get("description"),
             "category": row.get("category"),
+            "stage": row.get("stage"),
             "discrimination": row.get("discrimination")
         })
         data.save_docs([doc])
@@ -340,6 +355,6 @@ def update_concern_table(changed, dataChanged, deleted):
         "_rev_x": "_rev"
     })[[
         "_id", "_rev", "date", "given_name", "family_name", "category",
-        "discrimination", "description"
+        "stage", "discrimination", "description"
     ]]
     return merged_df.to_dict(orient='records')

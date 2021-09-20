@@ -161,6 +161,10 @@ report = html.Div([
                     "id": "category"
                 },
                 {
+                    "name": "Stage",
+                    "id": "stage"
+                },
+                {
                     "name": "Description",
                     "id": "description"
                 },
@@ -261,6 +265,16 @@ concern_form = dbc.Row(children=[
             options=curriculum.concern_discrimination_dropdown["options"],
             placeholder="Discrimination (optional)",
             multi=True,
+        ),
+        dcc.Dropdown(
+            id={
+                "type": "dropdown",
+                "page": "student",
+                "tab": "concern",
+                "name": "stage"
+            },
+            options=curriculum.concern_stages_dropdown["options"],
+            value=curriculum.concern_stages_dropdown["default"]
         ),
     ]),
     dbc.Col([
@@ -571,6 +585,13 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
             "type": "dropdown",
             "page": "student",
             "tab": "concern",
+            "name": "stage"
+        }, "value"),
+    Input(
+        {
+            "type": "dropdown",
+            "page": "student",
+            "tab": "concern",
             "name": "discrimination"
         }, "value"),
     Input(
@@ -590,7 +611,7 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
         }, "color"),
 ])
 def update_concern_message(selected_student_ids, description, category,
-                           discrimination, n_clicks, button_color):
+                           stage, discrimination, n_clicks, button_color):
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Raise {category} concern about')
@@ -607,6 +628,7 @@ def update_concern_message(selected_student_ids, description, category,
                 "type": "concern",
                 "student_id": s,
                 "category": category,
+                "stage": stage,
                 "discrimination": discrimination,
                 "description": description if description else "",
                 "date": date,

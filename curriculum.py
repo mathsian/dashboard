@@ -28,10 +28,15 @@ register_marks = {
 
 this_year_start = "2021-08-01"
 
-concern_categories = ["Conduct", "Academic"]
+concern_categories = ["Conduct", "Academic", "Attendance"]
 concern_categories_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_categories],
     "default": concern_categories[0],
+}
+concern_stages = ["Stage 1", "Stage 2", "Stage 3"]
+concern_stages_dropdown = {
+    "options": [{"label": s, "value": s} for s in concern_stages],
+    "default": concern_stages[0],
 }
 concern_discrimination = ["Race", "Sex or gender", "Sexual orientation", "Religion", "Disability", "Something else"]
 concern_discrimination_dropdown = {
@@ -90,6 +95,7 @@ scales = {
         "DsDsDs",
     ],
     "Expectations": ["Insufficient Information", "Below Expectations", "Meets Expectations", "Exceeds Expectations"],
+    "Percentage": []
 }
 scales_dropdown = {
     "options": [{"label": s, "value": s} for s in list(scales.keys())],
