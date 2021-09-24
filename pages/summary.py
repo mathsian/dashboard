@@ -483,6 +483,10 @@ def update_progress_table(cohort):
         pd.DataFrame.from_records(assessment_docs, columns=["student_id", "subject_name", "assessment", "grade"]),
         how='right', left_on='_id', right_on='student_id'
     ).set_index(['given_name', 'family_name', 'subject_name', 'assessment']).drop(['_id', 'student_id'], axis=1)
+    # print(merged_df.loc[merged_df.index.duplicated()])
+    # Need a log here if there are duplicates that will hurt unstack
+    # But don't have much choice because melt will only accept one value column
+    merged_df = merged_df.loc[~ merged_df.index.duplicated(keep='first')].copy()
     pivot_df = merged_df.unstack(level=-1).reset_index().fillna("").astype(str)
     flattened_columns = [a if not b else b for a,b in pivot_df.columns]
     pivot_df.columns = flattened_columns

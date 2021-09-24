@@ -63,7 +63,7 @@ kudos_points_dropdown = {
     ],
     "default": 1,
 }
-cohorts = ["1921", "2022"]
+cohorts = ["2022", "2123"]
 cohorts_dropdown = {
     "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
     "default": cohorts[-1],
