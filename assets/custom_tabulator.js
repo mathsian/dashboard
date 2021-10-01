@@ -1,11 +1,11 @@
 window.myNameSpace = Object.assign({}, window.myNameSpace, {
     tabulator: {
         clipboardPasteAction: function(rowData, table) {
-            console.log("Row data from paste parser");
-            console.log(rowData);
+            console.warn("Row data from paste parser");
+            console.warn(rowData);
         },
         clipboardPasted: function(clipboard, rowData, rows, table) {
-            console.log("Paste registered");
+            console.warn("Paste registered");
             table.props.setProps({"clipboardPasted": rowData});
         },
         groupHeader:
@@ -38,6 +38,16 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
             if(this.confirm("Delete this concern about " + row.getData()["given_name"]+"?")){
                 row.delete();
             }
+        },
+        dataLoaded: function(data, table) {
+            console.warn("dataLoaded called");
+            console.warn(data);
+            var preselected = data.filter(row => row.selected == 1);
+        },
+        rowSelected: function(args) {
+            console.warn("rowSelected called");
+            console.warn("Args incoming");
+            console.warn(args);
         }
     }
 });

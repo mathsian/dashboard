@@ -34,7 +34,7 @@ layout = dbc.Row(
     Output('progress-content', 'children'),
     [
         Input('progress-sort-dropdown', 'value'),
-        Input('sixthform-pastoral', 'data'),
+        Input('sixthform-pastoral-store', 'data'),
     ]
 )
 def update_progress_content(sort_value, store_data):

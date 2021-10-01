@@ -45,7 +45,7 @@ layout = dbc.Container(attendance_table)
         }, "data"),
    ],
     [
-        Input("sixthform-pastoral", "data")
+        Input("sixthform-pastoral-store", "data")
     ],
 )
 def update_pastoral_attendance(store_data):

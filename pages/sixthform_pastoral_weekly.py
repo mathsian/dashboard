@@ -118,7 +118,7 @@ layout = [
         "name": "wb"
     }, "children"),
 ], [
-    Input("sixthform-pastoral", "data"),
+    Input("sixthform-pastoral-store", "data"),
     Input({
         "type": "picker",
         "page": "pastoral",

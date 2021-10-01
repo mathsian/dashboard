@@ -19,4 +19,22 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-layout = html.Div("Report")
+layout = html.Div(id={"type": "text",
+                      "section": "sixthform",
+                      "page": "student",
+                      "tab": "report",
+                      "name": "report_div"})
+
+
+@app.callback(
+    Output(
+{"type": "text",
+                      "section": "sixthform",
+                      "page": "student",
+                      "tab": "report",
+                      "name": "report_div"}
+        ,"children"),
+    [Input("sixthform-selected-store", "data")]
+    )
+def update_report(store_data):
+    return store_data

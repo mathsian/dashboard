@@ -23,14 +23,13 @@ cohort_dropdown = dbc.DropdownMenu(id="academic-cohort-dropdown", nav=True)
 
 subject_dropdown = dbc.DropdownMenu(id="subject-dropdown", nav=True)
 
-cardheader_layout = dbc.Nav([
-    dcc.Store("sixthform-academic-store", storage_type='memory'),
+page_nav = dbc.Nav([
     dbc.NavItem(cohort_dropdown),
     dbc.NavItem(subject_dropdown),
 ],
                             fill=True)
 
-sidebar_layout = dbc.Nav(id={
+assessment_nav = dbc.Nav(id={
     "type": "nav",
     "section": "sixthform",
     "page": "academic",
@@ -39,6 +38,13 @@ sidebar_layout = dbc.Nav(id={
                          pills=True,
                          vertical=True,
 )
+layout = [
+    dcc.Store("sixthform-academic-store", storage_type='memory'),
+    dbc.Row(dbc.Col(page_nav)),
+    dbc.Row(dbc.Col(assessment_nav))
+    ]
+
+
 @app.callback([
     Output("academic-cohort-dropdown", "label"),
     Output("academic-cohort-dropdown", "children"),

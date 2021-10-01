@@ -67,7 +67,7 @@ layout = dbc.Container(concern_table)
         "tab": "concern",
     }, "data"),
     [
-        Input("sixthform-pastoral", "data"),
+        Input("sixthform-pastoral-store", "data"),
     ],
 )
 def update_pastoral_concern(store_data):

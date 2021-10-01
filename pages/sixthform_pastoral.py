@@ -78,16 +78,19 @@ gauge_overall = daq.Gauge(
     style={'margin-bottom': -50}
 )
 
-cardheader_layout = dbc.Nav([
-    dcc.Store(id="sixthform-pastoral", storage_type='memory'),
+filter_nav = dbc.Nav([
     dbc.NavItem(cohort_dropdown),
     dbc.NavItem(team_dropdown)
 ],
                             fill=True)
 
-sidebar_layout = dbc.Container([
+
+layout =[
+    dcc.Store(id="sixthform-pastoral-store", storage_type='memory'),
+    dbc.Row(dbc.Col(filter_nav)),
     dbc.Row(dbc.Col(gauge_overall)),
-    dbc.Row(dbc.Col(kudos_radar))])
+    dbc.Row(dbc.Col(kudos_radar))
+    ]
 
 
 @app.callback([
@@ -95,7 +98,7 @@ sidebar_layout = dbc.Container([
     Output("cohort-dropdown", "children"),
     Output("team-dropdown", "label"),
     Output("team-dropdown", "children"),
-    Output("sixthform-pastoral", "data")
+    Output("sixthform-pastoral-store", "data")
 ], [
     Input("location", "pathname"),
     Input("location", "search"),
@@ -160,7 +163,7 @@ def update_teams(pathname, search, team):
         "section": "sixthform",
         "page": "pastoral",
         "name": "kudos",
-    }, "figure"), [Input("sixthform-pastoral", "data")], [
+    }, "figure"), [Input("sixthform-pastoral-store", "data")], [
         State({
             "type": "graph",
             "section": "sixthform",
@@ -190,7 +193,7 @@ Output(
     }, "value"
 ),
    [
-        Input("sixthform-pastoral", "data")
+        Input("sixthform-pastoral-store", "data")
     ]
 )
 def update_year_gauge(store_data):

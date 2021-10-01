@@ -19,10 +19,7 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-cardheader_layout = dbc.Row([
-    dcc.Store(id='sixthform-attendance-store', storage_type='memory'),
-    dbc.Col([
-        dbc.Button(children="Update",
+update_button =  dbc.Button(children="Update",
                    id={
                        "type": "button",
                        "section": "sixthform",
@@ -31,9 +28,7 @@ cardheader_layout = dbc.Row([
                    },
                    outline=True,
                    block=True,
-                   color='primary'),
-    ], ),
-], )
+                   color='primary')
 gauge_last = daq.Gauge(
     id={
         "type": "gauge",
@@ -78,7 +73,12 @@ gauge_cumulative = daq.Gauge(
     size=170,
 )
 
-sidebar_layout = (gauge_last, gauge_cumulative)
+layout = [
+    dcc.Store(id='sixthform-attendance-store', storage_type='memory'),
+    dbc.Row(dbc.Col(update_button)),
+    dbc.Row(dbc.Col(gauge_last)),
+    dbc.Row(dbc.Col(gauge_cumulative))
+]
 
 
 @app.callback([

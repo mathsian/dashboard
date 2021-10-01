@@ -22,48 +22,44 @@ navbar = dbc.Navbar([
     dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links"))), width=2)
 ],
                     # style={"margin-bottom": 10}
-)
+                    )
 
 cardheader = dbc.CardHeader(
     dbc.Row([
-        dbc.Col(dbc.Tabs(id="tabs", card=True), width='auto'),
-    ], align='end'))
+        dbc.Col(dbc.Tabs(id="tabs", card=True, active_tab=""), width='auto'),
+    ],
+            align='end'))
 cardbody = dbc.CardBody(id="content")
 card = dbc.Card(children=[cardheader, cardbody])
 
-sidebar_header = dbc.Row(dbc.Col(id="cardheader_content"))
-sidebar_content = dbc.Row(dbc.Col(id="sidebar_content"))
-sidebar = dbc.Card(dbc.CardBody([sidebar_header, sidebar_content]), body=True)
+sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 
 app.layout = dbc.Container([
-        dcc.Location(id="location", refresh=False),
-        dcc.Store(id="history", storage_type='local'),
-        dbc.Row(dbc.Col(navbar)),
-        dbc.Row([dbc.Col(sidebar, width=3), dbc.Col(card, width=9)], no_gutters=True)
-    ], fluid=True)
-# app.layout = dbc.Container(children=layout, fluid=True)
+    dcc.Location(id="location", refresh=False),
+    dcc.Store(id="history", storage_type='memory'),
+    dbc.Row(dbc.Col(navbar)),
+    dbc.Row([dbc.Col(sidebar, width=3),
+             dbc.Col(card, width=9)],
+            no_gutters=True)
+],
+                           fluid=True)
 
 
 def parse(pathname):
     '''Parse the url.
     Return section, page and tab objects.'''
-
     levels = pathname.split("/")
-    section_path = "/".join(levels[:2])
-    page_path = "/".join(levels[:3])
-    tab_path = pathname
+    section_path = levels[1] if len(levels) > 1 else None
+    page_path = levels[2] if len(levels) > 2 else None
+    tab_path = levels[3] if len(levels) > 3 else None
 
-    section = None
-    page = None
-    tab = None
-
-    # retrieve child if found or False
+    page, tab = None, None
+    # retrieve child if found or None
     section = home.children.get(section_path, None)
     if section:
         page = section.children.get(page_path, None)
         if page:
-            tab: Tab = page.children.get(tab_path, None)
-
+            tab = page.children.get(tab_path, None) 
     return section, page, tab
 
 
@@ -72,20 +68,19 @@ def parse(pathname):
     Output("page_links", "children"),
     Output("tabs", "children"),
     Output("tabs", "active_tab"),
-    Output("cardheader_content", "children"),
     Output("sidebar_content", "children"),
     Output("content", "children"),
     Output("location", "pathname"),
-    Output("location", "search"),
     Output("settings_links", "children"),
 ], [
     Input("location", "pathname"),
-    Input("location", "search"),
     Input("tabs", "active_tab"),
 ], [State("history", "data")])
-def location_change(pathname, search, active_tab, history):
+def location_change(pathname, active_tab, history):
     '''Called whenever the location should change, either through url or tab click.
     Returns content from the appropriate section, page and tab to the layout'''
+
+    history = history or []
 
     # Circular callback so we need to know whether it was called by a link, a tab change or a dropdown
     ctx = dash.callback_context
@@ -100,46 +95,60 @@ def location_change(pathname, search, active_tab, history):
             page = list(section.children.values())[0]
         if not tab:
             tab = list(page.children.values())[0]
-        # Set the active tab from the location
-        active_tab = tab.path
+        # Get the previous location from active_tab
+        previous_section, previous_page, previous_tab = parse(active_tab)
+        active_tab = "/".join(["", section.path, page.path, tab.path])
+        # Add it to the history
+        # history.append(active_tab)
     elif input_id == "tabs":
         # Set the location from the active tab
         section, page, tab = parse(active_tab)
-        pathname = tab.path
+        # Get the previous location from pathname
+        previous_section, previous_page, previous_tab = parse(pathname)
+        # Add it to the history
+        # history.append(pathname)
+        pathname = active_tab
 
-    # Update the section dropdown
-    section_links = dbc.DropdownMenu(label=section.name,
-                                     nav=False,
-                                     color='primary',
-                                     children=[
-                                         dbc.DropdownMenuItem(
-                                             dbc.NavLink(s.name, href=path))
-                                         for path, s in home.children.items()
-                                     ])
+    # If the section hasn't changed we don't need to update section_links
+    if previous_section and (section.path == previous_section.path):
+        section_links = dash.no_update
+    else:
+        # Update the section dropdown
+        section_links = dbc.DropdownMenu(
+            label=section.name,
+            nav=False,
+            color='primary',
+            children=[
+                dbc.DropdownMenuItem(dbc.NavLink(s.name, href="/" + path))
+                for path, s in home.children.items()
+            ])
 
-    # Update the page nav links
-    page_links = dbc.Nav(children=[
-        dbc.NavItem(
-            dbc.NavLink(p.name, href=path, active=(p.path == page.path)))
-        for path, p in section.children.items()
-    ],
-                         pills=True)
+    # If the page hasn't changed we don't need to update it
+    if previous_page and (page.path == previous_page.path):
+        page_layout = dash.no_update
+        page_links = dash.no_update
+    else:
+        page_layout = page.layout
+        # Update the page nav links
+        page_links = dbc.Nav(children=[
+            dbc.NavItem(
+                dbc.NavLink(p.name, href="/".join(["", section.path, path]), active=(p.path == page.path)))
+            for path, p in section.children.items()
+        ],
+                             pills=True)
 
     # Update the tabs
     tabs = [
-        dbc.Tab(label=t.name, tab_id=path)
-        for path, t in page.children.items()
+        dbc.Tab(label=t.name, tab_id="/".join(["", section.path, page.path, t.path]))
+        for _, t in page.children.items()
     ]
-
     return [
         section_links,
         page_links,
         tabs,
         active_tab,
-        page.cardheader_layout,
-        page.sidebar_layout,
+        page_layout,
         tab.layout,
         pathname,
-        search,
         session.get("email", "No email"),
     ]

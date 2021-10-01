@@ -63,7 +63,7 @@ layout = dbc.Row(dbc.Col(kudos_table))
             "page": "pastoral",
             "name": "kudos",
         }, "data"), [
-            Input("sixthform-pastoral", "data"),
+            Input("sixthform-pastoral-store", "data"),
         ])
 def update_pastoral_kudos(store_data):
     kudos_pivot_docs = store_data.get('kudos_pivot_docs')

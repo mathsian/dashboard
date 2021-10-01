@@ -19,16 +19,15 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-cohort_dropdown = dbc.DropdownMenu(id="report-cohort-dropdown",
-                                   nav=True,)
+cohort_dropdown = dbc.DropdownMenu(
+    id="report-cohort-dropdown",
+    nav=True,
+)
 team_dropdown = dbc.DropdownMenu(id="report-team-dropdown", nav=True)
 
-cardheader_layout = dbc.Nav([
-    dcc.Store(id="sixthform-student-store", storage_type='memory'),
-    dbc.NavItem(cohort_dropdown),
-    dbc.NavItem(team_dropdown)
-],
-                            fill=True)
+filter_nav = dbc.Nav(
+    [dbc.NavItem(cohort_dropdown),
+     dbc.NavItem(team_dropdown)], fill=True)
 
 # The student list is on a separate card alongside the tabs
 # so that it isn't updated when the tab changes
@@ -38,6 +37,8 @@ student_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "selectable": True,
         "maxHeight": "70vh",
+        "dataLoaded": ns("dataLoaded"),
+        "rowSelected": ns("rowSelected")
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[
@@ -45,7 +46,9 @@ student_table = dash_tabulator.DashTabulator(
             "title": "Selected",
             "field": "selected",
             "formatter": "tickCross",
-            "formatterParams": {"crossElement": False},
+            "formatterParams": {
+                "crossElement": False
+            },
             "titleFormatter": "rowSelection",
             "horizAlign": "center",
             "headerSort": False,
@@ -71,7 +74,12 @@ student_table = dash_tabulator.DashTabulator(
     ],
 )
 
-sidebar_layout = dbc.Container(student_table)
+layout = [
+    dcc.Store(id="sixthform-student-store", storage_type='memory'),
+    dcc.Store(id="sixthform-selected-store", storage_type='memory'),
+    dbc.Row(dbc.Col(filter_nav)),
+    dbc.Row(dbc.Col(student_table))
+]
 
 
 @app.callback([
@@ -81,10 +89,10 @@ sidebar_layout = dbc.Container(student_table)
     Output("report-team-dropdown", "children"),
     Output("sixthform-student-store", "data")
 ], [
-    Input("location", "pathname"),
     Input("location", "search"),
-], [State("report-team-dropdown", "label")])
-def update_teams(pathname, search, team):
+], [State("location", "pathname"),
+    State("report-team-dropdown", "label")])
+def update_teams(search, pathname, team):
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
@@ -138,34 +146,21 @@ def update_teams(pathname, search, team):
     return (cohort, cohort_items, team, team_items, store_data)
 
 
-@app.callback(
-    Output("this_table_right_here", "data"),
+@app.callback(Output("sixthform-selected-store", "data"),
 [
-    Input("sixthform-student-store", "data")
+    Input("this_table_right_here", "multiRowsClicked"),
+    Input("location", "hash")
 ])
+def update_selected_students(multiRowsClicked, url_hash):
+    input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    if input_id == 'location':
+        selected_ids = url_hash.removeprefix('#').split(',')
+    else:
+        selected_ids = [row.get('_id') for row in multiRowsClicked]
+    return selected_ids
+
+@app.callback(Output("this_table_right_here", "data"),
+              [Input("sixthform-student-store", "data")])
 def update_student_table(store_data):
     enrolment_docs = store_data.get("enrolment_docs")
-    for enrolment_doc in enrolment_docs:
-        enrolment_doc["selected"] = 0
     return enrolment_docs
-
-
-@app.callback(
-[
-    Output("location", "hash"),
-    Output("this_table_right_here", "rowClick")
-], [
-    Input("location", "hash"),
-    Input("this_table_right_here", "multiRowsClicked") 
-], [
-    State("this_table_right_here", "data")])
-def sync_hash_with_selections(query_hash, multiRowsClicked, table_data):
-    ctx = dash.callback_context
-    input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    if "location" in input_id:
-        student_ids = query_hash.removeprefix('#').split(',')
-    else:
-        print(table_data)
-        student_ids = [row.get('_id') for row in multiRowsClicked]
-        query_hash = "#" + ",".join(student_ids)
-    return query_hash, student_ids
