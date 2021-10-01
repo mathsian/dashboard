@@ -285,9 +285,12 @@ def update_missing_table(n_intervals):
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
     rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
-    )
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+        )
+    except:
+        return dash.no_update
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template('sql/missing marks.sql')
@@ -316,9 +319,12 @@ def update_unauthorised_table(n_intervals):
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
     rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
-    )
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+        )
+    except:
+        return dash.no_update
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
@@ -377,9 +383,12 @@ def update_attendance_gauge(n_intervals, threshold):
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
     rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
-    )
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+        )
+    except:
+        return dash.no_update
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
     sql_template = sql_jinja_env.get_template(
