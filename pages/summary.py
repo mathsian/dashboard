@@ -232,6 +232,7 @@ progress_table = dash_tabulator.DashTabulator(
         "tab": "progress"
     },
     options={
+        "tooltips": ns("tooltips"),
         "resizableColumns": True,
         "maxHeight": "70vh",
         "nestedFieldSeparator": "|" # Default is . which conflicts with some assessment names
@@ -489,7 +490,7 @@ def update_progress_table(cohort):
     assessment_docs = data.get_data("assessment", "student_id", student_ids)
     merged_df = pd.merge(
         pd.DataFrame.from_records(enrolment_docs, columns=["_id", "given_name", "family_name"]),
-        pd.DataFrame.from_records(assessment_docs, columns=["student_id", "subject_name", "assessment", "grade"]),
+        pd.DataFrame.from_records(assessment_docs, columns=["student_id", "subject_name", "assessment", "grade", "comment"]),
         how='right', left_on='_id', right_on='student_id'
     ).set_index(['given_name', 'family_name', 'subject_name', 'assessment']).drop(['_id', 'student_id'], axis=1)
     # print(merged_df.loc[merged_df.index.duplicated()])
@@ -497,8 +498,16 @@ def update_progress_table(cohort):
     # But don't have much choice because melt will only accept one value column
     merged_df = merged_df.loc[~ merged_df.index.duplicated(keep='first')].copy()
     pivot_df = merged_df.unstack(level=-1).reset_index().fillna("").astype(str)
-    flattened_columns = [a if not b else b for a,b in pivot_df.columns]
+    print(pivot_df.columns)
+    flattened_columns = [f'{b} {a}'.strip() for a,b in pivot_df.columns]
+    print(flattened_columns)
     pivot_df.columns = flattened_columns
-    columns = [{"title": c.replace('_', ' ').title(), "field": c, "widthGrow": 1, "headerFilter": "input"} for c in pivot_df.columns]
+    columns = [{
+        "title": c.replace('_', ' ').title(),
+        "field": c,
+        "widthGrow": 1,
+        "headerFilter": "input",
+        "visible": 'comment' not in c
+    } for c in pivot_df.columns]
     columns[2].update({"widthGrow": 2})
     return pivot_df.to_dict(orient='records'), columns
