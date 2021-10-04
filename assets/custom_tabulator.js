@@ -10,8 +10,7 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
         },
         groupHeader:
         function(value, count, data) {
-            formatted = moment(value, "YYYY-MM-DD").format("dddd MMMM Do yyyy") + ", (" + count + ")";
-            return formatted;
+            return moment(value, "YYYY-MM-DD").format("dddd MMMM Do yyyy") + ", (" + count + ")";
             },
         groupHeader2: [
             function(value, count, data) {
@@ -23,8 +22,8 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
             }
         ],
         alertIcon: function(cell, formatterParams, onRendered) {
-            data = cell.getData();
-            value = "";
+            let data = cell.getData();
+            let value = "";
             if (data.present_today == 1) {
                 value += "<i class='fas fa-exclamation'></i>";
             }
@@ -34,10 +33,21 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
             return value;
         },
         deleteRow: function(e, cell) {
-            row = cell.getRow();
+            let row = cell.getRow();
             if(this.confirm("Delete this concern about " + row.getData()["given_name"]+"?")){
                 row.delete();
             }
+        },
+        tooltips: function(cell) {
+            let cell_data = cell.getData();
+            let field_name = cell.getField();
+            let tt = "";
+            if(field_name.includes('grade')) {
+                tt = cell_data[field_name.replace('grade', 'comment')];
+            } else {
+                tt = cell.getValue();
+            }
+            return tt;
         }
     }
 });
