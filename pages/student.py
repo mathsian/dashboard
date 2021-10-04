@@ -56,9 +56,7 @@ student_table = dash_tabulator.DashTabulator(
         },
     ],
 )
-student_table_container = html.Div(
-    [student_table],
-)
+student_table_container = html.Div([student_table], )
 blank_attendance = {
     "layout": {
         "xaxis": {
@@ -183,152 +181,209 @@ report = html.Div([
                 "whiteSpace": "normal",
             },
         )),
-], style={"max-height": "60vh", "overflow-y": "auto"})
-kudos_form = dbc.Row(children=[
-    dbc.Col([
-        dcc.Dropdown(
-            id={
-                "type": "dropdown",
-                "page": "student",
-                "tab": "kudos",
-                "name": "value"
-            },
-            options=curriculum.values_dropdown["options"],
-            value=curriculum.values_dropdown["default"],
-        ),
-        dcc.Dropdown(
-            id={
-                "type": "dropdown",
-                "page": "student",
-                "tab": "kudos",
-                "name": "points"
-            },
-            options=curriculum.kudos_points_dropdown["options"],
-            value=curriculum.kudos_points_dropdown["default"],
-        ),
-        dbc.Input(id={
-            "type": "input",
+],
+                  style={
+                      "max-height": "60vh",
+                      "overflow-y": "auto"
+                  })
+
+value_fg = dbc.FormGroup([
+    dbc.Label("Value"),
+    dbc.Select(
+        id={
+            "type": "dropdown",
             "page": "student",
             "tab": "kudos",
-            "name": "description"
+            "name": "value"
         },
-                  type="text",
-                  debounce=False,
-                  placeholder="Comment (optional)"),
-    ]),
-    dbc.Col([
-        dbc.Button("Submit",
-                   id={
-                       "type": "button",
-                       "page": "student",
-                       "tab": "kudos",
-                       "name": "submit"
-                   },
-                   color="secondary",
-                   n_clicks=0),
-        html.Div(id={
-            "type": "text",
-            "page": "student",
-            "tab": "kudos",
-            "name": "message"
-        })
-    ])
+        options=curriculum.values_dropdown["options"],
+        value=curriculum.values_dropdown["default"],
+    )
 ])
-concern_form = dbc.Row(children=[
-    dbc.Col([
-        dcc.Dropdown(
-            id={
-                "type": "dropdown",
-                "page": "student",
-                "tab": "concern",
-                "name": "category"
-            },
-            options=curriculum.concern_categories_dropdown["options"],
-            value=curriculum.concern_categories_dropdown["default"],
-        ),
-        dbc.Input(id={
-            "type": "input",
+
+points_fg = dbc.FormGroup([
+    dbc.Label("Points"),
+    dbc.Select(id={
+        "type": "dropdown",
+        "page": "student",
+        "tab": "kudos",
+        "name": "points"
+    },
+               options=curriculum.kudos_points_dropdown["options"],
+               value=curriculum.kudos_points_dropdown["default"])
+])
+
+kudos_description_fg = dbc.FormGroup([
+    dbc.Label("Description"),
+    dbc.Textarea(id={
+        "type": "input",
+        "page": "student",
+        "tab": "kudos",
+        "name": "description"
+    },
+                 debounce=False,
+                 placeholder="Description"),
+])
+
+kudos_message_fg = dbc.FormGroup([
+    dbc.FormText(id={
+        "type": "text",
+        "page": "student",
+        "tab": "kudos",
+        "name": "message"
+    })
+])
+
+kudos_submit_fg = dbc.FormGroup([
+    dbc.Button("Award kudos",
+               id={
+                   "type": "button",
+                   "page": "student",
+                   "tab": "kudos",
+                   "name": "submit"
+               },
+               color="secondary",
+               n_clicks=0),
+])
+
+kudos_form = dbc.Row(children=[
+    dbc.Col([value_fg, kudos_description_fg, kudos_submit_fg, kudos_message_fg]),
+    dbc.Col([points_fg], width=4)
+],
+                     form=True)
+
+category_fg = dbc.FormGroup([
+    dbc.Label("Category"),
+    dcc.Dropdown(id={
+        "type": "dropdown",
+        "page": "student",
+        "tab": "concern",
+        "name": "category"
+    },
+                 options=curriculum.concern_categories_dropdown["options"],
+                 value=curriculum.concern_categories_dropdown["default"],
+                 clearable=False),
+])
+
+discrimination_fg = dbc.FormGroup([
+    dbc.Label("Discrimination"),
+    dcc.Dropdown(
+        id={
+            "type": "dropdown",
             "page": "student",
             "tab": "concern",
-            "name": "description"
+            "name": "discrimination"
         },
-                  type="text",
-                  debounce=False,
-                  placeholder="Description"),
-        dcc.Dropdown(
-            id={
-                "type": "dropdown",
-                "page": "student",
-                "tab": "concern",
-                "name": "discrimination"
-            },
-            options=curriculum.concern_discrimination_dropdown["options"],
-            placeholder="Discrimination (optional)",
-            multi=True,
-        ),
-        dcc.Dropdown(
-            id={
-                "type": "dropdown",
-                "page": "student",
-                "tab": "concern",
-                "name": "stage"
-            },
-            options=curriculum.concern_stages_dropdown["options"],
-            value=curriculum.concern_stages_dropdown["default"]
-        ),
-    ]),
-    dbc.Col([
-        dbc.Button("Submit",
-                   id={
-                       "type": "button",
-                       "page": "student",
-                       "tab": "concern",
-                       "name": "submit"
-                   },
-                   color="secondary",
-                   n_clicks=0),
-        html.Div(id={
-            "type": "text",
-            "page": "student",
-            "tab": "concern",
-            "name": "message"
-        })
-    ])
+        options=curriculum.concern_discrimination_dropdown["options"],
+        placeholder="Optional",
+        multi=True,
+    ),
+    dbc.FormText("Select any that apply"),
+])
+
+description_fg = dbc.FormGroup([
+    dbc.Label("Description"),
+    dbc.Textarea(id={
+        "type": "input",
+        "page": "student",
+        "tab": "concern",
+        "name": "description"
+    },
+                 debounce=False,
+                 placeholder="Description"),
+])
+
+stage_fg = dbc.FormGroup([
+    dbc.Label("Stage"),
+    dcc.Dropdown(id={
+        "type": "dropdown",
+        "page": "student",
+        "tab": "concern",
+        "name": "stage"
+    },
+                 options=curriculum.concern_stages_dropdown["options"],
+                 value=curriculum.concern_stages_dropdown["default"],
+                 clearable=False),
+    dbc.FormText("For pastoral lead's use")
+])
+
+concern_message_fg = dbc.FormGroup([
+    dbc.FormText(id={
+        "type": "text",
+        "page": "student",
+        "tab": "concern",
+        "name": "message"
+    }),
+])
+
+concern_submit_fg = dbc.FormGroup([
+    dbc.Button("Raise concern",
+               id={
+                   "type": "button",
+                   "page": "student",
+                   "tab": "concern",
+                   "name": "submit"
+               },
+               color="secondary",
+               n_clicks=0),
+])
+
+concern_form = dbc.Form([
+    dbc.Row(children=[
+        dbc.Col([
+            category_fg,
+            description_fg,
+        ]),
+        dbc.Col([
+            discrimination_fg,
+            stage_fg,
+        ], width=2)
+    ],
+            form=True),
+    dbc.Row(children=[
+        dbc.Col([
+            concern_submit_fg,
+            concern_message_fg,
+        ], width=4),
+    ],
+            form=True)
 ])
 
 tabs = ["Report", "Kudos", "Concern"]
 content = [
-    dbc.Card([
-        dbc.CardHeader([
-            dbc.Row([
-                dbc.Col([
-                    dbc.Tabs(
-                        [
-                            dbc.Tab(label=t, tab_id=f"student-tab-{t.lower()}")
-                            for t in tabs
-                        ],
-                        id=f"student-tabs",
-                        card=True,
-                        active_tab=f"student-tab-{tabs[0].lower()}",
-                    )
+    dbc.Card(
+        [
+            dbc.CardHeader([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Tabs(
+                            [
+                                dbc.Tab(label=t,
+                                        tab_id=f"student-tab-{t.lower()}")
+                                for t in tabs
+                            ],
+                            id=f"student-tabs",
+                            card=True,
+                            active_tab=f"student-tab-{tabs[0].lower()}",
+                        )
+                    ],
+                            align='end'),
+                    dbc.Col([filters.cohort]),
+                    dbc.Col([filters.team]),
+                ])
+            ]),
+            dbc.CardBody(
+                [
+                    dbc.Row([
+                        dbc.Col([student_table_container], width=4),
+                        dbc.Col([html.Div(id=f"student-content")], width=8)
+                    ], ),
                 ],
-                        align='end'),
-                dbc.Col([filters.cohort]),
-                dbc.Col([filters.team]),
-            ])
-        ]),
-        dbc.CardBody([
-            dbc.Row([
-                dbc.Col([student_table_container], width=4),
-                dbc.Col([html.Div(id=f"student-content")], width=8)
-            ], ),
-        ],
-                     style={
-#                         "max-height": "70vh",
-#                         "overflow-y": "auto"
-                     }
-        )
-    ], )
+                style={
+                    #                         "max-height": "70vh",
+                    #                         "overflow-y": "auto"
+                })
+        ], )
 ]
 
 validation_layout = content + [report, kudos_form, concern_form]
@@ -610,8 +665,8 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
             "name": "submit"
         }, "color"),
 ])
-def update_concern_message(selected_student_ids, description, category,
-                           stage, discrimination, n_clicks, button_color):
+def update_concern_message(selected_student_ids, description, category, stage,
+                           discrimination, n_clicks, button_color):
     if selected_student_ids:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Raise {category} concern about')
