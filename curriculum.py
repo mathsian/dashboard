@@ -70,15 +70,15 @@ cohorts_dropdown = {
 }
 
 scales = {
-    "alevel": ["X", "U", "E", "D", "C", "B", "A", "S"],
-    "A-Level": ["X", "U", "E", "D", "C", "B", "A", "S"],
+    "alevel": ["X", "U", "E", "D", "C", "B", "A", "A*"],
+    "A-Level": ["X", "U", "E", "D", "C", "B", "A", "A*"],
     "AS-Level": ["X", "U", "E", "D", "C", "B", "A"],
     "Level3": ["X", "U", "E", "D", "C", "B", "A"],
-    "GCSE-Letter": ["X", "U", "G", "F", "E", "D", "C", "B", "A", "S"],
+    "GCSE-Letter": ["X", "U", "G", "F", "E", "D", "C", "B", "A", "A*"],
     "GCSE-Number": ["X"] + [str(i) for i in range(10)],
-    "btec": ["X", "U", "NYP", "N", "P", "M", "D", "Ds"],
-    "BTEC-Single": ["X", "U", "NYP", "N", "P", "M", "D", "Ds"],
-    "BTEC-Double": ["X", "U", "N", "PP", "MP", "MM", "DM", "DD", "Ds", "DsDs"],
+    "btec": ["X", "U", "NYP", "N", "P", "M", "D", "D*"],
+    "BTEC-Single": ["X", "U", "NYP", "N", "P", "M", "D", "D*"],
+    "BTEC-Double": ["X", "U", "N", "PP", "MP", "MM", "DM", "DD", "D*", "D*D*"],
     "BTEC-Triple": [
         "X",
         "U",

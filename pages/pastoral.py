@@ -212,10 +212,12 @@ kudos_table = dash_tabulator.DashTabulator(
         "title": v[:2],
         "field": v,
         "hozAlign": "right",
+        "topCalc": "sum"
     } for v in curriculum.values] + [{
         "title": "Total",
         "field": "total",
         "hozAlign": "right",
+        "topCalc": "sum"
     }],
 )
 
