@@ -270,7 +270,7 @@ progress_table = dash_tabulator.DashTabulator(
 progress_cohort = dcc.Dropdown(id='progress-cohort-dropdown', options=[{'label': c, 'value': c} for c in ['2022', '2123']], value='2123')
 
 validation_layout = content + [
-    attendance_dashboard, unauthorised_table, missing_table, progress_cohort, progress_table
+    attendance_dashboard, punctuality_dashboard, unauthorised_table, missing_table, progress_cohort, progress_table
 ]
 tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
