@@ -14,7 +14,7 @@ from
   FROM [Reports].[DASH].[vw_Current_Full_Marks]
   where REGD_Attendance_Mark is NULL
   and Past = 1 and LiveStu = 1 and StuType = 'SF' 
-  and datediff(week, regs_session_date, getdate()) < 3
+--  and datediff(week, regs_session_date, getdate()) < 3
   and datetimefromparts(
 						year(regs_session_date), 
 						month(regs_session_date), 
