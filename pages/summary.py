@@ -18,7 +18,7 @@ import data
 from dash_extensions.javascript import Namespace
 ns = Namespace("myNameSpace", "tabulator")
 
-tabs = ["Attendance", "Unauthorised", "Missing", "Progress"]
+tabs = ["Attendance", "Punctuality", "Unauthorised", "Missing", "Progress"]
 content = [
     dbc.Card([
         dbc.CardHeader(dbc.Tabs(
@@ -83,6 +83,23 @@ gauge_cumulative = daq.Gauge(
     min=0,
     max=100,
 )
+punctuality_monthly = dcc.Graph(id={
+    "type": "graph",
+    "page": "summary",
+    "tab": "punctuality",
+    "name": "monthly"
+},
+                          figure={
+                              "layout": {
+                                  "xaxis": {
+                                      "visible": False
+                                  },
+                                  "yaxis": {
+                                      "visible": False
+                                  }
+                              }
+                          },
+                          config={"displayModeBar": False})
 graph_monthly = dcc.Graph(id={
     "type": "graph",
     "page": "summary",
@@ -126,7 +143,7 @@ threshold_slider = dcc.Slider(
     },
     min=0,
     max=100,
-    value=92,
+    value=90,
     marks={
         60: '60',
         80: '80',
@@ -145,6 +162,11 @@ attendance_dashboard = [
     dbc.Row(dbc.Col([graph_monthly, graph_threshold, threshold_slider]),
             align='start',
             justify='center')
+]
+punctuality_dashboard = [
+    dbc.Row([
+        dbc.Col([punctuality_monthly])
+    ])
 ]
 unauthorised_table = dash_tabulator.DashTabulator(
     id={
@@ -252,6 +274,7 @@ validation_layout = content + [
 ]
 tab_map = {
     "summary-tab-attendance": [attendance_dashboard],
+    "summary-tab-punctuality": [punctuality_dashboard],
     "summary-tab-unauthorised": [dbc.Col([unauthorised_table])],
     "summary-tab-missing":
     [dbc.Col([missing_table])],
@@ -334,6 +357,73 @@ def update_unauthorised_table(n_intervals):
     return df.to_dict(orient='records')
 
 
+@app.callback(
+    Output({
+            "type": "graph",
+            "page": "summary",
+            "tab": "punctuality",
+            "name": "monthly"
+        }, "figure"),
+           [
+Input({
+        "type": "interval",
+        "page": "summary",
+        "tab": "attendance"
+    }, "n_intervals")
+           ]
+)
+def update_punctuality_dashboard(n_intervals):
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+        )
+    except:
+        return dash.no_update
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(abspath('.')))
+    sql_template = sql_jinja_env.get_template(
+        'sql/cumulative punctuality monthly.sql')
+    sql = sql_template.render()
+    rems_df = pd.read_sql(sql, conn)
+    # For monthly graph
+    monthly_df = rems_df.query('date != "Year" & student_id == "All"')
+    months = list(monthly_df['date'])
+    monthly_figure = go.Figure(
+        data=[
+            go.Bar(x=monthly_df['date'],
+                   y=monthly_df['punctuality'],
+                   text=monthly_df['punctuality'],
+                   textposition='auto',
+                   marker_color='steelblue',
+                   name="Monthly"),
+            go.Scatter(x=monthly_df['date'],
+                       y=monthly_df['cumulative'],
+                       text=monthly_df['cumulative'],
+                       textposition='top center',
+                       marker_color='gold',
+                       name="Cumulative"),
+        ],
+        layout={
+            "title": "Monthly average student punctuality",
+            "yaxis": {
+                "range": [60, 100]
+            },
+            "xaxis": {
+                "tickmode": "array",
+                "tickvals": months,
+                # "ticktext": months
+            }
+        },
+    )
+    return monthly_figure
+
+
 @app.callback([
     Output(
         {
@@ -377,7 +467,7 @@ def update_unauthorised_table(n_intervals):
             "name": "threshold",
         }, "value")
 ])
-def update_attendance_gauge(n_intervals, threshold):
+def update_attendance_dashboard(n_intervals, threshold):
     config_object = ConfigParser()
     config_object.read("config.ini")
     rems_settings = config_object["REMS"]
