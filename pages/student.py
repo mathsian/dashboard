@@ -588,11 +588,12 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
         if cc.triggered and "n_clicks" in cc.triggered[0][
                 "prop_id"] and button_color == "primary":
             date = datetime.datetime.today().strftime("%Y-%m-%d")
+            print(type(points))
             docs = [{
                 "type": "kudos",
                 "student_id": s,
                 "ada_value": ada_value,
-                "points": points,
+                "points": int(points), # not sure why this wouldn't be an int but hey
                 "description": description if description else "",
                 "date": date,
                 "from": session.get('email', "none"),
