@@ -260,7 +260,7 @@ def update_kudos_table(changed, dataChanged):
         doc = data.get_doc(row.get("_id"))
         doc.update({
             "description": row.get("description"),
-            "points": row.get("points"),
+            "points": int(row.get("points")), # not sure why this wouldn't be an int be to be safe
             "ada_value": row.get("ada_value")
         })
         data.save_docs([doc])
