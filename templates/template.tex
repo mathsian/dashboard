@@ -120,6 +120,10 @@
 %% endfor
 % Kudos
 \section*{\VAR{kudos_total} Kudos}
+\noindent Kudos points are awarded to students who demonstrate the college
+values of curiosity, creativity, collaboration, rigour and resilience
+
+\vspace{1em}
 %% if kudos|length > 0
 \noindent\begin{tabularx}{\linewidth}{l l X}
 %% for kudo in kudos
@@ -129,10 +133,14 @@
 %% endfor
     \end{tabularx}
 %% else
-No kudos points recorded
+\noindent No kudos points have been recorded
 %% endif
 % Concern
 \section*{\VAR{concern_total} Concerns}
+\noindent Concerns may be raised by staff about a student's conduct, their
+academic performance or their attendance
+
+\vspace{1em}
 %% if concerns|length > 0
 \noindent\begin{tabularx}{\linewidth}{l l X}
 %% for concern in concerns
@@ -140,15 +148,14 @@ No kudos points recorded
   %% endfor
      \end{tabularx}
   %% else
-
-  No concerns recorded
+\noindent No concerns have been recorded
   %% endif
-\section*{Coming up}
-\begin{tabularx}{\linewidth}{l l l X}
-  9th July & & & Last day of Summer term \\
-           & & & End of year celebration \\
-  27th Aug & & & Re-enrolment day \\
-  31st Aug & -- & 17th Dec & Autumn term \\
-  18th Oct & -- & 29th Oct & Half term break
-\end{tabularx}
+% \section*{Coming up}
+% \begin{tabularx}{\linewidth}{l l l X}
+%   9th July & & & Last day of Summer term \\
+%            & & & End of year celebration \\
+%   27th Aug & & & Re-enrolment day \\
+%   31st Aug & -- & 17th Dec & Autumn term \\
+%   18th Oct & -- & 29th Oct & Half term break
+% \end{tabularx}
 \end{document}

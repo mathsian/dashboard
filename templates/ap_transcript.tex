@@ -1,0 +1,84 @@
+\errorcontextlines 10000
+\documentclass[a4paper,14pt,landscape]{memoir}
+\usepackage{etoolbox}
+\usepackage{multicol}
+
+% set up fonts
+\usepackage{fontspec}
+\setsansfont{Titillium-Regular}
+\setmainfont{Titillium-Regular}
+\setromanfont{FSSinclair-Medium}
+
+% smaller margins
+\usepackage[margin=1.5cm]{geometry}
+
+% drawing packages
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+\usetikzlibrary{decorations.text}
+\usepackage{pgfplots}
+\pgfplotsset{
+  compat = newest,
+  tick label style = {font=\sffamily},
+  every axis label = {font=\sffamily},
+  legend style = {font=\sffamily},
+  label style = {font=\sffamily}
+}
+
+% custom colours
+\definecolor{adaYellow}{RGB}{245,225,52}
+\definecolor{adaPurple}{RGB}{149,96,159}
+\definecolor{adaGreen}{RGB}{161,200,84}
+\definecolor{adaCoral}{RGB}{236,98,113}
+\definecolor{adaBlue}{RGB}{108,184,231}
+\definecolor{adaOrange}{RGB}{246,131,82}
+
+\definecolor{adaBlack}{RGB}{9,20,8}
+\definecolor{adaGrey}{RGB}{134,136,140}
+\definecolor{adaLightGrey}{RGB}{211,212,211}
+\definecolor{adaWhite}{RGB}{255,255,255}
+
+\definecolor{clr1}{RGB}{149,96,159}
+\definecolor{clr2}{RGB}{161,200,84}
+\definecolor{clr3}{RGB}{236,98,113}
+\definecolor{clr4}{RGB}{108,184,231}
+\definecolor{clr5}{RGB}{246,131,82}
+
+% Declare layers
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\setlength{\columnsep}{3em}
+\begin{document}
+% no page numbers
+\pagestyle{empty}
+% title
+\begin{center}
+    {\rmfamily\uppercase{
+        {\large Ada National College for Digital Skills}\\
+        \VAR{programme}
+}}
+\tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
+\end{center}
+\begin{tabular}{l l}
+Student name & \textsf{\VAR{student_name}}\\
+Student ID & \textsf{\VAR{student_id}}\\
+Issued & \textsf{27/09/21}
+\end{tabular}
+
+\begin{center}
+\begin{tabular}{l l r r l}
+Module name & Module code & First teaching & Total & Class\\
+\hline
+%% for level in modules
+Level \VAR{level.level} \\
+%% for module in level.results
+\textsf{\VAR{module.name}} & \textsf{\VAR{module.code}} & \textsf{\VAR{module.first}} & \textsf{\VAR{module.total}} & \textsf{\VAR{module.class}}\\
+%% endfor
+%% endfor
+\hline
+&&& \textbf{\textsf{\VAR{overall}}} & \textbf{\textsf{\VAR{overall_class}}}
+\end{tabular}
+\end{center}
+
+\end{document}

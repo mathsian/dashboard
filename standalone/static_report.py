@@ -37,6 +37,7 @@ def generate_report(student_id):
         "description = description.str.replace('%', '\%').replace('&', '\&')",
         inplace=True)
     kudos_df["date"] = kudos_df["date"].apply(data.format_date)
+    kudos_df['points'] = pd.to_numeric(kudos_df['points'], downcast='integer')
     kudos_total = kudos_df['points'].sum()
     kudos = kudos_df.to_dict(orient='records')
 
@@ -118,5 +119,5 @@ def cohort_reports(cohort):
 
 
 if __name__ == "__main__":
-    generate_report("211236")
-    #cohort_reports("1921")
+    generate_report("211219")
+    # cohort_reports("2123")

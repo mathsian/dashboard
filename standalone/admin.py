@@ -1,16 +1,19 @@
 import pyodbc
-import data
 import pandas as pd
 from configparser import ConfigParser
 import datetime
 import jinja2
 from os.path import abspath
+import sys
+sys.path.append('..')
+
 import curriculum
+import data
 
 def sync_group(dbname=None, full=False, dry=True):
     # Get connection settings
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -84,7 +87,7 @@ def sync_group(dbname=None, full=False, dry=True):
 def check_ids():
     # Get connection settings
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -117,7 +120,7 @@ def check_ids():
 def sync_enrolment(dbname=None, dry=True):
     # Get connection settings
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -190,7 +193,7 @@ def sync_enrolment(dbname=None, dry=True):
 
 def initial_sync(dbname):
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -259,7 +262,7 @@ def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
 
 def sync_rems_attendance(period='weekly', dbname=None):
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -268,7 +271,7 @@ def sync_rems_attendance(period='weekly', dbname=None):
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
     sql_jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(abspath('.'))
+        loader=jinja2.FileSystemLoader(abspath('..'))
     )
     if period == 'weekly':
         sql_template = sql_jinja_env.get_template('sql/attendance by week beginning and student.sql')
@@ -306,7 +309,7 @@ def copy_docs(doc_type, db_src, db_dest):
 def fix_assessments(db_name=None):
     # Get connection settings
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read("../config.ini")
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
@@ -391,37 +394,5 @@ def fix_nan_comments(db_name):
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
-    #data.delete_all("attendance", "ada")
     sync_rems_attendance("weekly", "ada")
     sync_rems_attendance("monthly", "ada")
-    #check_ids() #This shows that student id is a fixed length string in one table and a different length string in another
-    #sync_enrolment("ada", dry=False)
-    #sync_group("ada", full=False, dry=False)
-    #fix_assessments("ada")
-    #fix_group_cohorts("ada", dry=True)
-    #fix_assessment_comments("ada")
-    #fix_null_descriptions("ada")
-    #fix_nan_comments("ada")
-#    for subject_code in ["BUS-L3AL", "MAT-L3AL", "GRA-L3AL", "PSY-L3AL", "FMA-L3AL"]:
-    #for subject_code in ["AL-BS", "AL-MA", "AL-GR", "AL-PS"]:
-    #    create_assessment("1921", subject_code, "13.2 Spring Assessment", "2021-03-16", "A-Level", "ada")
-#        create_assessment("2022", subject_code, "12.3 June Assessment", "2021-06-25", "A-Level", "ada")
-    #create_assessment("1921", "ECS", "Unit 10", "2021-03-16", "BTEC-Single", "ada")
-    #create_assessment("1921", "ECS", "Unit 4", "2021-03-16", "BTEC-Single", "ada")
-    #create_assessment("1921", "L3-CM", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
-    #create_assessment("2022", "MAT-L2GC", "12.2 May Assessment", "2021-05-06", "GCSE-Number", "ada")
-    #create_assessment("2022", "MAT-L2GC", "12.3 June Assessment", "2021-07-06", "GCSE-Number", "ada")
-    #create_assessment("2022", "ENG-L2GC", "12.2 May Assessment", "2021-05-06", "GCSE-Number", "ada")
-    #create_assessment("2022", "ENG-L2GC", "12.3 June Assessment", "2021-07-06", "GCSE-Number", "ada")
-    #create_assessment("1921", "EPQ-L3DP", "13.2 Spring Assessment", "2021-03-16", "AS-Level", "ada")
-    #result = data.find_and_replace({"type": {"$eq": "assessment"}}, {"report": 1}, "ada")
-    #result = data.find_and_replace({"type": {"$eq": "assessment"}, "subtype": {"$eq": "Expectations"}}, {"report": 2}, "ada")
-    #result = data.find_and_replace({"type": {"$eq": "assessment"},
-    #                                "subject_code": {"$regex": "BUS"},
-    #                                "assessment": {"$regex": "12.2"}
-    #}, {"report": 2}, "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EX"}}, {"date": "2021-07-05"}, "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-04"}, "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3EC"}}, {"date": "2021-07-05"}, "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 1"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-04"}, "ada")
-    #data.find_and_replace({"assessment": {"$eq": "Unit 2"}, "subject_code": {"$eq": "CSC-L3DP"}}, {"date": "2021-07-05"}, "ada")
