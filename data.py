@@ -2,12 +2,14 @@ from configparser import ConfigParser
 from cloudant.client import CouchDB
 import pandas as pd
 import calendar
-
+from pathlib import Path
+import os
 
 def create_db(name):
     # read the config
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
+    config_object.read(config_file)
     # and get couchdb settings
     couchdb_config = config_object["COUCHDB"]
     couchdb_user = couchdb_config["user"]
@@ -30,7 +32,8 @@ class Connection(object):
     def __init__(self, db_name=None):
         # read the config
         config_object = ConfigParser()
-        config_object.read("config.ini")
+        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
+        config_object.read(config_file)
         # and get couchdb settings
         couchdb_config = config_object["COUCHDB"]
         couchdb_user = couchdb_config["user"]
@@ -86,6 +89,14 @@ def get_data(doc_type, key_field, key_list, db_name=None):
                                     keys=key_list,
                                     include_docs=True).all()
     return list(map(lambda r: r["doc"], result))
+
+
+def get_grouped_data(doc_type, view_name, start_key, end_key, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result(doc_type,
+                                    view_name,
+                                    group=True)[start_key:end_key]
+    return result
 
 
 def get_student(student_id, db_name=None):
