@@ -1,19 +1,17 @@
-from operator import itemgetter
+import sys
+
 from os.path import abspath
 import jinja2
-from jinja2 import Template
-import subprocess
 import pandas as pd
-import numpy as np
+
+sys.path.append('..')
 import data
 import curriculum
-import plotly.graph_objects as go
 
 
 def generate_report(student_id):
     this_year_start = curriculum.this_year_start
     student = data.get_student(student_id, "ada")
-
     academic_multiindex = pd.DataFrame.from_records(
         data.get_data("assessment", "student_id", [student_id], "ada"),
         columns=["subject_name", "assessment", "grade", "date",
@@ -27,7 +25,6 @@ def generate_report(student_id):
         subject: academic_multiindex.xs(subject).to_dict('index')
         for subject in academic_multiindex.index.levels[0]
     }
-
     kudos_df = pd.DataFrame(
         data.get_data("kudos", "student_id", [student_id], "ada"),
         columns=["ada_value", "points", "date", "from",
@@ -40,7 +37,6 @@ def generate_report(student_id):
     kudos_df['points'] = pd.to_numeric(kudos_df['points'], downcast='integer')
     kudos_total = kudos_df['points'].sum()
     kudos = kudos_df.to_dict(orient='records')
-
     concern_df = pd.DataFrame(
         data.get_data("concern", "student_id", [student_id], "ada"),
         columns=["category", "date", "description", "from"]).sort_values(
@@ -51,7 +47,6 @@ def generate_report(student_id):
         inplace=True)
     concern_total = len(concern_df)
     concerns = concern_df.to_dict(orient='records')
-
     attendance_df = pd.DataFrame.from_records(
         data.get_data("attendance", "student_id", [student_id],
                       "ada")).query("subtype == 'monthly'").sort_values(
@@ -85,11 +80,11 @@ def generate_report(student_id):
                                          trim_blocks=True,
                                          autoescape=False,
                                          loader=jinja2.FileSystemLoader(
-                                             abspath('.')))
+                                             abspath('../templates')))
 
     template = latex_jinja_env.get_template('template.tex')
     student_name = f"{student.get('given_name')} {student.get('family_name')}"
-    with open(f"latex/{student.get('_id')} {student_name}.tex", 'w') as f:
+    with open(f"../latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data = {
             "name": student_name,
             "date": "October 2021",
@@ -106,6 +101,7 @@ def generate_report(student_id):
             "concern_total": concern_total
         }
         f.write(template.render(template_data))
+        print("tex done")
 
 
 def cohort_reports(cohort):
@@ -115,9 +111,10 @@ def cohort_reports(cohort):
                                    db_name="ada")
     for student in enrolment_docs:
         print(f"Generating report for {student.get('given_name')}")
+        print(f"Student ID {student.get('_id')}")
         generate_report(student.get('_id'))
 
 
 if __name__ == "__main__":
-    generate_report("211219")
+    generate_report("111111")
     # cohort_reports("2123")

@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 import argparse
 import data
 import pandas as pd

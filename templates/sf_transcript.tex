@@ -1,8 +1,11 @@
 \errorcontextlines 10000
-\documentclass[a4paper,14pt,landscape]{memoir}
-\usepackage{etoolbox}
-\usepackage{multicol}
-
+\documentclass[a4paper,12pt,portrait]{article}
+% for text wrapping in table
+\usepackage{tabularx}
+% for footer
+\usepackage[]{fancyhdr}
+% never hyphenate in this document
+\usepackage[none]{hyphenat}
 % set up fonts
 \usepackage{fontspec}
 \setsansfont{Titillium-Regular}
@@ -11,19 +14,6 @@
 
 % smaller margins
 \usepackage[margin=1.5cm]{geometry}
-
-% drawing packages
-\usepackage{tikz}
-\usetikzlibrary{shapes}
-\usetikzlibrary{decorations.text}
-\usepackage{pgfplots}
-\pgfplotsset{
-  compat = newest,
-  tick label style = {font=\sffamily},
-  every axis label = {font=\sffamily},
-  legend style = {font=\sffamily},
-  label style = {font=\sffamily}
-}
 
 % custom colours
 \definecolor{adaYellow}{RGB}{245,225,52}
@@ -44,37 +34,44 @@
 \definecolor{clr4}{RGB}{108,184,231}
 \definecolor{clr5}{RGB}{246,131,82}
 
-% Declare layers
-\pgfdeclarelayer{background}
-\pgfsetlayers{background,main}
+% customise sections
+% need explicit to access parameter number to get the section on the left
+\usepackage[explicit]{titlesec}
+\titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
+\titleformat{\subsection}[hang]{\rmfamily\uppercase}{\thesubsection.}{0em}{ #1}
 
-\setlength{\columnsep}{3em}
 \begin{document}
-% no page numbers
-\pagestyle{empty}
-% title
-\begin{center}
-    {\rmfamily\uppercase{
-        {\large Ada National College for Digital Skills}\\
-        Academic Transcript
-}}
-\tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
-\end{center}
-\begin{tabular}{l l}
-Student name & \textsf{\VAR{student_name}}\\
-Student ID & \textsf{\VAR{student_id}}\\
-ULN & \textsf{\VAR{student_uln}}\\
-Issued & \textsf{14/10/21}
-\end{tabular}
 
-\begin{center}
-\begin{tabular}{l l r r l}
-Learning Aim & Learning Aim Title & Guided Learning Hours & Completed & Grade\\
+\cfoot{\sffamily \small \color{adaGrey} ada.ac.uk  |  info@ada.ac.uk  |  +44 203 105 0125  | charity no. 1158399}
+\renewcommand{\headrulewidth}{0pt} % remove header rule
+\pagestyle{fancy}
+
+\begin{flushright}
+\includegraphics[height=3cm]{NCDS.jpg}\\
+  {\uppercase{\small Ada. National College for Digital Skills\\
+      Broad Lane, Tottenham Hale\\
+      London N15 4AG}}
+\end{flushright}
+
+\section*{ACADEMIC TRANSCRIPT}
+
+\noindent \begin{tabular}{l l}
+\uppercase{Student name} & \textsf{\VAR{student_name}}\\
+\uppercase{Student ID} & \textsf{\VAR{student_id}}\\
+ULN & \textsf{\VAR{student_uln}}\\
+ISSUED & \textsf{14/10/21}
+\end{tabular}\\
+
+\vspace{1em}
+\noindent \begin{tabularx}{\linewidth}{r X r r l}
+LEARNING AIM & TITLE & GLH & COMPLETED & GRADE\\
 \hline
 %% for subject in subjects
 \textsf{\VAR{subject.ref}} & \textsf{\VAR{subject.title}} & \textsf{\VAR{subject.glh}} & \textsf{\VAR{subject.date}} & \textsf{\VAR{subject.grade}}\\
+%% for unit in subject.units
+\small \textsf{\textit{Unit \VAR{unit.number}}}  & \small \textsf{\textit{\VAR{unit.name}}} & \textit{\textsf{\VAR{unit.glh}}} & & \small \textsf{\textit{\VAR{unit.grade}}} \\
 %% endfor
-\end{tabular}
-\end{center}
+%% endfor
+\end{tabularx}
 
 \end{document}

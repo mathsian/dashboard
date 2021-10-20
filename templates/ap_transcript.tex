@@ -1,8 +1,12 @@
 \errorcontextlines 10000
-\documentclass[a4paper,14pt,landscape]{memoir}
-\usepackage{etoolbox}
-\usepackage{multicol}
-
+\documentclass[a4paper,12pt,portrait]{article}
+\usepackage{graphicx}
+% for text wrapping in table
+\usepackage{tabularx}
+% for footer
+\usepackage[]{fancyhdr}
+% never hyphenate in this document
+\usepackage[none]{hyphenat}
 % set up fonts
 \usepackage{fontspec}
 \setsansfont{Titillium-Regular}
@@ -12,20 +16,8 @@
 % smaller margins
 \usepackage[margin=1.5cm]{geometry}
 
-% drawing packages
-\usepackage{tikz}
-\usetikzlibrary{shapes}
-\usetikzlibrary{decorations.text}
-\usepackage{pgfplots}
-\pgfplotsset{
-  compat = newest,
-  tick label style = {font=\sffamily},
-  every axis label = {font=\sffamily},
-  legend style = {font=\sffamily},
-  label style = {font=\sffamily}
-}
-
 % custom colours
+\usepackage{xcolor}
 \definecolor{adaYellow}{RGB}{245,225,52}
 \definecolor{adaPurple}{RGB}{149,96,159}
 \definecolor{adaGreen}{RGB}{161,200,84}
@@ -44,26 +36,32 @@
 \definecolor{clr4}{RGB}{108,184,231}
 \definecolor{clr5}{RGB}{246,131,82}
 
-% Declare layers
-\pgfdeclarelayer{background}
-\pgfsetlayers{background,main}
+% customise sections
+% need explicit to access parameter number to get the section on the left
+\usepackage[explicit]{titlesec}
+\titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
+\titleformat{\subsection}[hang]{\rmfamily\uppercase}{\thesubsection.}{0em}{ #1}
 
-\setlength{\columnsep}{3em}
 \begin{document}
-% no page numbers
-\pagestyle{empty}
-% title
-\begin{center}
-    {\rmfamily\uppercase{
-        {\large Ada National College for Digital Skills}\\
-        \VAR{programme}
-}}
-\tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
-\end{center}
+
+\cfoot{\sffamily \small \color{adaGrey} ada.ac.uk  |  info@ada.ac.uk  |  +44 203 105 0125  | charity no. 1158399}
+\renewcommand{\headrulewidth}{0pt} % remove header rule
+\pagestyle{fancy}
+
+\begin{flushright}
+\includegraphics[height=3cm]{NCDS.jpg}\\
+  {\uppercase{\small Ada. National College for Digital Skills\\
+      Broad Lane, Tottenham Hale\\
+      London N15 4AG}}
+\end{flushright}
+
+\section*{ACADEMIC TRANSCRIPT}
+
 \begin{tabular}{l l}
 Student name & \textsf{\VAR{student_name}}\\
 Student ID & \textsf{\VAR{student_id}}\\
-Issued & \textsf{27/09/21}
+Programme & \textsf{\VAR{programme}}\\
+Issued & \textsf{\VAR{issued}}
 \end{tabular}
 
 \begin{center}
