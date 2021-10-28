@@ -15,10 +15,6 @@ navbar = dbc.Navbar([
     dbc.Col(dbc.Nav(dbc.NavItem(id="section_links"), horizontal='end'),
             width=2),
     dbc.Col(id="page_links", width=True),
-    dbc.Col(dbc.Nav(
-        dbc.NavItem(
-            dbc.DropdownMenu(id="history_links", label="History", nav=True))),
-            width=2),
     dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links"))), width=2)
 ],
                     # style={"margin-bottom": 10}
@@ -26,7 +22,7 @@ navbar = dbc.Navbar([
 
 cardheader = dbc.CardHeader(
     dbc.Row([
-        dbc.Col(dbc.Tabs(id="tabs", card=True, active_tab=""), width='auto'),
+        dbc.Col(dbc.Tabs(id="tabs", active_tab=""), width='auto'),
     ],
             align='end'))
 cardbody = dbc.CardBody(id="content")
@@ -36,11 +32,9 @@ sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 
 app.layout = dbc.Container([
     dcc.Location(id="location", refresh=False),
-    dcc.Store(id="history", storage_type='memory'),
     dbc.Row(dbc.Col(navbar)),
     dbc.Row([dbc.Col(sidebar, width=3),
-             dbc.Col(card, width=9)],
-            no_gutters=True)
+             dbc.Col(card, width=9)], )
 ],
                            fluid=True)
 
@@ -59,7 +53,7 @@ def parse(pathname):
     if section:
         page = section.children.get(page_path, None)
         if page:
-            tab = page.children.get(tab_path, None) 
+            tab = page.children.get(tab_path, None)
     return section, page, tab
 
 
@@ -75,12 +69,10 @@ def parse(pathname):
 ], [
     Input("location", "pathname"),
     Input("tabs", "active_tab"),
-], [State("history", "data")])
-def location_change(pathname, active_tab, history):
+])
+def location_change(pathname, active_tab):
     '''Called whenever the location should change, either through url or tab click.
     Returns content from the appropriate section, page and tab to the layout'''
-
-    history = history or []
 
     # Circular callback so we need to know whether it was called by a link, a tab change or a dropdown
     ctx = dash.callback_context
@@ -98,15 +90,11 @@ def location_change(pathname, active_tab, history):
         # Get the previous location from active_tab
         previous_section, previous_page, previous_tab = parse(active_tab)
         active_tab = "/".join(["", section.path, page.path, tab.path])
-        # Add it to the history
-        # history.append(active_tab)
     elif input_id == "tabs":
         # Set the location from the active tab
         section, page, tab = parse(active_tab)
         # Get the previous location from pathname
         previous_section, previous_page, previous_tab = parse(pathname)
-        # Add it to the history
-        # history.append(pathname)
         pathname = active_tab
 
     # If the section hasn't changed we don't need to update section_links
@@ -132,14 +120,17 @@ def location_change(pathname, active_tab, history):
         # Update the page nav links
         page_links = dbc.Nav(children=[
             dbc.NavItem(
-                dbc.NavLink(p.name, href="/".join(["", section.path, path]), active=(p.path == page.path)))
+                dbc.NavLink(p.name,
+                            href="/".join(["", section.path, path]),
+                            active=(p.path == page.path)))
             for path, p in section.children.items()
         ],
                              pills=True)
 
     # Update the tabs
     tabs = [
-        dbc.Tab(label=t.name, tab_id="/".join(["", section.path, page.path, t.path]))
+        dbc.Tab(label=t.name,
+                tab_id="/".join(["", section.path, page.path, t.path]))
         for _, t in page.children.items()
     ]
     return [
