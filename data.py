@@ -3,6 +3,8 @@ from cloudant.client import CouchDB
 import pandas as pd
 import calendar
 
+APPRENTICE_SCHEMA = ['_id', 'type', 'given_name', 'family_name', 'email', 'status', 'company', 'cohort', 'intake']
+RESULT_SCHEMA = ['type', 'student_id', 'moduleCode', 'moduleName', 'module', 'level', 'credits', 'total', 'breakdown', 'week1FirstDay', 'week2FirstDay']
 
 def create_db(name):
     # read the config
@@ -59,11 +61,12 @@ class Connection(object):
 
 def save_docs(docs, db_name=None):
     """
-    Does no error checking here
+    Returns a DataFrame
     """
     with Connection(db_name) as db:
         result = db.bulk_docs(docs)
-    return result
+        result_df = pd.DataFrame.from_records(result, columns=['ok', 'error', 'reason', '_id', 'rev'])
+    return result_df
 
 
 def get_data(doc_type, key_field, key_list, db_name=None):
@@ -87,6 +90,10 @@ def get_data(doc_type, key_field, key_list, db_name=None):
                                     include_docs=True).all()
     return list(map(lambda r: r["doc"], result))
 
+def get_grouped_data(ddoc_id, view_name, startkey, endkey, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result(ddoc_id, view_name, startkey=startkey, endkey=endkey, group=True).all()
+    return result
 
 def get_student(student_id, db_name=None):
     with Connection(db_name) as db:
@@ -176,3 +183,14 @@ def get_enrolment_by_cohort_team(cohort, team, db_name=None):
     else:
         enrolment_docs = get_data("enrolment", "cohort", ["2022", "2123"])
     return enrolment_docs
+
+def safe_json(d):
+    if d is None:
+        return True
+    elif isinstance(d, (bool, int, float)):
+        return True
+    elif isinstance(d, (tuple, list)):
+        return all(safe_json(x) for x in d) 
+    elif isinstance(d, dict):
+        return all(isinstance(k, str) and safe_json(v) for k, v in d.items())
+    return False
