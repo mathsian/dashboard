@@ -140,7 +140,7 @@ def update_results(pathname, search, cohort):
             active = 'exact' if m == module else False
             module_nav_items.append(
                 dbc.NavItem(dbc.NavLink(n, href=f'{pathname}?{q}',
-                                        active=bool(active)), active=active)
+                                        active=bool(active)))
                 )
 
         module_results_df = merged_df.loc[[module]] # pass list

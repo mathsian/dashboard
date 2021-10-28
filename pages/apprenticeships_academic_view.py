@@ -96,8 +96,9 @@ def update_subject_graph(store_data):
     result_df = pd.DataFrame.from_records(store_data.get("result_docs"), columns=data.APPRENTICE_SCHEMA+data.RESULT_SCHEMA+["class"])
     bar_trace = go.Histogram(
         x=result_df["class"],
-        hovertemplate="%{y} %{x:.1f}<extra></extra>",
-        histfunc='count'
+        hovertemplate="%{y:.0f}% %{x}<extra></extra>",
+        histfunc='count',
+        histnorm='percent'
     )
     fig = go.Figure()
     fig.update_xaxes(

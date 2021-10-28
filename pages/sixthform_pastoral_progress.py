@@ -61,7 +61,7 @@ def update_progress_content(sort_value, store_data):
         student_attendance = round(student_attendance_row['percentage'].squeeze())
         danger = low_attendance(student_attendance, 90)
         # And create list group
-        student_attendance_listgroupitem = dbc.ListGroupItem([dbc.ListGroupItemHeading('Attendance'), dbc.ListGroupItemText(student_attendance)])
+        student_attendance_listgroupitem = dbc.ListGroupItem([dbc.ListGroupItem('Attendance'), dbc.ListGroupItem(student_attendance)])
         # Get student's assessment record, alphabetical by subject, and date order
         student_assessment_record = assessment_df.query('student_id == @student_id').sort_values(['subject_code', 'date']).set_index(['subject_code', 'assessment'])
         # List of unique subjects
@@ -70,7 +70,7 @@ def update_progress_content(sort_value, store_data):
         student_subject_list = []
         for subject_code in student_subjects:
             # Set the heading to the subject code
-            student_subject_itemheading = dbc.ListGroupItemHeading(subject_code)
+            student_subject_itemheading = dbc.ListGroupItem(subject_code)
             # For every assessment in that subject
             assessment_list = []
             for student_assessment in student_assessment_record.loc[subject_code].index.unique(0):
@@ -78,7 +78,7 @@ def update_progress_content(sort_value, store_data):
                 grade = student_assessment_record.loc[(subject_code, student_assessment), 'grade']
                 scale = student_assessment_record.loc[(subject_code, student_assessment), 'subtype']
                 # And add a text item
-                assessment_list.append(dbc.ListGroupItemText(f'{student_assessment}\t{grade}'))
+                assessment_list.append(dbc.ListGroupItem(f'{student_assessment}\t{grade}'))
                 danger = danger or low_grade(grade, scale)
                 student_subject_list.append(dbc.ListGroupItem(children=[student_subject_itemheading] + assessment_list))
                 popover_content = [dbc.ListGroup(student_attendance_listgroupitem), dbc.ListGroup(student_subject_list)]
@@ -93,7 +93,9 @@ def update_progress_content(sort_value, store_data):
                                         popover,
                                         dbc.CardHeader(html.H5(f'{s.get("given_name")} {s.get("family_name")}')),
                                         dbc.CardBody(f'{student_attendance}% attendance')
-                                    ], color=('danger' if danger else 'primary'), inverse=True))
+                                    ],
+                             # color=('danger' if danger else 'primary'),
+                              inverse=True))
     result = dbc.Row([dbc.Col(card, width=4, style={'margin-bottom': '10px'}) for card in cards], align='center')
     return result
 

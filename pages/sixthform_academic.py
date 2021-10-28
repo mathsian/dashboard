@@ -27,22 +27,23 @@ page_nav = dbc.Nav([
     dbc.NavItem(cohort_dropdown),
     dbc.NavItem(subject_dropdown),
 ],
-                            fill=True)
+                   fill=True)
 
-assessment_nav = dbc.Nav(id={
-    "type": "nav",
-    "section": "sixthform",
-    "page": "academic",
-    "name": "assessments"
-},
-                         pills=True,
-                         vertical=True,
+assessment_nav = dbc.Nav(
+    id={
+        "type": "nav",
+        "section": "sixthform",
+        "page": "academic",
+        "name": "assessments"
+    },
+    pills=True,
+    vertical=True,
 )
 layout = [
     dcc.Store("sixthform-academic-store", storage_type='memory'),
     dbc.Row(dbc.Col(page_nav)),
     dbc.Row(dbc.Col(assessment_nav))
-    ]
+]
 
 
 @app.callback([
@@ -82,9 +83,9 @@ def update_assessments(pathname, search, subject):
         })
         active = 'exact' if ass == assessment else False
         assessment_items.append(
-            dbc.NavItem(dbc.NavLink(ass, href=f'{pathname}?{s}',
-                                    active=bool(active)),
-                        active=active))
+            dbc.NavItem(
+                dbc.NavLink(ass, href=f'{pathname}?{s}',
+                            active=bool(active)), ))
     subject_items = []
     for sub in subjects:
         s = urlencode(query={'cohort': cohort, 'subject': sub})
@@ -95,11 +96,12 @@ def update_assessments(pathname, search, subject):
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
                                     [(assessment, subject, cohort)])
-    enrolment_docs = data.get_data("enrolment", "_id", [d.get("student_id") for d in assessment_docs])
+    enrolment_docs = data.get_data(
+        "enrolment", "_id", [d.get("student_id") for d in assessment_docs])
     store_data = {
         "enrolment_docs": enrolment_docs,
         "assessment_docs": assessment_docs,
         "assessment_name": assessment
-        }
+    }
     return (cohort, cohort_items, subject, subject_items, assessment_items,
             store_data)

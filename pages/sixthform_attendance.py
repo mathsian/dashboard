@@ -27,7 +27,6 @@ update_button =  dbc.Button(children="Update",
                        "name": "update"
                    },
                    outline=True,
-                   block=True,
                    color='primary')
 gauge_last = daq.Gauge(
     id={

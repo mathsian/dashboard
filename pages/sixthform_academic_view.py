@@ -107,6 +107,10 @@ def update_subject_graph(store_data, colour_code, subject_code):
                                     left_on="student_id",
                                     right_on="_id",
                                     how="inner")
+    if subtype == 'Percentage':
+        # We need numeric grades otherwise the histogram will think this is categorical
+        merged_df["grade"] = pd.to_numeric(merged_df["grade"], errors='coerce')
+
     fig = sp.make_subplots(
         rows=1,
         cols=2,
@@ -137,18 +141,29 @@ def update_subject_graph(store_data, colour_code, subject_code):
         "%{customdata[0]} %{customdata[1]}: %{y}<br>APS: %{x:.1f}<br>" +
         colour_code + ": %{customdata[2]}<extra></extra>",
         mode='markers')
-    bar_trace = go.Histogram(
-        y=merged_df["grade"],
-        histfunc='count',
-        histnorm='percent',
-        orientation='h',
-        showlegend=False,
-        hovertemplate="%{y} %{x:.1f}<extra></extra>",
-    )
-    fig.update_yaxes(
-        categoryorder='array',
-        categoryarray=curriculum.scales.get(subtype),
-    )
+    if subtype == 'Percentage':
+        bar_trace = go.Histogram(
+            y=merged_df["grade"],
+            histfunc='count',
+            histnorm='percent',
+            orientation='h',
+            showlegend=False,
+            ybins={"start": 0, "end": 100, "size": 10},
+            hovertemplate="%{y}: %{x:.1f}%<extra></extra>",
+        )
+    else:
+        bar_trace = go.Histogram(
+            y=merged_df["grade"],
+            histfunc='count',
+            histnorm='percent',
+            orientation='h',
+            showlegend=False,
+            hovertemplate="%{y}: %{x:.1f}%<extra></extra>",
+        )
+        fig.update_yaxes(
+            categoryorder='array',
+            categoryarray=curriculum.scales.get(subtype),
+        )
     fig.update_xaxes(
         title_text="GCSE Average Point Score",
         row=1,
