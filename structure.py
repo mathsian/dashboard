@@ -8,7 +8,8 @@ from pages import (sixthform_attendance, sixthform_attendance_year,
                    sixthform_pastoral_concern, sixthform_academic,
                    sixthform_academic_view, sixthform_academic_edit,
                    sixthform_student, sixthform_student_report,
-                   sixthform_student_kudos, sixthform_student_concern)
+                   sixthform_student_kudos, sixthform_student_concern,
+                   apprenticeships_academic, apprenticeships_academic_edit, apprenticeships_academic_view)
 
 
 class PathExistsError(Exception):
@@ -94,7 +95,7 @@ class Tab(Container):
 #         }
 # }
 
-content_dict = {
+content= {
     Section("Sixth Form", "sixthform"): {
         Page("Attendance", "attendance", sixthform_attendance.layout): [
             Tab("Year", "year", sixthform_attendance_year.layout),
@@ -121,15 +122,22 @@ content_dict = {
             Tab("Kudos", "kudos", sixthform_student_kudos.layout),
             Tab("Concern", "concern", sixthform_student_concern.layout)
         ]
+    },
+    Section("Apprenticeships", "apprenticeships"): {
+        Page("Academic", "academic", apprenticeships_academic.layout):
+        [
+            Tab("Edit", "edit", apprenticeships_academic_edit.layout),
+            Tab("View", "view", apprenticeships_academic_view.layout)
+        ]
     }
 }
 # The root container. Has no content of its own
 home = Container("Home", "/")
-for s in content_dict.keys():
+for s in content.keys():
     section = home.add_child(s)
-    for p in content_dict[s].keys():
+    for p in content[s].keys():
         page = section.add_child(p)
-        for t in content_dict[s][p]:
+        for t in content[s][p]:
             tab = page.add_child(t)
 
 if __name__ == "__main__":
