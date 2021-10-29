@@ -143,10 +143,10 @@ def update_subject_table(store_data, changed, row_data):
         {
             "title": "Marks",
             "field": "total",
-            "editor": "select",
-            "editorParams": {
-                "values": curriculum.scales.get('percentage')
-            },
+            # "editor": "select",
+            # "editorParams": {
+            #     "values": curriculum.scales.get('percentage')
+            # },
             "width": "15%"
         },
         {

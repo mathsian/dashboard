@@ -10,15 +10,12 @@ from app import app, server
 from structure import home
 from history import History
 
-navbar = dbc.Navbar([
+navbar = dbc.Navbar(dbc.Container([
     dbc.Col(dbc.NavbarBrand("data@ada"), width=1),
-    dbc.Col(dbc.Nav(dbc.NavItem(id="section_links"), horizontal='end'),
-            width=2),
-    dbc.Col(id="page_links", width=True),
-    dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links"))), width=2)
-],
-                    # style={"margin-bottom": 10}
-                    )
+    dbc.Col(dbc.Nav(dbc.DropdownMenu(id="section_links", nav=True), justified=True), width=2),
+    dbc.Col(dbc.Nav(id="page_links", justified=True, pills=True), width="auto"),
+    dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links")), justified=True), width=2)
+    ]))
 
 cardheader = dbc.CardHeader(
     dbc.Row([
@@ -32,11 +29,10 @@ sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 
 app.layout = dbc.Container([
     dcc.Location(id="location", refresh=False),
-    dbc.Row(dbc.Col(navbar)),
+    navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
-             dbc.Col(card, width=9)], )
-],
-                           fluid=True)
+             dbc.Col(card, width=9)], class_name='g-0')
+], fluid=True)
 
 
 def parse(pathname):
@@ -58,6 +54,7 @@ def parse(pathname):
 
 
 @app.callback([
+    Output("section_links", "label"),
     Output("section_links", "children"),
     Output("page_links", "children"),
     Output("tabs", "children"),
@@ -102,14 +99,10 @@ def location_change(pathname, active_tab):
         section_links = dash.no_update
     else:
         # Update the section dropdown
-        section_links = dbc.DropdownMenu(
-            label=section.name,
-            nav=False,
-            color='primary',
-            children=[
+        section_links = [
                 dbc.DropdownMenuItem(dbc.NavLink(s.name, href="/" + path))
                 for path, s in home.children.items()
-            ])
+            ]
 
     # If the page hasn't changed we don't need to update it
     if previous_page and (page.path == previous_page.path):
@@ -118,14 +111,13 @@ def location_change(pathname, active_tab):
     else:
         page_layout = page.layout
         # Update the page nav links
-        page_links = dbc.Nav(children=[
+        page_links = [
             dbc.NavItem(
                 dbc.NavLink(p.name,
                             href="/".join(["", section.path, path]),
                             active=(p.path == page.path)))
             for path, p in section.children.items()
-        ],
-                             pills=True)
+        ]
 
     # Update the tabs
     tabs = [
@@ -134,6 +126,7 @@ def location_change(pathname, active_tab):
         for _, t in page.children.items()
     ]
     return [
+        section.name,
         section_links,
         page_links,
         tabs,

@@ -105,13 +105,13 @@ content= {
                 sixthform_attendance_missing.layout)
         ],
         Page("Pastoral", "pastoral", sixthform_pastoral.layout): [
-            Tab("Progress", "progress", sixthform_pastoral_progress.layout),
             Tab("Attendance", "attendance",
                 sixthform_pastoral_attendance.layout),
-            Tab("Weekly attendance", "weekly",
-                sixthform_pastoral_weekly.layout),
+            # Tab("Weekly attendance", "weekly",
+            #     sixthform_pastoral_weekly.layout),
             Tab("Kudos", "kudos", sixthform_pastoral_kudos.layout),
             Tab("Concern", "concern", sixthform_pastoral_concern.layout),
+            Tab("Progress", "progress", sixthform_pastoral_progress.layout),
         ],
         Page("Academic", "academic", sixthform_academic.layout): [
             Tab("Edit", "edit", sixthform_academic_edit.layout),

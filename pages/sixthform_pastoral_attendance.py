@@ -115,5 +115,4 @@ def update_pastoral_attendance(store_data):
         "headerFilterFunc": "<",
         "headerFilterPlaceholder": "Less than",
     })
-
     return columns, attendance_pivot.to_dict(orient='records')

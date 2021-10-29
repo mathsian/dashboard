@@ -37,6 +37,11 @@ concern_discrimination = ["Race", "Sex or gender", "Sexual orientation", "Religi
 concern_discrimination_dropdown = {
     "options": [{"label": s, "value": s} for s in concern_discrimination]
 }
+concern_stages = ["Stage 1", "Stage 2", "Stage 3"]
+concern_stages_dropdown = {
+    "options": [{"label": s, "value": s} for s in concern_stages],
+    "default": concern_stages[0],
+}
 
 values = [
     "Curiosity",

@@ -94,7 +94,7 @@ weekly_picker = dcc.DatePickerSingle(
     display_format="MMM DD YY",
 )
 
-layout = [
+layout = dbc.Container([
     dbc.Row([
             dbc.Col(width=3, children=weekly_picker),
             dbc.Col(weekly_header)
@@ -102,7 +102,7 @@ layout = [
     dbc.Row(
         dbc.Col(weekly_table)
     )
-]
+])
 
 
 @app.callback([
@@ -145,6 +145,5 @@ def update_weekly_table(store_data, picker_value):
                                    how='left',
                                    left_on='_id',
                                    right_on='student_id')
-    return merged_df.to_dict(orient='records'), data.format_date(
-        attendance_df["date"].iloc[0])
+    return merged_df.to_dict(orient='records'), data.format_date(attendance_df["date"].iloc[0])
 

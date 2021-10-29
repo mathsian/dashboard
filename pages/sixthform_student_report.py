@@ -17,16 +17,17 @@ import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
 
+blank_figure = {'layout': {'xaxis': {'visible': False}, 'yaxis': {'visible': False}}}
 ns = Namespace("myNameSpace", "tabulator")
 single_report_attendance = dbc.AccordionItem([
-    html.Div(
+    html.H5(children=[html.Span(
         id={
             "section": "sixthform",
             "type": "text",
             "page": "student",
             "tab": "report",
             "name": "attendance"
-        }),
+        }), "% attendance"]),
     dcc.Graph(id={
         "section": "sixthform",
         "type": "graph",
@@ -34,7 +35,7 @@ single_report_attendance = dbc.AccordionItem([
         "tab": "report",
         "name": "attendance"
     },
-              figure={},
+              figure=blank_figure,
               config={"displayModeBar": False}),
 ],
                                              title="Attendance")
@@ -198,7 +199,7 @@ layout = html.Div([
 ], [Input("sixthform-selected-store", "data")])
 def update_student_report(store_data):
     if not store_data:
-        return "", "Select a student to view their report", {}, [], [], []
+        return "Select a student to view their report", "", blank_figure, [], [], []
     student_id = store_data[-1]
     enrolment_doc = data.get_student(student_id)
     heading = f'{enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'
