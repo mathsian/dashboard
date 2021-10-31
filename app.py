@@ -20,7 +20,7 @@ server.config.update({
     "GOOGLE_OAUTH_CLIENT_ID": client_id,
     "GOOGLE_OAUTH_CLIENT_SECRET": client_secret,
     "GOOGLE_LOGIN_REDIRECT_SCHEME": "https",
-    "GOOGLE_LOGIN_REDIRECT_URI": "https://testing.ada.ac.uk/login/google/authorized"
+    "GOOGLE_LOGIN_REDIRECT_URI": "https://data.ada.ac.uk/login/google/authorized"
 })
 server.secret_key = os.urandom(24) 
 
