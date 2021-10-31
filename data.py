@@ -2,6 +2,7 @@ from configparser import ConfigParser
 from cloudant.client import CouchDB
 import pandas as pd
 import calendar
+import os
 
 APPRENTICE_SCHEMA = ['_id', 'type', 'given_name', 'family_name', 'email', 'status', 'company', 'cohort', 'intake']
 RESULT_SCHEMA = ['type', 'student_id', 'moduleCode', 'moduleName', 'module', 'level', 'credits', 'total', 'breakdown', 'week1FirstDay', 'week2FirstDay']
