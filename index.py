@@ -27,12 +27,12 @@ card = dbc.Card(children=[cardheader, cardbody])
 
 sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 
-app.layout = dbc.Container([
+app.layout = html.Div([
     dcc.Location(id="location", refresh=False),
     navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
              dbc.Col(card, width=9)], class_name='g-0')
-], fluid=True)
+])
 
 
 def parse(pathname):
