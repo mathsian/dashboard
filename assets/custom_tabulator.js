@@ -38,6 +38,11 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
                 row.delete();
             }
         },
+        dataLoaded: function(data, table) {
+                                console.warn("dataLoaded called");
+                                console.warn(data);
+                                var preselected = data.filter(row => row.selected == 1);
+                            },
         tooltips: function(cell) {
             let cell_data = cell.getData();
             let field_name = cell.getField();
