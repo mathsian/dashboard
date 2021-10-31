@@ -10,6 +10,7 @@ sys.path.append('..')
 import curriculum
 import data
 
+
 def sync_group(dbname=None, full=False, dry=True):
     # Get connection settings
     config_object = ConfigParser()
@@ -237,11 +238,14 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
         "date": date,
         "comment": "",
         "student_id": g.get("student_id"),
-        "subject": g.get("name"),
+        "subject_code": g.get("subject_code"),
+        "subject_name": g.get("subject_name"),
         "cohort": cohort,
-        "grade": curriculum.scales.get(scale_name)[2]
+        # "grade": curriculum.scales.get(scale_name)[2]
+        "grade": "TBA"
     } for g in groups]
     data.save_docs(assessments, dbname)
+
 
 def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
     group = data.get_data("group", "subject_code", subject_code, dbname)
@@ -260,6 +264,7 @@ def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
     } for g in group]
     data.save_docs(assessments, dbname)
 
+
 def sync_rems_attendance(period='weekly', dbname=None):
     config_object = ConfigParser()
     config_object.read("../config.ini")
@@ -274,25 +279,44 @@ def sync_rems_attendance(period='weekly', dbname=None):
         loader=jinja2.FileSystemLoader(abspath('..'))
     )
     if period == 'weekly':
-        sql_template = sql_jinja_env.get_template('sql/attendance by week beginning and student.sql')
+        sql_template = sql_jinja_env.get_template(
+            'sql/attendance by week beginning and student.sql')
     elif period == 'monthly':
-        sql_template = sql_jinja_env.get_template('sql/attendance by month and student.sql')
+        sql_template = sql_jinja_env.get_template(
+            'sql/attendance by month and student.sql')
     else:
         return False
     sql = sql_template.render()
     rems_df = pd.read_sql(sql, conn).eval("date = date.astype('str')")
-    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype", [["attendance", period]], dbname), columns=["_id", "_rev", "student_id", "date", "type", "subtype", "actual", "possible", "authorised", "unauthorised", "late", "marks"])
-    merged_df = pd.merge(rems_df,
-                         our_df,
-                         how='left',
-                         suffixes=['','_right'],
-                         left_on=['student_id', 'date'],
-                         right_on=['student_id', 'date'],
+    our_df = pd.DataFrame.from_records(data.get_data("all", "type_subtype",
+                                                     [["attendance", period]],
+                                                     dbname),
+                                       columns=[
+                                           "_id", "_rev", "student_id", "date",
+                                           "type", "subtype", "actual",
+                                           "possible", "authorised",
+                                           "unauthorised", "late", "marks"
+                                       ])
+    merged_df = pd.merge(
+        rems_df,
+        our_df,
+        how='left',
+        suffixes=['', '_right'],
+        left_on=['student_id', 'date'],
+        right_on=['student_id', 'date'],
     )
-    to_add = merged_df.query("_id.isna()")[["type", "subtype", "date", "student_id", "actual", "possible", "authorised", "unauthorised", "late", "marks"]].eval("type = 'attendance'").eval("subtype = @period")
+    to_add = merged_df.query("_id.isna()")[[
+        "type", "subtype", "date", "student_id", "actual", "possible",
+        "authorised", "unauthorised", "late", "marks"
+    ]].eval("type = 'attendance'").eval("subtype = @period")
     print(len(to_add), " to add")
     data.save_docs(to_add.to_dict(orient='records'), dbname)
-    to_update = merged_df.query("_id.notna() and (actual != actual_right or late != late_right or possible != possible_right or authorised != authorised_right)")[["_id", "_rev", "type", "subtype", "date", "student_id", "actual", "possible", "authorised", "unauthorised", "late", "marks"]]
+    to_update = merged_df.query(
+        "_id.notna() and (actual != actual_right or late != late_right or possible != possible_right or authorised != authorised_right)"
+    )[[
+        "_id", "_rev", "type", "subtype", "date", "student_id", "actual",
+        "possible", "authorised", "unauthorised", "late", "marks"
+    ]]
     print(len(to_update), "to update")
     data.save_docs(to_update.to_dict(orient='records'), dbname)
 
@@ -388,7 +412,6 @@ def fix_nan_comments(db_name):
         if a.get('comment') == "nan":
             a['comment'] = ""
     data.save_docs(assessment_docs, db_name)
-
 
 
 if __name__ == "__main__":

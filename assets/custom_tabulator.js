@@ -1,11 +1,11 @@
 window.myNameSpace = Object.assign({}, window.myNameSpace, {
     tabulator: {
         clipboardPasteAction: function(rowData, table) {
-            console.log("Row data from paste parser");
-            console.log(rowData);
+            console.warn("Row data from paste parser");
+            console.warn(rowData);
         },
         clipboardPasted: function(clipboard, rowData, rows, table) {
-            console.log("Paste registered");
+            console.warn("Paste registered");
             table.props.setProps({"clipboardPasted": rowData});
         },
         groupHeader:

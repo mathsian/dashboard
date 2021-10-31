@@ -1,4 +1,4 @@
-select top (50) with ties 
+select
 	STUD_Surname family_name
 	, CASE WHEN STUD_Known_As = '' THEN STUD_Forename_1 ELSE STUD_Known_As END given_name -- if no preferred name then use the forename field
 	, format(REGS_Session_Date, 'yyyy-MM-dd') date
