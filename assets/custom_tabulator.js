@@ -53,6 +53,11 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
                 tt = cell.getValue();
             }
             return tt;
-        }
+        },
+        rowSelected: function(args) {
+                                        console.warn("rowSelected called");
+                                        console.warn("Args incoming");
+                                        console.warn(args);
+                                    }
     }
 });
