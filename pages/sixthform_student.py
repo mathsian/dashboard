@@ -156,6 +156,7 @@ def update_selected_students(multiRowsClicked, url_hash):
     if input_id == 'location':
         selected_ids = url_hash.removeprefix('#').split(',')
     else:
+        multiRowsClicked = multiRowsClicked or []
         selected_ids = [row.get('_id') for row in multiRowsClicked]
     return selected_ids
 
