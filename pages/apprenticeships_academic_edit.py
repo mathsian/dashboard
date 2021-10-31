@@ -46,37 +46,41 @@ result_table = dash_tabulator.DashTabulator(
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
-layout=dbc.Row(dbc.Col([result_table]))
+layout = dbc.Row(dbc.Col([result_table]))
+
 
 @app.callback([
-    Output({
-        "type": "table",
-        "section": "apprenticeships",
-        "page": "academic",
-        "tab": "edit"
-    }, "data"),
-    Output({
-        "type": "table",
-        "page": "academic",
-        "section": "apprenticeships",
-        "tab": "edit"
-    }, "columns"),
+    Output(
+        {
+            "type": "table",
+            "section": "apprenticeships",
+            "page": "academic",
+            "tab": "edit"
+        }, "data"),
+    Output(
+        {
+            "type": "table",
+            "page": "academic",
+            "section": "apprenticeships",
+            "tab": "edit"
+        }, "columns"),
 ], [
     Input("apprenticeships-academic-store", "data"),
-    Input({
-        "type": "table",
-        "section": "apprenticeships",
-        "page": "academic",
-        "tab": "edit"
-    }, "cellEdited"),
-    Input({
-        "type": "table",
-        "section": "apprenticeships",
-        "page": "academic",
-        "tab": "edit",
-    }, "clipboardPasted")
-]
-)
+    Input(
+        {
+            "type": "table",
+            "section": "apprenticeships",
+            "page": "academic",
+            "tab": "edit"
+        }, "cellEdited"),
+    Input(
+        {
+            "type": "table",
+            "section": "apprenticeships",
+            "page": "academic",
+            "tab": "edit",
+        }, "clipboardPasted")
+])
 def update_subject_table(store_data, changed, row_data):
     if not store_data:
         return [], []
@@ -128,16 +132,22 @@ def update_subject_table(store_data, changed, row_data):
         {
             "title": "Instance",
             "field": "moduleCode",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
             "width": "15%"
         },
         {
             "title": "Given name",
             "field": "given_name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
             "width": "20%"
         },
         {
             "title": "Family name",
             "field": "family_name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
             "width": "20%"
         },
         {
@@ -152,6 +162,8 @@ def update_subject_table(store_data, changed, row_data):
         {
             "title": "Class",
             "field": "class",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
             "width": "15%"
         }
         # {
@@ -165,4 +177,3 @@ def update_subject_table(store_data, changed, row_data):
         # },
     ]
     return store_data.get("result_docs"), columns
-
