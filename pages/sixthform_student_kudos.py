@@ -161,7 +161,7 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
                 "type": "kudos",
                 "student_id": s,
                 "ada_value": ada_value,
-                "points": points,
+                "points": int(points), # the values are ints already but somehow they end up a string
                 "description": description if description else "",
                 "date": date,
                 "from": session.get('email', "none"),
