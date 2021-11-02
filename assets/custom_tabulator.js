@@ -34,7 +34,7 @@ window.myNameSpace = Object.assign({}, window.myNameSpace, {
         },
         deleteRow: function(e, cell) {
             let row = cell.getRow();
-            if(this.confirm("Delete this concern about " + row.getData()["given_name"]+"?")){
+            if(this.confirm("Delete this record about " + row.getData()["given_name"]+"?")){
                 row.delete();
             }
         },
