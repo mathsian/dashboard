@@ -78,6 +78,7 @@ layout=dbc.Row(dbc.Col([subject_table]))
 def update_subject_table(store_data, changed, row_data, cohort):
     if not store_data:
         return [], []
+    assessment_subject_cohort = store_data.get("assessment_subject_cohort")
     trigger = dash.callback_context.triggered[0].get("prop_id")
     # If we're here because a cell has been edited
     if "cellEdited" in trigger:
@@ -87,7 +88,8 @@ def update_subject_table(store_data, changed, row_data, cohort):
         data.save_docs([doc])
     elif "clipboardPasted" in trigger:
         # If we're here because data has been pasted
-        assessment_docs = store_data.get("assessment_docs")
+        assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
+                                    [assessment_subject_cohort])
         assessment_df = pd.DataFrame.from_records(assessment_docs)
         try:
             pasted_df = pd.DataFrame.from_records(row_data)[[
@@ -105,8 +107,9 @@ def update_subject_table(store_data, changed, row_data, cohort):
             }).drop(["grade_x", "comment_x"], axis=1)
             merged_docs = merged_df.to_dict(orient='records')
             data.save_docs(merged_docs)
-
-    assessment_df = pd.DataFrame.from_records(store_data.get("assessment_docs"))
+    assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
+                                    [assessment_subject_cohort])
+    assessment_df = pd.DataFrame.from_records(assessment_docs)
     enrolment_df = pd.DataFrame.from_records(store_data.get("enrolment_docs"))
     merged_df = pd.merge(assessment_df,
                          enrolment_df,
