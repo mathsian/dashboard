@@ -9,7 +9,8 @@ from pages import (sixthform_attendance, sixthform_attendance_year,
                    sixthform_academic_view, sixthform_academic_edit,
                    sixthform_student, sixthform_student_report,
                    sixthform_student_kudos, sixthform_student_concern,
-                   apprenticeships_academic, apprenticeships_academic_edit, apprenticeships_academic_view)
+                   apprenticeships_academic, apprenticeships_academic_edit, apprenticeships_academic_view,
+                   admin_records, admin_records_kudos, admin_records_concern)
 
 
 class PathExistsError(Exception):
@@ -128,6 +129,13 @@ content= {
         [
             Tab("Edit", "edit", apprenticeships_academic_edit.layout),
             Tab("View", "view", apprenticeships_academic_view.layout)
+        ]
+    },
+    Section("Admin", "admin"): {
+        Page("My records", "records", admin_records.layout):
+        [
+            Tab("Kudos", "kudos", admin_records_kudos.layout),
+            Tab("Concern", "concern", admin_records_concern.layout)
         ]
     }
 }
