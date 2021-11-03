@@ -87,8 +87,11 @@ layout = dbc.Container([
         State("subject-dropdown", "label"),
         ])
 def update_subject_graph(store_data, colour_code, subject_code):
-    assessment_name = store_data.get("assessment_name")
-    if not assessment_name:
+    assessment_subject_cohort = store_data.get("assessment_subject_cohort")
+    assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
+                                    [assessment_subject_cohort])
+    assessment_df = pd.DataFrame.from_records(assessment_docs)
+    if not store_data:
         return {
             "layout": {
                 "xaxis": {
@@ -100,7 +103,6 @@ def update_subject_graph(store_data, colour_code, subject_code):
                 "height": 320
             }
         }
-    assessment_df = pd.DataFrame.from_records(store_data.get("assessment_docs"))
     subtype = assessment_df.iloc[0]["subtype"]
     enrolment_df = pd.DataFrame.from_records(store_data.get("enrolment_docs"))
     merged_df = assessment_df.merge(enrolment_df,

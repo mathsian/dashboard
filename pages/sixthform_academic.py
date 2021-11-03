@@ -100,8 +100,7 @@ def update_assessments(pathname, search, subject):
         "enrolment", "_id", [d.get("student_id") for d in assessment_docs])
     store_data = {
         "enrolment_docs": enrolment_docs,
-        "assessment_docs": assessment_docs,
-        "assessment_name": assessment
+        "assessment_subject_cohort": (assessment, subject, cohort)
     }
     return (cohort, cohort_items, subject, subject_items, assessment_items,
             store_data)

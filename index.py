@@ -14,7 +14,7 @@ navbar = dbc.Navbar(dbc.Container([
     dbc.Col(dbc.NavbarBrand("data@ada"), width=1),
     dbc.Col(dbc.Nav(dbc.DropdownMenu(id="section_links", nav=True), justified=True), width=2),
     dbc.Col(dbc.Nav(id="page_links", justified=True, pills=True), width="auto"),
-    dbc.Col(dbc.Nav(dbc.NavItem(dbc.NavLink(id="settings_links")), justified=True), width=2)
+    dbc.Col(dbc.Nav(id="user_links", justified=True), width=2)
     ]))
 
 cardheader = dbc.CardHeader(
@@ -62,7 +62,7 @@ def parse(pathname):
     Output("sidebar_content", "children"),
     Output("content", "children"),
     Output("location", "pathname"),
-    Output("settings_links", "children"),
+    Output("user_links", "children"),
 ], [
     Input("location", "pathname"),
     Input("tabs", "active_tab"),
@@ -125,6 +125,10 @@ def location_change(pathname, active_tab):
                 tab_id="/".join(["", section.path, page.path, t.path]))
         for _, t in page.children.items()
     ]
+
+    # set the user email as the link to user admin
+    user_link = dbc.NavItem(dbc.NavLink(session.get("email", "Not signed in"), href="/admin"))
+
     return [
         section.name,
         section_links,
@@ -134,5 +138,5 @@ def location_change(pathname, active_tab):
         page_layout,
         tab.layout,
         pathname,
-        session.get("email", "No email"),
+        user_link,
     ]
