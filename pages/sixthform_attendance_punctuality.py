@@ -2,6 +2,7 @@ import pyodbc
 from os.path import abspath
 import jinja2
 from configparser import ConfigParser
+import dash
 from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
@@ -41,7 +42,7 @@ layout = dbc.Container(punctuality_monthly)
     Input("sixthform-attendance-store", 'data')
           ]
 )
-def update_punctuality_dashboard(n_intervals):
+def update_punctuality_dashboard(store_data):
     config_object = ConfigParser()
     config_object.read("config.ini")
     rems_settings = config_object["REMS"]
