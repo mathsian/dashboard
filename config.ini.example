@@ -12,3 +12,5 @@ authorized_emails = LIST_AUTHORIZED_EMAILS
 ip = server
 uid = username
 pwd = password
+[FIRESTORE]
+cred_file = FIRESTORE_CREDENTIALS_FILE
