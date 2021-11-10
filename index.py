@@ -1,8 +1,7 @@
 from flask import session
 import dash
-import dash_core_components as dcc
+from dash import html, dcc
 import dash_bootstrap_components as dbc
-import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
 from app import app, server
@@ -28,6 +27,9 @@ card = dbc.Card(children=[cardheader, cardbody])
 sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 
 app.layout = html.Div([
+    dcc.Store(id="global-history", storage_type='local'),
+    dcc.Store(id="sixthform-history"),
+    dcc.Store(id="apprenticeships-history"),
     dcc.Location(id="location", refresh=False),
     navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
@@ -63,13 +65,18 @@ def parse(pathname):
     Output("content", "children"),
     Output("location", "pathname"),
     Output("user_links", "children"),
+    Output("global-history", "data")
 ], [
     Input("location", "pathname"),
     Input("tabs", "active_tab"),
+    ],[
+    State("global-history", "data")
 ])
-def location_change(pathname, active_tab):
+def location_change(pathname, active_tab, global_history):
     '''Called whenever the location should change, either through url or tab click.
     Returns content from the appropriate section, page and tab to the layout'''
+
+    global_history = global_history or []
 
     # Circular callback so we need to know whether it was called by a link, a tab change or a dropdown
     ctx = dash.callback_context
@@ -79,11 +86,28 @@ def location_change(pathname, active_tab):
         # Attempt to parse link
         section, page, tab = parse(pathname)
         if not section:
-            section = list(home.children.values())[0]
+            if global_history:
+                section_path, page_path, tab_path = global_history[-1]
+                section = home.children.get(section_path)
+                page = section.children.get(page_path)
+                tab = page.children.get(tab_path)
+            else:
+                section = list(home.children.values())[0]
         if not page:
-            page = list(section.children.values())[0]
+            page_matches = [(p, t) for s, p, t in global_history if s == section.path]
+            if page_matches:
+                page_path, tab_path = page_matches[-1]
+                page = section.children.get(page_path)
+                tab = page.children.get(tab_path)
+            else:
+                page = list(section.children.values())[0]
         if not tab:
-            tab = list(page.children.values())[0]
+            tab_matches = [t for s, p, t in global_history if s == section.path and p == page.path]
+            if tab_matches:
+                tab_path = tab_matches[-1]
+                tab = page.children.get(tab_path)
+            else:
+                tab = list(page.children.values())[0]
         # Get the previous location from active_tab
         previous_section, previous_page, previous_tab = parse(active_tab)
         active_tab = "/".join(["", section.path, page.path, tab.path])
@@ -105,7 +129,7 @@ def location_change(pathname, active_tab):
             ]
 
     # If the page hasn't changed we don't need to update it
-    if previous_page and (page.path == previous_page.path):
+    if previous_page and (page.path == previous_page.path) and (section.path == previous_section.path):
         page_layout = dash.no_update
         page_links = dash.no_update
     else:
@@ -129,6 +153,13 @@ def location_change(pathname, active_tab):
     # set the user email as the link to user admin
     user_link = dbc.NavItem(dbc.NavLink(session.get("email", "Not signed in"), href="/admin"))
 
+    # update history
+    if (section.path, page.path, tab.path) in global_history:
+        global_history.remove((section.path, page.path, tab.path))
+    global_history.append((section.path, page.path, tab.path))
+    if len(global_history) > 20:
+        global_history.pop(0)
+
     return [
         section.name,
         section_links,
@@ -139,4 +170,5 @@ def location_change(pathname, active_tab):
         tab.layout,
         pathname,
         user_link,
+        global_history
     ]
