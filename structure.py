@@ -10,6 +10,7 @@ from pages import (sixthform_attendance, sixthform_attendance_year,
                    sixthform_student, sixthform_student_report,
                    sixthform_student_kudos, sixthform_student_concern,
                    apprenticeships_academic, apprenticeships_academic_edit, apprenticeships_academic_view,
+                   apprenticeships_attendance, apprenticeships_attendance_year,
                    admin_records, admin_records_kudos, admin_records_concern)
 
 
@@ -130,6 +131,10 @@ content= {
         [
             Tab("Edit", "edit", apprenticeships_academic_edit.layout),
             Tab("View", "view", apprenticeships_academic_view.layout)
+        ],
+        Page("Attendance", "attendance", apprenticeships_attendance.layout):
+        [
+            Tab("Year", "year", apprenticeships_attendance_year.layout)
         ]
     },
     Section("Admin", "admin"): {
