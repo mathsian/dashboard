@@ -39,17 +39,24 @@ missing_table = dash_tabulator.DashTabulator(
         "visible": False,
     }, {
         "title": "Register",
-        "field": "register"
+        "field": "register",
+        "headerSort": False,
     }, {
         "title": "Period",
         "field": "period",
         "visible": False,
     }, {
         "title": "Lecturer",
-        "field": "lecturer"
+        "field": "lecturer",
+        "headerSort": False,
     }, {
         "title": "Missing marks",
-        "field": "missing"
+        "field": "Student ID",
+        "headerSort": False,
+    }, {
+        "title": "Students",
+        "field": "Student",
+        "headerSort": False,
     }])
 
 layout = dbc.Container(missing_table, fluid=True)
@@ -84,4 +91,9 @@ def update_missing_table(n_clicks):
     template_vars = {}
     sql = sql_template.render(template_vars)
     df = pd.read_sql(sql, conn)
-    return df.to_dict(orient='records')
+    df['Student'] = df['Student ID'] + " " + df['Given Name'] + " " + df['Family Name']
+    grouped_df = df.groupby(['date', 'period', 'register', 'lecturer'], as_index=False).agg(
+    {'Student ID': 'count',
+     'Student': ', '.join})
+    grouped_df.sort_values(by='date', ascending=False, inplace=True)
+    return grouped_df.to_dict(orient='records')
