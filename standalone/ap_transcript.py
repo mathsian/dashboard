@@ -23,6 +23,7 @@ df = df.set_index(['student_id', 'student_name', 'programme', 'level'])
 
 df['class'] = df['class'].str.title().replace({"Tba": "tba"})
 df['total'] = df['total'].str.title().replace({"Tba": "tba"})
+df.dropna(inplace=True)
 
 df = df.sort_index().astype(str)
 
@@ -51,7 +52,7 @@ def populate_template(student_id):
     with open("../latex/{} {}.tex".format(student_id, student_name),'w') as f:
         template_data = {"student_name": student_name,
                          "student_id": student_id,
-                         "issued": "27/09/21",
+                         "issued": "23/11/21",
                          "programme": programme,
                          "modules": modules,
                          "overall": overall,
@@ -59,4 +60,4 @@ def populate_template(student_id):
                         }
         f.write(template.render(template_data))
 
-populate_template('0000000')
+populate_template('000000')

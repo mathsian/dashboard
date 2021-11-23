@@ -30,12 +30,6 @@
 \definecolor{adaLightGrey}{RGB}{211,212,211}
 \definecolor{adaWhite}{RGB}{255,255,255}
 
-\definecolor{clr1}{RGB}{149,96,159}
-\definecolor{clr2}{RGB}{161,200,84}
-\definecolor{clr3}{RGB}{236,98,113}
-\definecolor{clr4}{RGB}{108,184,231}
-\definecolor{clr5}{RGB}{246,131,82}
-
 % customise sections
 % need explicit to access parameter number to get the section on the left
 \usepackage[explicit]{titlesec}
@@ -55,21 +49,21 @@
       London N15 4AG}}
 \end{flushright}
 
-\section*{ACADEMIC TRANSCRIPT}
+%\section*{ACADEMIC TRANSCRIPT}
 
 \begin{tabular}{l l}
-Student name & \textsf{\VAR{student_name}}\\
-Student ID & \textsf{\VAR{student_id}}\\
-Programme & \textsf{\VAR{programme}}\\
-Issued & \textsf{\VAR{issued}}
+\uppercase{Student name} & \textsf{\VAR{student_name}}\\
+\uppercase{Student ID} & \textsf{\VAR{student_id}}\\
+\uppercase{Programme} & \textsf{\VAR{programme}}\\
+\uppercase{Issued} & \textsf{\VAR{issued}}
 \end{tabular}
 
 \begin{center}
 \begin{tabular}{l l r r l}
-Module name & Module code & First teaching & Total & Class\\
+\uppercase{Module name} & \uppercase{Module code} & \uppercase{Started} & \uppercase{Total} & \uppercase{Class}\\
 \hline
 %% for level in modules
-Level \VAR{level.level} \\
+\uppercase{Level \VAR{level.level}} \\
 %% for module in level.results
 \textsf{\VAR{module.name}} & \textsf{\VAR{module.code}} & \textsf{\VAR{module.first}} & \textsf{\VAR{module.total}} & \textsf{\VAR{module.class}}\\
 %% endfor
