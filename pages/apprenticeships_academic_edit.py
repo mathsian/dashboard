@@ -28,9 +28,8 @@ result_table = dash_tabulator.DashTabulator(
         "tab": "edit"
     },
     options={
+        "layout": "fitDataTable",
         "placeholder": "Select a module",
-        # "layout": "fitDataStretch",
-        # "maxHeight": "60vh",
         "resizableColumns": False,
         "index": "_id",
         "clipboard": True,
@@ -46,7 +45,8 @@ result_table = dash_tabulator.DashTabulator(
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
-layout = dbc.Row(dbc.Col([result_table]))
+#layout = dbc.Row(dbc.Col([result_table]))
+layout = dbc.Container([result_table])
 
 
 @app.callback([
@@ -114,7 +114,7 @@ def update_subject_table(store_data, changed, row_data):
         #     merged_docs = merged_df.to_dict(orient='records')
         #     data.save_docs(merged_docs)
 
-    columns = [
+    columns_start = [
         {
             "title": "Student ID",
             "field": "student_id",
@@ -129,51 +129,47 @@ def update_subject_table(store_data, changed, row_data):
             "clipboard": "true",
             "download": "true"
         },
-        {
-            "title": "Instance",
-            "field": "moduleCode",
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
-            "width": "15%"
-        },
-        {
+       {
             "title": "Given name",
             "field": "given_name",
             "headerFilter": True,
             "headerFilterPlaceholder": "Search",
-            "width": "20%"
+            "widthGrow": 2
         },
         {
             "title": "Family name",
             "field": "family_name",
             "headerFilter": True,
             "headerFilterPlaceholder": "Search",
-            "width": "20%"
-        },
-        {
-            "title": "Marks",
+            "widthGrow": 2
+        }]
+    m = store_data.get("module")
+    components = data.get_grouped_data("result", "moduleCode_components", m, m, "app_testing")[0].get('value')
+    columns_components = []
+    for component in components:
+        columns_components.append({"title": component.title(), "field": f'breakdown.{component}.total'})
+        columns_components.append({"title": "Capped", "field": f'breakdown.{component}.penalty.capped', "formatter": "tickCross"})
+    columns_end = [{
+            "title": "Total",
             "field": "total",
             # "editor": "select",
             # "editorParams": {
             #     "values": curriculum.scales.get('percentage')
             # },
-            "width": "15%"
+            "widthGrow": 1
         },
-        {
-            "title": "Class",
-            "field": "class",
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
-            "width": "15%"
-        }
-        # {
-        #     "title": "Comment",
-        #     "field": "comment",
-        #     "editor": "textarea",
-        #     "editorParams": {
-        #         "verticalNavigation": "hybrid"
-        #     },
-        #     "formatter": "plaintext",
-        # },
+                   {
+                       "title": "Validated",
+                       "field": "validated",
+                       "editor": "tickCross",
+                       "formatter": "tickCross",
+                       "widthGrow": 1},
+#         {
+#             "title": "Class",
+#             "field": "class",
+#             "headerFilter": True,
+#             "headerFilterPlaceholder": "Search",
+#             "widthGrow": 1
+#         }
     ]
-    return store_data.get("result_docs"), columns
+    return store_data.get("result_docs"), columns_start + columns_components + columns_end

@@ -124,22 +124,22 @@ def update_results(pathname, search, cohort):
     result_df["class"].values.add_categories("Missing", inplace=True)
     result_df["class"].fillna("Missing", inplace=True)
     # drop=False so the column is still there to match the schema
-    merged_df = pd.merge(result_df, apprentice_df, left_on='student_id', right_on='_id', how='left').set_index(['module', 'moduleName'], drop=False)
-    modules = merged_df.index.unique()
+    merged_df = pd.merge(result_df, apprentice_df, left_on='student_id', right_on='_id', how='left').set_index(['moduleCode', 'moduleName'], drop=False)
+    moduleCodes = merged_df.index.unique()
 
     module_nav_items = []
-    if len(modules):
+    if len(moduleCodes):
         # Get module from query or first result
-        module = search_dict.get("module", modules[0])[0]
+        module = search_dict.get("module", moduleCodes[0])[0]
         # Generate nav of modules
-        for m, n in modules:
+        for m, n in moduleCodes:
             q = urlencode(query={
                 'cohort': cohort,
                 'module': m
             })
             active = 'exact' if m == module else False
             module_nav_items.append(
-                dbc.NavItem(dbc.NavLink(n, href=f'{pathname}?{q}',
+                dbc.NavItem(dbc.NavLink(n + ": " + m, href=f'{pathname}?{q}',
                                         active=bool(active)))
                 )
 
@@ -149,7 +149,6 @@ def update_results(pathname, search, cohort):
         # Learners have no modules yet
         module = ""
         result_docs = []
-
     store_data = {
         "result_docs": result_docs,
         "module": module

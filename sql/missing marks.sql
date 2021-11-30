@@ -1,17 +1,14 @@
-select 
-  format(REGS_Session_Date, 'yyyy-MM-dd') as date
-, format(REGH_Start_Time, 'HH:mm') as period
-, REGH_Class_Register as register
-, RGHL_Lecturer_Code as lecturer
-, missing
-from
-(SELECT 
-      REGS_Session_Date
-	  , REGH_Start_Time
-	  , REGH_Class_Register
-	  , REGH_ISN
-	  , count(REGT_Student_ID) as missing
+SELECT 
+      format(REGS_Session_Date, 'yyyy-MM-dd') date
+    , format(REGH_Start_Time, 'HH:mm') period
+    , REGH_Class_Register register
+    , RGHL_Lecturer_Code lecturer
+    , trim(regt_student_id) 'Student ID'
+    , trim(iif(stud_known_as is null or STUD_Known_As = '', STUD_Forename_1, stud_known_as)) 'Given Name'
+    , trim(STUD_Surname) 'Family Name'
   FROM [Reports].[DASH].[vw_Current_Full_Marks]
+  left join remslive.dbo.RGHLHeadLect on RGHL_REGH_ISN = REGH_ISN
+  left join remslive.dbo.STUDstudent on stud_student_id = regt_student_id
   where REGD_Attendance_Mark is NULL
   and Past = 1 and LiveStu = 1 and StuType = 'SF' 
 --  and datediff(week, regs_session_date, getdate()) < 3
@@ -24,7 +21,3 @@ from
 						datepart(second, regh_start_time),
 						datepart(millisecond, regh_start_time)
 						) < getdate()
-  group by REGS_Session_Date, REGH_Start_Time, REGH_Class_Register, REGH_ISN
- ) s
-  join remslive.dbo.RGHLHeadLect t on t.RGHL_REGH_ISN = s.REGH_ISN
-  order by REGS_Session_Date desc, REGH_Start_Time desc, lecturer asc

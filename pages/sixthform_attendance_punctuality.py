@@ -68,6 +68,9 @@ def update_punctuality_dashboard(store_data):
         data=[
             go.Bar(x=monthly_df['date'],
                    y=monthly_df['punctuality'],
+                   hovertemplate="During %{x}<br>%{y}",
+                   xperiod='M1',
+                   xperiodalignment='middle',
                    text=monthly_df['punctuality'],
                    textposition='auto',
                    marker_color='steelblue',
@@ -77,7 +80,10 @@ def update_punctuality_dashboard(store_data):
                        text=monthly_df['cumulative'],
                        textposition='top center',
                        marker_color='gold',
-                       name="Cumulative"),
+                       hovertemplate="At end of %{x}<br>%{y}",
+                       xperiod='M1',
+                       xperiodalignment='end',
+                       name="Year to date"),
         ],
         layout={
             "title": "Monthly average student punctuality",
@@ -85,9 +91,8 @@ def update_punctuality_dashboard(store_data):
                 "range": [60, 100]
             },
             "xaxis": {
-                "tickmode": "array",
-                "tickvals": months,
-                # "ticktext": months
+                "ticklabelmode": 'period',
+                "tickformat": "%b %Y",
             }
         },
     )

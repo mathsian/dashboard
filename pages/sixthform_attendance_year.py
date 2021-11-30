@@ -108,18 +108,25 @@ def update_attendance_dashboard(threshold, store_data):
     months = list(monthly_df['date'])
     monthly_figure = go.Figure(
         data=[
-            go.Bar(x=monthly_df['date'],
+            go.Bar(x=monthly_df['date'].astype('datetime64'),
                    y=monthly_df['attendance'],
                    text=monthly_df['attendance'],
                    textposition='auto',
                    marker_color='steelblue',
+                   hovertemplate="During %{x}<br>%{y}",
+                   xperiod='M1',
+                   xperiodalignment='middle',
                    name="Monthly"),
-            go.Scatter(x=monthly_df['date'],
+            go.Scatter(x=monthly_df['date'].astype('datetime64'),
                        y=monthly_df['cumulative'],
                        text=monthly_df['cumulative'],
                        textposition='top center',
                        marker_color='gold',
-                       name="Cumulative"),
+                       name="Year to date",
+                       hovertemplate="At end of %{x}<br>%{y}",
+                       xperiod='M1',
+                       xperiodalignment='end',
+            ),
         ],
         layout={
             "title": "Monthly average student attendance",
@@ -127,9 +134,8 @@ def update_attendance_dashboard(threshold, store_data):
                 "range": [60, 100]
             },
             "xaxis": {
-                "tickmode": "array",
-                "tickvals": months,
-                # "ticktext": months
+                "ticklabelmode": 'period',
+                "tickformat": "%b %Y",
             }
         },
     )
@@ -150,19 +156,24 @@ def update_attendance_dashboard(threshold, store_data):
                    text=low_grouped['percent'],
                    textposition='auto',
                    marker_color='steelblue',
+                   hovertemplate="During %{x}<br>%{y}",
+                   xperiod='M1',
+                   xperiodalignment='middle',
                    name="Monthly"),
             go.Scatter(x=low_grouped['date'],
                        y=low_grouped['percentc'],
                        text=low_grouped['percentc'],
                        textposition='top center',
                        marker_color='gold',
-                       name="Cumulative")
+                       xperiod='M1',
+                       hovertemplate="At end of %{x}<br>%{y}",
+                       xperiodalignment='end',
+                       name="Year to date")
         ],
         layout={
             "xaxis": {
-                "tickmode": "array",
-                "tickvals": months,
-                # "ticktext": months
+                "ticklabelmode": 'period',
+                "tickformat": "%b %Y",
             },
             "title": f"Proportion of students with < {threshold}% attendance"
         },
