@@ -145,10 +145,10 @@ def update_subject_table(store_data, changed, row_data, cohort):
         {
             "title": "Grade",
             "field": "grade",
-            "editor": "select",
+            "editor": "select" if not subtype == 'Percentage' else "number",
             "editorParams": {
                 "values": curriculum.scales.get(subtype)
-            },
+            } if subtype != 'Percentage' else {"max": 100, "min": 0, "step": 1},
             "width": "15%"
         },
         {
