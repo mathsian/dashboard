@@ -117,7 +117,10 @@ Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
 \subsection*{\rmfamily \VAR{subject}}
 \noindent\begin{tabularx}{\linewidth}{l l X}
 %% for assessment_name, assessment_details in assessment.items()
-\VAR{assessment_name}& \VAR{assessment_details['grade']}& {\em \VAR{assessment_details['comment']}}\\
+           \VAR{assessment_name}& \VAR{assessment_details['grade']} \\
+           %% if assessment_details['date'] > '2021-08-30'
+           \multicolumn{3}{p{\hsize}}{\em \VAR{assessment_details['comment']}}\\
+           %% endif
 %% endfor
   \end{tabularx}
 %% endfor
@@ -161,4 +164,13 @@ academic performance or their attendance
 %   31st Aug & -- & 17th Dec & Autumn term \\
 %   18th Oct & -- & 29th Oct & Half term break
 % \end{tabularx}
+% Messages
+%% if messages
+\section*{Messages}
+\noindent\begin{tabularx}{\linewidth}{l X}
+%% for message in messages
+           \VAR{message.title} & \VAR{message.message}\\
+           %% endfor
+         \end{tabularx}
+         %% endif
 \end{document}

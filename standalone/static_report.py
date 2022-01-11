@@ -15,9 +15,10 @@ def generate_report(student_id):
     academic_multiindex = pd.DataFrame.from_records(
         data.get_data("assessment", "student_id", [student_id], "ada"),
         columns=["subject_name", "assessment", "grade", "date",
-                 "comment"]).set_index(["subject_name", "assessment"
+                 "comment", "report"]).query('report == 1').set_index(["subject_name", "assessment"
                                         ])[["grade", "date", "comment"]]
     # Escape manually for now
+    academic_multiindex['comment'].fillna("", inplace=True)
     academic_multiindex.eval(
         "comment = comment.str.replace('%', '\%').replace('&', '\&')",
         inplace=True)
@@ -43,7 +44,7 @@ def generate_report(student_id):
             "date", ascending=False).query("date >= @this_year_start")
     concern_df["date"] = concern_df["date"].apply(data.format_date)
     concern_df.eval(
-        "description = description.replace('%', '\%').replace('&', '\&')",
+        "description = description.str.replace('%', '\%').replace('&', '\&')",
         inplace=True)
     concern_total = len(concern_df)
     concerns = concern_df.to_dict(orient='records')
@@ -58,7 +59,16 @@ def generate_report(student_id):
                        attendance_totals['possible'])
     punctuality = round(100 - 100 * attendance_totals['late'] /
                         attendance_totals['actual'])
-
+    ucas = data.get_data("ucas", "student_id", [student_id], "ada")
+    messages = []
+    if ucas:
+        ucas_status = ucas[0].get("ucas_status")
+        if ucas_status == "Not Submitted":
+            message = {"title": "UCAS application", "message": f"{student.get('given_name')} has not yet submitted their UCAS form. We strongly advise they do this even if they are not intending to go to university. The UCAS process is great practice for an apprenticeship or job application. Submitting their UCAS form will also mean the college will have a reference for them on file should they need one in the future. This will also provide them with a backup option should they not be successful in securing an apprenticeship."}
+            messages.append(message)
+        elif ucas_status == "Returned":
+            message = {"title": "UCAS application", "message": f"{student.get('given_name')} has had their UCAS form returned to them to correct an error. Please take a look at the form with them and help them complete and resubmit it. If further support is required please email mumtaz@ada.ac.uk"}
+            messages.append(message)
     # attendance_df['percent'] = round(
     #     100 * (attendance_df['actual'] - attendance_df['late']) /
     #     attendance_df['possible'])
@@ -87,7 +97,7 @@ def generate_report(student_id):
     with open(f"../latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data = {
             "name": student_name,
-            "date": "October 2021",
+            "date": "December 2021",
             "team": student.get("team"),
             # "attendance_dates": attendance_dates,
             # "attendance_zip": attendance_zip,
@@ -98,7 +108,8 @@ def generate_report(student_id):
             "kudos": kudos,
             "kudos_total": kudos_total,
             "concerns": concerns,
-            "concern_total": concern_total
+            "concern_total": concern_total,
+            "messages": messages
         }
         f.write(template.render(template_data))
         print("tex done")
@@ -116,5 +127,5 @@ def cohort_reports(cohort):
 
 
 if __name__ == "__main__":
-    generate_report("111111")
-    # cohort_reports("2123")
+    #generate_report("190817")
+    cohort_reports("2123")
