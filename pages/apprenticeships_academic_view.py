@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import urllib
 from app import app
-import data
+import app_data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
@@ -39,29 +39,12 @@ result_graph = dcc.Graph(id={
                                      "height": 320
                                  }
                              })
-# assessment_colour_dropdown = dcc.Dropdown(id={
-#     "page": "academic",
-#     "tab": "view",
-#     "type": "dropdown",
-#     "name": "colour"
-# },
-#                                           options=[
-#                                               {
-#                                                   "label": "Maths",
-#                                                   "value": "gc-ma"
-#                                               },
-#                                               {
-#                                                   "label": "English",
-#                                                   "value": "gc-en"
-#                                               },
-#                                               {
-#                                                   "label": "Comp Sci",
-#                                                   "value": "gc-comp.sci"
-#                                               },
-#                                           ],
-#                                           value="gc-ma")
 
+instance_info = [
+    html.H4(id={"type": "text", "section": "apprenticeships", "page": "academic", "tab": "view", "name": "header"}),
+]
 layout = dbc.Container([
+    dbc.Row([dbc.Col(instance_info)]),
             dbc.Row([dbc.Col([result_graph])]),
         ])
 
@@ -75,12 +58,14 @@ layout = dbc.Container([
             "tab": "view",
             "name": "bar",
         }, "figure"),
+    Output(
+        {"type": "text", "section": "apprenticeships", "page": "academic", "tab": "view", "name": "header"}, "children"),
     [
         Input("apprenticeships-academic-store", "data"),
     ] )
 def update_subject_graph(store_data):
-    module_name = store_data.get("module")
-    if not module_name:
+    instance_dict = store_data.get("instance", {})
+    if not (instance_code := instance_dict.get('instance_code', False)):
         return {
             "layout": {
                 "xaxis": {
@@ -93,7 +78,9 @@ def update_subject_graph(store_data):
             }
         }
     # we added the class field before storing
-    result_df = pd.DataFrame.from_records(store_data.get("result_docs"), columns=data.APPRENTICE_SCHEMA+data.RESULT_SCHEMA+["class"])
+    result_df = pd.DataFrame.from_records(app_data.get_results_for_instance(instance_code))
+    labels=["Missing", "Fail", "Pass", "Merit", "Distinction", "Error"]
+    result_df["class"] = pd.cut(result_df["total"], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")], labels=labels)
     bar_trace = go.Histogram(
         x=result_df["class"],
         hovertemplate="%{y:.0f}% %{x}<extra></extra>",
@@ -103,7 +90,8 @@ def update_subject_graph(store_data):
     fig = go.Figure()
     fig.update_xaxes(
         categoryorder='array',
-        categoryarray=["Missing", "Fail", "Pass", "Merit", "Distinction"],
+        categoryarray=labels,
     )
     fig.add_trace(bar_trace)
-    return fig
+    header = f'{instance_dict.get("module_name")} - {instance_dict.get("instance_code")} - {instance_dict.get("start_date")}'
+    return fig, header

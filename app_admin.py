@@ -145,5 +145,5 @@ if __name__ == "__main__":
     # data.delete_all("result", "app_testing")
     # data.delete_all("delete_apprentice", "app_testing")
     # data.delete_all("delete_result", "app_testing")
-    # upload_apps_from_firestore('app_testing')
+    upload_apps_from_firestore('app_testing')
     upload_modules_from_firestore('app_testing')

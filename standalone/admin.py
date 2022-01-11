@@ -248,7 +248,7 @@ def create_assessment_all(cohort, name, date, scale_name, dbname):
 
 
 def create_assessment(cohort, subject_code, name, date, scale_name, dbname):
-    group = data.get_data("group", "subject_code", subject_code, dbname)
+    group = data.get_data("group", "subject_cohort", [[subject_code, cohort]], dbname)
     assessments = [{
         "type": "assessment",
         "subtype": scale_name,
@@ -412,6 +412,36 @@ def fix_nan_comments(db_name):
         if a.get('comment') == "nan":
             a['comment'] = ""
     data.save_docs(assessment_docs, db_name)
+
+def fix_subject_names():
+    groups = data.get_grouped_data("group", "unique_subject_codes", [], ['ZZZZ'], "ada")
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("../config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    subjects_sql = """
+    SELECT DISTINCT trim(STEM_Provision_Code) STEM_Provision_Code, stem_provision_instance, learnaimreftitle
+    FROM remslive.dbo.stem left join lars.dbo.Core_lars_learningdelivery
+    on stem_lad_aim = learnaimref
+    where stem_lad_aim > ''
+    order by stem_provision_instance desc;
+    """
+    subjects_df = pd.read_sql(subjects_sql, conn).drop_duplicates('STEM_Provision_Code').set_index('STEM_Provision_Code')
+    subjects_df = subjects_df.append(pd.Series({'stem_provision_instance': '0', 'learnaimreftitle': 'Ada Skills'}, name='ADA-SKILLS'))
+    for group in groups:
+        subject_code = group.get('key')[1]
+        print("Replacing ", group.get('value'))
+        aim = subjects_df.loc[subject_code, 'learnaimreftitle']
+        print("With ", aim)
+        data.find_and_replace({"assessment": {"$eq": "UCAS predicted grade"}, "subject_code": {"$eq": subject_code}}, {"subject_name": aim, "assessment": "UCAS Predicted Grade"}, "ada")
+    data.find_and_replace({"cohort": {"$eq": "2022"}, "subject_code": {"$eq": "CDM-L3DP"}}, {"subject_name": "BTEC National Diploma in Digital Publishing"}, "ada")
+    groups = data.get_grouped_data("group", "unique_subject_codes", [], ['ZZZZ'], "ada")
 
 
 if __name__ == "__main__":

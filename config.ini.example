@@ -14,3 +14,7 @@ uid = username
 pwd = password
 [FIRESTORE]
 cred_file = FIRESTORE_CREDENTIALS_FILE
+[POSTGRES]
+username = username
+password = password
+database = database

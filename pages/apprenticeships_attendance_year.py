@@ -114,18 +114,25 @@ def update_attendance_dashboard(threshold, store_data):
     months = list(monthly_df['date'])
     monthly_figure = go.Figure(
         data=[
-            go.Bar(x=monthly_df['date'],
+            go.Bar(x=monthly_df['date'].astype('datetime64'),
                    y=monthly_df['attendance'],
                    text=monthly_df['attendance'],
                    textposition='auto',
+                   hovertemplate="During %{x}<br>%{y}",
+                   xperiod='M1',
+                   xperiodalignment='middle',
                    marker_color='steelblue',
                    name="Monthly"),
-            go.Scatter(x=monthly_df['date'],
+            go.Scatter(x=monthly_df['date'].astype('datetime64'),
                        y=monthly_df['cumulative'],
                        text=monthly_df['cumulative'],
                        textposition='top center',
                        marker_color='gold',
-                       name="Cumulative"),
+                       name="Year to date",
+                       hovertemplate="At end of %{x}<br>%{y}",
+                       xperiod='M1',
+                       xperiodalignment='end',
+)
         ],
         layout={
             "title": "Monthly average learner attendance",
@@ -133,11 +140,10 @@ def update_attendance_dashboard(threshold, store_data):
                 "range": [60, 100]
             },
             "xaxis": {
-                "tickmode": "array",
-                "tickvals": months,
-                # "ticktext": months
+                "ticklabelmode": 'period',
+                "tickformat": "%b %Y",
             }
-        },
+       },
     )
     # For low attendance graph
     low_df = rems_df.query("date != 'Year' and student_id != 'All'")
@@ -151,26 +157,31 @@ def update_attendance_dashboard(threshold, store_data):
         100 * low_grouped['lowc', 'sum'] / low_grouped['lowc', 'count'], 1)
     low_figure = go.Figure(
         data=[
-            go.Bar(x=low_grouped['date'],
+            go.Bar(x=low_grouped['date'].astype('datetime64'),
                    y=low_grouped['percent'],
                    text=low_grouped['percent'],
                    textposition='auto',
                    marker_color='steelblue',
+                   hovertemplate="During %{x}<br>%{y}",
+                   xperiod='M1',
+                   xperiodalignment='middle',
                    name="Monthly"),
-            go.Scatter(x=low_grouped['date'],
+            go.Scatter(x=low_grouped['date'].astype('datetime64'),
                        y=low_grouped['percentc'],
                        text=low_grouped['percentc'],
                        textposition='top center',
                        marker_color='gold',
-                       name="Cumulative")
+                       xperiod='M1',
+                       hovertemplate="At end of %{x}<br>%{y}",
+                       xperiodalignment='end',
+                       name="Year to date")
         ],
         layout={
             "xaxis": {
-                "tickmode": "array",
-                "tickvals": months,
-                # "ticktext": months
+                "ticklabelmode": 'period',
+                "tickformat": "%b %Y",
             },
-            "title": f"Proportion of learners with < {threshold}% attendance"
+           "title": f"Proportion of learners with < {threshold}% attendance"
         },
     )
     return monthly_figure, low_figure

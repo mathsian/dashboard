@@ -1,19 +1,12 @@
-import filters
 import dash_tabulator
 import dash
-import plotly.express as px
-import plotly.subplots as sp
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
-from dash.exceptions import PreventUpdate
 import pandas as pd
-import numpy as np
-import urllib
 from app import app
-import data
+import app_data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
@@ -46,7 +39,9 @@ result_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
 )
 #layout = dbc.Row(dbc.Col([result_table]))
-layout = dbc.Container([result_table])
+layout = dbc.Container([
+    html.H4(id={"type": "text", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}),
+    result_table])
 
 
 @app.callback([
@@ -64,6 +59,8 @@ layout = dbc.Container([result_table])
             "section": "apprenticeships",
             "tab": "edit"
         }, "columns"),
+    Output(
+        {"type": "text", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}, "children")
 ], [
     Input("apprenticeships-academic-store", "data"),
     Input(
@@ -82,8 +79,9 @@ layout = dbc.Container([result_table])
         }, "clipboardPasted")
 ])
 def update_subject_table(store_data, changed, row_data):
-    if not store_data:
-        return [], []
+    instance_dict = store_data.get("instance", {})
+    if not instance_dict:
+        return [], [], "No instance selected"
     trigger = dash.callback_context.triggered[0].get("prop_id")
     # If we're here because a cell has been edited
     if "cellEdited" in trigger:
@@ -143,33 +141,29 @@ def update_subject_table(store_data, changed, row_data):
             "headerFilterPlaceholder": "Search",
             "widthGrow": 2
         }]
-    m = store_data.get("module")
-    components = data.get_grouped_data("result", "moduleCode_components", m, m, "app_testing")[0].get('value')
-    columns_components = []
-    for component in components:
-        columns_components.append({"title": component.title(), "field": f'breakdown.{component}.total'})
-        columns_components.append({"title": "Capped", "field": f'breakdown.{component}.penalty.capped', "formatter": "tickCross"})
+
+    components_df = pd.DataFrame.from_records(app_data.get_results_for_instance_code(instance_dict.get("instance_code")))
+    components_df.eval("weighted_value = value * weight", inplace=True)
+    results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"].round(0).astype("Int64")
+    # Number duplicates
+    components_df["component_name"] = components_df["component_name"] + components_df.groupby(["student_id", "component_name"]).cumcount().astype(str).replace('0', '')
+    components_df = components_df.set_index(["student_id", "given_name", "family_name", "component_name"])[["value", "capped"]]
+    components_df = components_df.unstack().swaplevel(axis=1).sort_index(axis=1, ascending=[True, False])
+    component_columns = components_df.columns.to_flat_index()
+    components_df.columns = [":".join(c) for c in components_df.columns.to_flat_index()]
+    components_df = components_df.join(results_df).reset_index()
+    columns_middle = []
+    for component, column_type in component_columns:
+        if column_type == 'value':
+            columns_middle.append({"title": component, "field": f'{component}:value', "widthGrow": 1})
+        else:
+            columns_middle.append({"title": "Cap", "field": f'{component}:capped', "formatter": "tickCross", "formatterParams": {"crossElement": False}, "widthGrow": 1})
     columns_end = [{
             "title": "Total",
             "field": "total",
-            # "editor": "select",
-            # "editorParams": {
-            #     "values": curriculum.scales.get('percentage')
-            # },
             "widthGrow": 1
         },
-                   {
-                       "title": "Validated",
-                       "field": "validated",
-                       "editor": "tickCross",
-                       "formatter": "tickCross",
-                       "widthGrow": 1},
-#         {
-#             "title": "Class",
-#             "field": "class",
-#             "headerFilter": True,
-#             "headerFilterPlaceholder": "Search",
-#             "widthGrow": 1
-#         }
-    ]
-    return store_data.get("result_docs"), columns_start + columns_components + columns_end
+                       ]
+
+    heading = f'{instance_dict.get("module_name")} - {instance_dict.get("instance_code")} - {instance_dict.get("start_date")}'
+    return components_df.to_dict(orient='records'), columns_start + columns_middle + columns_end, heading
