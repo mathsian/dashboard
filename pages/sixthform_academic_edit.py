@@ -1,3 +1,4 @@
+from flask import session
 import filters
 import dash_tabulator
 import dash
@@ -14,6 +15,7 @@ import numpy as np
 import urllib
 from app import app
 import data
+import app_data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
@@ -80,13 +82,14 @@ def update_subject_table(store_data, changed, row_data, cohort):
         return [], []
     assessment_subject_cohort = store_data.get("assessment_subject_cohort")
     trigger = dash.callback_context.triggered[0].get("prop_id")
+    permissions = app_data.get_permissions(session.get("email"))
     # If we're here because a cell has been edited
-    if "cellEdited" in trigger:
+    if "cellEdited" in trigger and permissions.get("can_edit_sf"):
         row = changed.get("row")
         doc = data.get_doc(row.get("_id_x"))
         doc.update({"grade": row.get("grade"), "comment": row.get("comment")})
         data.save_docs([doc])
-    elif "clipboardPasted" in trigger:
+    elif "clipboardPasted" in trigger and permissions.get("can_edit_sf"):
         # If we're here because data has been pasted
         assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
                                     [assessment_subject_cohort])
@@ -117,6 +120,12 @@ def update_subject_table(store_data, changed, row_data, cohort):
                          right_on='_id',
                          how='inner').sort_values(by=["family_name", "given_name"])
     subtype = merged_df.iloc[0]["subtype"]
+    if permissions.get("can_edit_sf"):
+        grade_editor = "select" if not subtype == 'Percentage' else "number"
+        comment_editor = "textarea"
+    else:
+        grade_editor = False
+        comment_editor = False
     columns = [
         {
             "title": "Student ID",
@@ -145,7 +154,7 @@ def update_subject_table(store_data, changed, row_data, cohort):
         {
             "title": "Grade",
             "field": "grade",
-            "editor": "select" if not subtype == 'Percentage' else "number",
+            "editor": grade_editor,
             "editorParams": {
                 "values": curriculum.scales.get(subtype)
             } if subtype != 'Percentage' else {"max": 100, "min": 0, "step": 1},
@@ -154,7 +163,7 @@ def update_subject_table(store_data, changed, row_data, cohort):
         {
             "title": "Comment",
             "field": "comment",
-            "editor": "textarea",
+            "editor": comment_editor,
             "editorParams": {
                 "verticalNavigation": "hybrid"
             },

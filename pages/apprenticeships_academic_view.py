@@ -50,7 +50,8 @@ layout = dbc.Container([
 
 
 @app.callback(
-    Output(
+    [
+        Output(
         {
             "type": "graph",
             "section": "apprenticeships",
@@ -58,14 +59,15 @@ layout = dbc.Container([
             "tab": "view",
             "name": "bar",
         }, "figure"),
-    Output(
+        Output(
         {"type": "text", "section": "apprenticeships", "page": "academic", "tab": "view", "name": "header"}, "children"),
+        ],
     [
         Input("apprenticeships-academic-store", "data"),
     ] )
 def update_subject_graph(store_data):
-    instance_dict = store_data.get("instance", {})
-    if not (instance_code := instance_dict.get('instance_code', False)):
+    instance_code = store_data.get("instance_code", False)
+    if not instance_code:
         return {
             "layout": {
                 "xaxis": {
@@ -93,5 +95,6 @@ def update_subject_graph(store_data):
         categoryarray=labels,
     )
     fig.add_trace(bar_trace)
-    header = f'{instance_dict.get("module_name")} - {instance_dict.get("instance_code")} - {instance_dict.get("start_date")}'
+    instance_dict = app_data.get_instance_by_instance_code(instance_code)
+    header = f'{instance_dict.get("module_name")} - {instance_code} - {instance_dict.get("start_date")}'
     return fig, header

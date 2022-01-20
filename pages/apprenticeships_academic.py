@@ -118,6 +118,6 @@ def update_results(pathname, search, module_name):
     else:
         instance_dict = {}
     store_data = {
-        "instance": instance_dict,
+        "instance_code": instance_dict.get("instance_code", False),
         }
     return module_name, module_select_items, instance_nav_items, store_data

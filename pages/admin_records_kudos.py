@@ -140,6 +140,8 @@ def update_kudos_table(changed, dataChanged):
         ]
         data.delete_docs(deleted_ids)
     kudos_docs = data.get_data("kudos", "from", [session.get('email')])
+    if not kudos_docs:
+        return []
     kudos_df = pd.DataFrame(kudos_docs)
     student_ids = list(kudos_df["student_id"].unique())
     enrolment_docs = data.get_data("enrolment", "_id", student_ids)

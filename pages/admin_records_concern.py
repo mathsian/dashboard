@@ -169,6 +169,11 @@ def update_concern_table(changed, dataChanged, deleted):
         doc = data.get_doc(row.get("_id"))
         data.delete_docs([doc])
     concern_docs = data.get_data("concern", "from", [session.get('email')])
+    # If email has no concerns then concern docs will be empty
+    # which means concern_df will have no columns and throw an error when we use one
+    # better just save everyone's time and bail now
+    if not concern_docs:
+        return []
     concern_df = pd.DataFrame(concern_docs)
     student_ids = list(concern_df["student_id"].unique())
     enrolment_docs = data.get_data("enrolment", "_id", student_ids)
