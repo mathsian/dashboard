@@ -24,28 +24,81 @@ concern_table = dash_tabulator.DashTabulator(
     },
     columns=[
         {
-            "title": "Given name",
-            "field": "given_name"
+            "title": "Student ID",
+            "field": "student_id",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
         },
         {
-            "title": "Family name",
-            "field": "family_name"
+            "title": "Email",
+            "field": "student_email",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
         },
         {
             "title": "Date",
-            "field": "date"
+            "field": "date",
+            "width": "10%"
+        },
+        {
+            "title": "Given name",
+            "field": "given_name",
+            "width": "10%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
+        },
+        {
+            "title": "Family name",
+            "field": "family_name",
+            "width": "15%",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
         },
         {
             "title": "Category",
-            "field": "category"
+            "field": "category",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_categories
+            },
+            "headerFilterPlaceholder": "filter",
         },
         {
-            "title": "Raised by",
-            "field": "from"
+            "title": "Stage",
+            "field": "stage",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_stages
+            },
+            "headerFilterPlaceholder": "filter",
         },
         {
             "title": "Description",
-            "field": "description"
+            "field": "description",
+            "formatter": "plaintext",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "filter",
+        },
+        {
+            "title": "Additional",
+            "field": "discrimination",
+            "width": "10%",
+            "headerFilter": "select",
+            "headerFilterParams": {
+                "values": curriculum.concern_discrimination
+            },
+            "headerFilterPlaceholder": "filter",
+        },
+       {
+            "title": "Raised by",
+            "field": "from",
+           "width": "10%",
+           "headerFilter": True,
+           "headerFilterPlaceholder": "filter",
         },
     ],
     theme='bootstrap/tabulator_bootstrap4',
@@ -53,7 +106,9 @@ concern_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         # "layout": "fitDataStretch",
         # "maxHeight": "70vh",
-        "clipboard": "copy"
+        "clipboard": "copy",
+        "height": "70vh",
+        "pagination": "local"
     },
 )
 

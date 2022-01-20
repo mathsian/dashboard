@@ -15,6 +15,7 @@ import numpy as np
 from urllib.parse import parse_qs, urlencode
 from app import app
 import data
+import app_data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
@@ -25,6 +26,7 @@ ns = Namespace("myNameSpace", "tabulator")
 category_input = html.Div([
     dbc.Label("Category"),
     dcc.Dropdown(id={
+        "section": "sixthform",
         "type": "dropdown",
         "page": "student",
         "tab": "concern",
@@ -39,6 +41,7 @@ discrimination_input = html.Div([
     dbc.Label("Discrimination"),
     dcc.Dropdown(
         id={
+        "section": "sixthform",
             "type": "dropdown",
             "page": "student",
             "tab": "concern",
@@ -54,6 +57,7 @@ discrimination_input = html.Div([
 description_input = html.Div([
     dbc.Label("Description"),
     dbc.Textarea(id={
+        "section": "sixthform",
         "type": "input",
         "page": "student",
         "tab": "concern",
@@ -66,6 +70,7 @@ description_input = html.Div([
 stage_input = html.Div([
     dbc.Label("Stage"),
     dcc.Dropdown(id={
+        "section": "sixthform",
         "type": "dropdown",
         "page": "student",
         "tab": "concern",
@@ -79,6 +84,7 @@ stage_input = html.Div([
 
 concern_message_input = html.Div([
     dbc.FormText(id={
+        "section": "sixthform",
         "type": "text",
         "page": "student",
         "tab": "concern",
@@ -89,6 +95,7 @@ concern_message_input = html.Div([
 concern_submit_input = html.Div([
     dbc.Button("Raise concern",
                id={
+        "section": "sixthform",
                    "type": "button",
                    "page": "student",
                    "tab": "concern",
@@ -121,6 +128,7 @@ layout = dbc.Container(concern_form)
 @app.callback([
     Output(
         {
+        "section": "sixthform",
             "type": "text",
             "page": "student",
             "tab": "concern",
@@ -128,15 +136,25 @@ layout = dbc.Container(concern_form)
         }, "children"),
     Output(
         {
+        "section": "sixthform",
             "type": "button",
             "page": "student",
             "tab": "concern",
             "name": "submit"
         }, "color"),
+    Output(
+    {
+        "section": "sixthform",
+        "page": "student",
+        "tab": "concern",
+        "type": ALL,
+        "name": ALL
+    }, "disabled")
 ], [
     Input("sixthform-selected-store", "data"),
     Input(
         {
+        "section": "sixthform",
             "type": "input",
             "page": "student",
             "tab": "concern",
@@ -144,6 +162,7 @@ layout = dbc.Container(concern_form)
         }, "value"),
     Input(
         {
+        "section": "sixthform",
             "type": "dropdown",
             "page": "student",
             "tab": "concern",
@@ -151,6 +170,7 @@ layout = dbc.Container(concern_form)
         }, "value"),
     Input(
         {
+        "section": "sixthform",
             "type": "dropdown",
             "page": "student",
             "tab": "concern",
@@ -158,6 +178,7 @@ layout = dbc.Container(concern_form)
         }, "value"),
     Input(
         {
+        "section": "sixthform",
             "type": "dropdown",
             "page": "student",
             "tab": "concern",
@@ -165,6 +186,7 @@ layout = dbc.Container(concern_form)
         }, "value"),
     Input(
         {
+        "section": "sixthform",
             "type": "button",
             "page": "student",
             "tab": "concern",
@@ -173,6 +195,7 @@ layout = dbc.Container(concern_form)
 ], [
     State(
         {
+        "section": "sixthform",
             "type": "button",
             "page": "student",
             "tab": "concern",
@@ -181,7 +204,13 @@ layout = dbc.Container(concern_form)
 ])
 def update_concern_message(selected_student_ids, description, category, stage,
                            discrimination, n_clicks, button_color):
-    if selected_student_ids:
+    # We need the number of outputs so we can set disabled on all but the first two
+    editable = app_data.get_permissions(session.get("email")).get("can_edit_sf")
+    # Pattern matched outputs is a sublist of cc.outputs
+    pattern_matched_outputs = cc.outputs_list[2]
+    disabled_outputs = [not editable for o in pattern_matched_outputs]
+ 
+    if selected_student_ids and editable:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(f'Raise {category} concern about')
         desc = html.Div(["For ", html.Blockquote(description)
@@ -204,7 +233,9 @@ def update_concern_message(selected_student_ids, description, category, stage,
                 "from": session.get('email', "none"),
             } for s in selected_student_ids]
             data.save_docs(docs)
-            return "Concern raised", "secondary"
-        return [intro, recipients, desc], "primary"
+            return "Concern raised", "secondary", disabled_outputs
+        return [intro, recipients, desc], "primary", disabled_outputs
+    elif editable:
+        return "Select one or more students to raise concern", "secondary", disabled_outputs
     else:
-        return "Select one or more students to raise concern", "secondary"
+        return "Only Sixth Form staff can raise concerns for these students", "secondary", disabled_outputs
