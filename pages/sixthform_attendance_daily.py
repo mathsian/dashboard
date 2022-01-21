@@ -3,35 +3,31 @@ import pyodbc
 from os.path import abspath
 import jinja2
 from configparser import ConfigParser
+from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import pandas as pd
 from app import app
 from dash_extensions.javascript import Namespace
+from datetime import date
 
 ns = Namespace("myNameSpace", "tabulator")
 
-unauthorised_table = dash_tabulator.DashTabulator(
+daily_table = dash_tabulator.DashTabulator(
     id={
         "section": "sixthform",
         "type": "table",
         "page": "attendance",
         "tab": "unauthorised",
-        "name": "unauthorised_table"
     },
     options={
         "resizableColumns": False,
-        "groupBy": "date",
-        # "layout": "fitData",
-        # "maxHeight": "70vh",
-        "groupHeader": ns("groupHeader"),
+        "height": "70vh",
+        "clipboard": "copy",
+        # "pagination": "local",
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[{
-        "title": "Date",
-        "field": "date",
-        "visible": False,
-    }, {
         "title": "Given name",
         "field": "given_name",
         "headerFilter": True,
@@ -44,41 +40,42 @@ unauthorised_table = dash_tabulator.DashTabulator(
     }, {
         "title": "Marks",
         "field": "marks",
+        "topCalc": "count",
         "widthGrow": 1,
-    }, {
-        "title": "Alert",
-        "formatter": ns("alertIcon"),
-        "widthGrow": 1,
-    }, {
-        "title": "Present same day",
-        "field": "present_today",
-        "visible": False,
-    }, {
-        "title": "Authorised same day",
-        "field": "authorised_today",
-        "visible": False,
     }],
 )
 
-layout = dbc.Container(unauthorised_table, fluid=True)
+date_picker = dcc.DatePickerSingle(
+    id={"section": "sixthform",
+        "page": "attendance",
+        "tab": "daily",
+        "type": "date"},
+    date=date.today()
+)
+layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(date_picker)
+    ]),
+    dbc.Row([
+        dbc.Col(daily_table)
+    ])], fluid=True)
 
 @app.callback(
-    Output({
-        "type": "table",
+    Output(
+{
         "section": "sixthform",
+        "type": "table",
         "page": "attendance",
         "tab": "unauthorised",
-        "name": "unauthorised_table"
-    }, "data"), [
-        Input(
-            {
-                "type": "button",
-                "section": "sixthform",
-                "page": "attendance",
-                "name": "update"
-            }, "n_clicks")
-    ])
-def update_unauthorised_table(n_intervals):
+    }, "data"
+    ),
+[Input(
+{"section": "sixthform",
+        "page": "attendance",
+        "tab": "daily",
+        "type": "date"}, "date"
+)])
+def update_daily_table(date_selected):
     config_object = ConfigParser()
     config_object.read("config.ini")
     rems_settings = config_object["REMS"]
@@ -90,7 +87,8 @@ def update_unauthorised_table(n_intervals):
     )
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(abspath('.')))
-    sql_template = sql_jinja_env.get_template('sql/unauthorised absences.sql')
-    sql = sql_template.render()
+    sql_template = sql_jinja_env.get_template('sql/sixthform_day_absentees.sql')
+    sql = sql_template.render({"date": date_selected})
     df = pd.read_sql(sql, conn)
     return df.to_dict(orient='records')
+
