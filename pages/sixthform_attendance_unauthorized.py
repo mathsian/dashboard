@@ -13,9 +13,11 @@ ns = Namespace("myNameSpace", "tabulator")
 
 unauthorised_table = dash_tabulator.DashTabulator(
     id={
+        "section": "sixthform",
         "type": "table",
-        "page": "summary",
+        "page": "attendance",
         "tab": "unauthorised",
+        "name": "unauthorised_table"
     },
     options={
         "resizableColumns": False,
@@ -63,8 +65,10 @@ layout = dbc.Container(unauthorised_table, fluid=True)
 @app.callback(
     Output({
         "type": "table",
-        "page": "summary",
+        "section": "sixthform",
+        "page": "attendance",
         "tab": "unauthorised",
+        "name": "unauthorised_table"
     }, "data"), [
         Input(
             {
