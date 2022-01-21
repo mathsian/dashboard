@@ -3,6 +3,7 @@ import dash_html_components as html
 from pages import (sixthform_attendance, sixthform_attendance_year,
                    sixthform_attendance_unauthorized, sixthform_attendance_punctuality,
                    sixthform_attendance_missing, sixthform_pastoral,
+                   sixthform_attendance_daily,
                    sixthform_pastoral_progress, sixthform_pastoral_attendance,
                    sixthform_pastoral_weekly, sixthform_pastoral_kudos,
                    sixthform_pastoral_concern, sixthform_academic,
@@ -104,8 +105,8 @@ content= {
         Page("Attendance", "attendance", sixthform_attendance.layout): [
             Tab("Year", "year", sixthform_attendance_year.layout),
             Tab("Punctuality", "punctuality", sixthform_attendance_punctuality.layout),
-            Tab("Unauthorized", "unauthorized",
-                sixthform_attendance_unauthorized.layout),
+            Tab("Unauthorized", "unauthorized",sixthform_attendance_unauthorized.layout),
+            Tab("Daily", "daily",sixthform_attendance_daily.layout),
             Tab("Missing marks", "missing",
                 sixthform_attendance_missing.layout)
         ],
