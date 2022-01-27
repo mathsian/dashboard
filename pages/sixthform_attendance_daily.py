@@ -50,7 +50,8 @@ date_picker = dcc.DatePickerSingle(
         "page": "attendance",
         "tab": "daily",
         "type": "date"},
-    date=date.today()
+    date=date.today(),
+    display_format="MMM D, YY"
 )
 layout = dbc.Container([
     dbc.Row([
