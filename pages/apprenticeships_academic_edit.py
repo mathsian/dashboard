@@ -140,6 +140,12 @@ def update_result(changed):
     component_name, _ = column.split(":")
     result_id = row.get(f'{component_name}:result_id')
     new_value = row.get(f'{component_name}:value')
+    # Validation should happen at table edit level not here
+    if type(new_value) == int and (new_value < 0 or new_value > 100):
+        return False
+    elif new_value == "":
+        # psycopg wants None for null
+        new_value = None
     new_capped = row.get(f'{component_name}:capped')
     new_comment = row.get(f'{component_name}:comment')
     lecturer = session.get("email")
