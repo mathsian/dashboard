@@ -100,24 +100,24 @@ def update_results(pathname, search, module_name):
         instance_dict = instances[0]
         # If instance is in query and valid, use it
         if instance_query := search_dict.get("instance", False):
-            matching_instances = [i for i in instances if i.get("instance_code") == instance_query[0]]
+            matching_instances = [i for i in instances if i.get("code") == instance_query[0]]
             if matching_instances:
                 instance_dict = matching_instances[0]
         # Generate nav of modules
         for i_dict in instances:
             q = urlencode(query={
-                'module': i_dict.get("module_name"),
-                'instance': i_dict.get("instance_code")
+                'module': i_dict.get("modules.name"),
+                'instance': i_dict.get("code")
             })
-            active = 'exact' if i_dict.get("instance_code") == instance_dict.get("instance_code") else False
+            active = 'exact' if i_dict.get("code") == instance_dict.get("code") else False
             instance_nav_items.append(
-                dbc.NavItem(dbc.NavLink(f'{i_dict.get("instance_code")}: {i_dict.get("start_date")}', href=f'{pathname}?{q}',
+                dbc.NavItem(dbc.NavLink(f'{i_dict.get("code")}: {i_dict.get("start_date")}', href=f'{pathname}?{q}',
                                         active=bool(active)))
                 )
 
     else:
         instance_dict = {}
     store_data = {
-        "instance_code": instance_dict.get("instance_code", False),
+        "instance_code": instance_dict.get("code", False),
         }
     return module_name, module_select_items, instance_nav_items, store_data

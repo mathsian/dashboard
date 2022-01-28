@@ -96,5 +96,5 @@ def update_subject_graph(store_data):
     )
     fig.add_trace(bar_trace)
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
-    header = f'{instance_dict.get("module_name")} - {instance_code} - {instance_dict.get("start_date")}'
+    header = f'{instance_dict.get("name")} - {instance_code} - {instance_dict.get("start_date")}'
     return fig, header

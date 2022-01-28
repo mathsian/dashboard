@@ -115,8 +115,8 @@ def update_subject_table(store_data, changed, row_data):
     components_df.eval("weighted_value = value * weight", inplace=True)
     results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"].round(0).astype("Int64")
     # Number duplicate components so we can unstack the dataframe later
-    components_df["component_name"] = components_df["component_name"] + components_df.groupby(["student_id", "component_name"]).cumcount().astype(str).replace('0', '')
-    components_df = components_df.set_index(["student_id", "given_name", "family_name", "component_name"])[["result_id", "value", "capped", "comment"]]
+    components_df["name"] = components_df["name"] + components_df.groupby(["student_id", "name"]).cumcount().astype(str).replace('0', '')
+    components_df = components_df.set_index(["student_id", "given_name", "family_name", "name"])[["result_id", "value", "capped", "comment"]]
     pivoted_components_df = components_df.unstack().swaplevel(axis=1).sort_index(axis=1, ascending=[True, False])
     # Columns is still a multiindex
     component_columns = pivoted_components_df.columns.to_flat_index()
@@ -129,7 +129,7 @@ def update_subject_table(store_data, changed, row_data):
         columns = no_update
         table_data = pivoted_components_df.sort_values(["family_name", "given_name"]).to_dict(orient='records')
     else:
-        heading = f'{instance_dict.get("module_name")} - {instance_code} - {instance_dict.get("start_date")}'
+        heading = f'{instance_dict.get("name")} - {instance_code} - {instance_dict.get("start_date")}'
         columns = build_columns(pivoted_components_df, permissions.get("can_edit_ap") and not instance_dict.get("moderated"))
         table_data = pivoted_components_df.sort_values(["family_name", "given_name"]).to_dict(orient='records')
     return table_data, columns, heading
