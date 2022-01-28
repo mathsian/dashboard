@@ -62,7 +62,7 @@ def update_student_report(store_data):
         cards.append(card)
         cards.append(dbc.Popover(target={
             "type": "card", "section": "apprenticeships", "page": "student", "tab": "report", "name": f'{student_id}'
-        }, children=html.Table([html.Tr([html.Td(r.get("instance_code")), html.Td(r.get("total"))]) for r in results]),
+        }, children=html.Table([html.Tr([html.Td(r.get("code")), html.Td(r.get("total"))]) for r in results]),
                                  placement='left',
                                  trigger='click'))
     return [cards]
