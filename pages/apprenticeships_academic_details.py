@@ -52,7 +52,7 @@ def update_instance_form(store_data):
             dbc.Col([
                 dbc.Label("Weight", html_for=f'weight_{c.get("component_id")}'),
                 dbc.Input(id=f'weight_{c.get("name")}', value=c.get("weight"), type='number', disabled=True)
-            ], width='1')
+            ], width='2')
             ]) for (i, c) in enumerate(components)])
     submit_button = html.Div([
         dbc.Button("Save",

@@ -21,7 +21,7 @@ result_table = dash_tabulator.DashTabulator(
     },
     options={
         "layout": "fitDataTable",
-        "height": "70vh",
+        "height": "65vh",
         "placeholder": "Select a module",
         "resizableColumns": False,
         "index": "_id",
@@ -110,8 +110,12 @@ def update_subject_table(store_data, changed, row_data):
                     except ValueError:
                         break
                     update_data_only = app_data.set_result_by_component_name_instance_code(student_id, new_value, component_name, instance_code, lecturer)
-    components_df = pd.DataFrame.from_records(app_data.get_results_for_instance_code(instance_code))
+    components_dicts = app_data.get_results_for_instance_code(instance_code)
+    if not components_dicts:
+        return [], [], "There are no students in this instance yet"
+    components_df = pd.DataFrame.from_records(components_dicts, columns=["result_id", "given_name", "family_name", "student_id", "name", "value", "capped", "weight", "comment"])
     # Calculate module results from components
+    components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer')
     components_df.eval("weighted_value = value * weight", inplace=True)
     results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"].round(0).astype("Int64")
     # Number duplicate components so we can unstack the dataframe later
@@ -154,6 +158,22 @@ def update_result(changed):
 
 def build_columns(pivoted_components_df, editable):
     columns_start = [
+       {
+            "title": "Given name",
+            "field": "given_name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
+            "widthGrow": 2,
+           "frozen": True
+        },
+       {
+            "title": "Family name",
+            "field": "family_name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "Search",
+            "widthGrow": 2,
+            "frozen":True
+        },
         {
             "title": "Student ID",
             "field": "student_id",
@@ -168,20 +188,7 @@ def build_columns(pivoted_components_df, editable):
             "clipboard": "true",
             "download": "true"
         },
-       {
-            "title": "Given name",
-            "field": "given_name",
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
-            "widthGrow": 2
-        },
-        {
-            "title": "Family name",
-            "field": "family_name",
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
-            "widthGrow": 2
-        }]
+]
 
     # Build list of component columns for tabulator
     columns_middle = []

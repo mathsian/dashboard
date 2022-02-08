@@ -202,7 +202,7 @@ def set_result(result_id, new_value, new_capped, new_comment, lecturer):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
             update results set value = %(new_value)s, capped = %(new_capped)s, updated_at = CURRENT_TIMESTAMP,
-            comment = %(new_comment)s, lecturer = %(lecturer)s where results.id = %(result_id)s;
+            comment = %(new_comment)s, missing = false, lecturer = %(lecturer)s where results.id = %(result_id)s;
             """, {"new_value": new_value, "new_capped": new_capped,
                   "new_comment": new_comment, "lecturer": lecturer, "result_id": result_id})
             return_value = cur.rowcount
@@ -214,7 +214,7 @@ def set_result_by_component_name_instance_code(student_id, new_value, component_
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            update results set value = %(new_value)s, lecturer = %(lecturer)s, updated_at = CURRENT_TIMESTAMP
+            update results set value = %(new_value)s, missing = false, lecturer = %(lecturer)s, updated_at = CURRENT_TIMESTAMP
             from components c
             left join instances i on c.instance_id = i.id
             where student_id = %(student_id)s
@@ -235,7 +235,7 @@ def set_results(results, lecturer):
         with conn.cursor(row_factory=dict_row) as cur:
             for result in results:
                 cur.execute("""
-                update results set value = %(new_value)s, capped = %(new_capped)s,
+                update results set value = %(new_value)s, capped = %(new_capped)s, missing = false,
                 comment = %(new_comment)s, lecturer = %(lecturer)s, updated_at = CURRENT_TIMESTAMP
                 where results.id = %(result_id)s;
                 """, {"new_value": result["new_value"], "new_capped": result["new_capped"],
@@ -259,6 +259,74 @@ def set_moderated_by_instance_code(instance_code, moderated):
 
     return return_value
 
+
+def add_module(short, name, level, credits):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            insert into modules (short, name, level, credits, inserted_at, updated_at)
+            values (%(short)s, %(name)s, %(level)s, %(credits)s, current_timestamp, current_timestamp)
+            on conflict do nothing;
+            """, {"short": short, "name": name, "level": level, "credits": credits})
+            return_value = cur.rowcount
+    return return_value
+
+
+def add_instance(short, code, start_date, second_date=None):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            insert into instances (code, start_date, second_date, module_id, inserted_at, updated_at)
+            values (%(code)s, %(start_date)s, %(second_date)s, (select id from modules where short = %(short)s), current_timestamp, current_timestamp)
+            on conflict do nothing;
+            """, {"code": code, "short": short, "start_date": start_date, "second_date": second_date})
+            return_value = cur.rowcount
+    return return_value
+
+def add_component_to_instance(code, name, weight):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            insert into components (name, weight, instance_id, inserted_at, updated_at)
+            values (%(name)s, %(weight)s, (select instances.id from instances where instances.code = %(code)s), current_timestamp, current_timestamp)
+            on conflict do nothing;
+            """, {"code": code, "name": name, "weight": weight})
+            return_value = cur.rowcount
+    return return_value
+
+
+def add_student_to_instance(student_id, code, lecturer):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            insert into results (lecturer, missing, component_id, student_id, inserted_at, updated_at)
+            (select %(lecturer)s, True, components.id, %(student_id)s, current_timestamp, current_timestamp
+            from instances left join components on components.instance_id = instances.id
+            where code = %(code)s)
+            on conflict do nothing;
+            """, {"lecturer": lecturer, "student_id": student_id, "code": code})
+            return_value = cur.rowcount
+    return return_value
+
+
+def add_students_to_instance(student_ids, code, lecturer):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            for student_id in student_ids:
+                cur.execute("""
+                insert into results (lecturer, missing, component_id, student_id, inserted_at, updated_at)
+                (select %(lecturer)s, True, components.id, %(student_id)s, current_timestamp, current_timestamp
+                from instances left join components on components.instance_id = instances.id
+                where code = %(code)s)
+                on conflict do nothing;
+                """, {"lecturer": lecturer, "student_id": student_id, "code": code})
+            return_value = cur.rowcount
+    return return_value
 
 
 if __name__ == "__main__":

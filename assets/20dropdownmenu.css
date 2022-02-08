@@ -1,0 +1,4 @@
+.dropdown-menu.show {
+    height: 60vh;
+    overflow-y: auto;
+}

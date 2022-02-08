@@ -25,7 +25,9 @@ module_dropdown = dbc.DropdownMenu(id={
     "section": "apprenticeships",
     "page": "academic",
     "type": "dropdown",
-    "name": "module"}, nav=True)
+    "name": "module",
+},
+                                   nav=True)
 
 page_nav = dbc.Nav([
     dbc.NavItem(module_dropdown),
@@ -106,7 +108,7 @@ def update_results(pathname, search, module_name):
         # Generate nav of modules
         for i_dict in instances:
             q = urlencode(query={
-                'module': i_dict.get("modules.name"),
+                'module': i_dict.get("name"),
                 'instance': i_dict.get("code")
             })
             active = 'exact' if i_dict.get("code") == instance_dict.get("code") else False

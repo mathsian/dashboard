@@ -1,5 +1,6 @@
 import pyodbc
 import data
+import app_data
 import pandas as pd
 from configparser import ConfigParser
 import datetime
@@ -140,10 +141,45 @@ def upload_modules_from_firestore(db_name):
     print("Removing errors:", result_df['reason'].value_counts())
 
 
+def get_instance_students_from_rems(instance_code):
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    group_sql = """
+    select distinct
+    trim(stgm_student_id) student_id
+    from remslive.dbo.TTGPTimetableGroups
+    left join remslive.dbo.STGMGroupMembership
+    on ttgp_isn = stgm_group_isn
+    where TTGP_Group_code = ?;
+    """
+    group_df = pd.read_sql(group_sql, conn, params=[instance_code])
+    return group_df
+
 if __name__ == "__main__":
-    # data.delete_all("apprentice", "app_testing")
-    # data.delete_all("result", "app_testing")
-    # data.delete_all("delete_apprentice", "app_testing")
-    # data.delete_all("delete_result", "app_testing")
-    upload_apps_from_firestore('app_testing')
-    upload_modules_from_firestore('app_testing')
+    app_data.add_module('DMI', 'Data Mining', 6, 20)
+    app_data.add_module('BDA', 'Big Data Analysis', 6, 20)
+    app_data.add_module('ETB', 'ETB', 6, 20)
+    for code, short, start_date in [
+             ('SQA-22-01-LDN', 'SQA', '2022-01-10'),
+             ('DMI-22-01-LDN', 'DMI', '2022-01-10'),
+            ('TIA-22-01-LDN', 'TIA', '2022-01-17'),
+             ('NET-22-01-CBD', 'NET', '2022-01-17'),
+             ('TIA-22-01-MCR', 'TIA', '2022-01-17'),
+             ('ETB-22-01-LDN', 'ETB', '2022-01-31'),
+            ('BDA-22-02-LDN', 'BDA', '2022-02-07'),
+            ('EPR-22-02-LDN', 'EPR', '2022-02-07'),
+            ('ECR-22-02-LDN', 'ECR', '2022-02-21')
+                                    ]:
+        print(app_data.add_instance(short, code, start_date))
+        print(app_data.add_component_to_instance(code, 'Coursework', 100))
+        student_ids = get_instance_students_from_rems(code)['student_id'].tolist()
+        print(student_ids)
+        print(app_data.add_students_to_instance(student_ids, code, 'ian@ada.ac.uk'))
