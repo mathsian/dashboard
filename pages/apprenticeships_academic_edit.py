@@ -91,7 +91,7 @@ def update_subject_table(store_data, changed, row_data):
     # If we're here because a cell has been edited
     if "cellEdited" in trigger and permissions.get("can_edit_ap"):
         update_data_only = update_result(changed)
-    elif "clipboardPasted" in trigger and permissions.get("can_edit_ap"):
+    elif "clipboardPasted" in trigger and permissions.get("can_edit_ap") and not instance_dict.get('moderated'):
         lecturer = session.get("email")
         for row in row_data:
             # check student id
