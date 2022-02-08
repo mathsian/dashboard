@@ -121,13 +121,13 @@ def get_results_for_student(student_id):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            select instances.code, round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0) total
+            select code, round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
             from results
             left join components on components.id = results.component_id
             left join instances on instances.id = components.instance_id
             left join students on students.id = results.student_id
             where students.id = %(student_id)s
-            group by instances.code
+            group by code
             """, {"student_id": student_id})
             result = cur.fetchall()
     return result
