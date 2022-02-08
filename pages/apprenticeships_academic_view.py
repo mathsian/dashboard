@@ -18,6 +18,17 @@ import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
 
+empty_layout = {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                },
+                "height": 320
+            }
+        } 
 result_graph = dcc.Graph(id={
     "type": "graph",
     "section": "apprenticeships",
@@ -68,21 +79,16 @@ layout = dbc.Container([
 def update_subject_graph(store_data):
     instance_code = store_data.get("instance_code", False)
     if not instance_code:
-        return {
-            "layout": {
-                "xaxis": {
-                    "visible": False
-                },
-                "yaxis": {
-                    "visible": False
-                },
-                "height": 320
-            }
-        }
+        return empty_layout, "There are no students in this instance yet"
     # we added the class field before storing
-    result_df = pd.DataFrame.from_records(app_data.get_results_for_instance(instance_code))
+    results_dicts = app_data.get_results_for_instance(instance_code)
+    if not results_dicts:
+        return empty_layout, "There are no students in this instance yet"
+    result_df = pd.DataFrame.from_records(results_dicts)
     labels=["Missing", "Fail", "Pass", "Merit", "Distinction", "Error"]
-    result_df["class"] = pd.cut(result_df["total"], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")], labels=labels)
+    # Cut doesn't like NaN so set to something in the missing bin
+    result_df['total'].fillna(-99, inplace=True)
+    result_df["class"] = pd.cut(result_df["total"], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")], labels=labels, right=False)
     bar_trace = go.Histogram(
         x=result_df["class"],
         hovertemplate="%{y:.0f}% %{x}<extra></extra>",
