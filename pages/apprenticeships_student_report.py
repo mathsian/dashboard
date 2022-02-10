@@ -43,7 +43,7 @@ def update_student_report(store_data):
     for student_id in store_data:
         student = app_data.get_student_by_id(student_id)
         results = app_data.get_results_for_student(student_id)
-        actual_results = [r.get('total') for r in results if isinstance(r, int)]
+        actual_results = [r.get('total') for r in results if r.get('total') is not None]
         if len(actual_results):
             average = round(sum(actual_results)/len(actual_results), 0)
         else:
