@@ -164,22 +164,4 @@ def get_instance_students_from_rems(instance_code):
     return group_df
 
 if __name__ == "__main__":
-    app_data.add_module('DMI', 'Data Mining', 6, 20)
-    app_data.add_module('BDA', 'Big Data Analysis', 6, 20)
-    app_data.add_module('ETB', 'ETB', 6, 20)
-    for code, short, start_date in [
-             ('SQA-22-01-LDN', 'SQA', '2022-01-10'),
-             ('DMI-22-01-LDN', 'DMI', '2022-01-10'),
-            ('TIA-22-01-LDN', 'TIA', '2022-01-17'),
-             ('NET-22-01-CBD', 'NET', '2022-01-17'),
-             ('TIA-22-01-MCR', 'TIA', '2022-01-17'),
-             ('ETB-22-01-LDN', 'ETB', '2022-01-31'),
-            ('BDA-22-02-LDN', 'BDA', '2022-02-07'),
-            ('EPR-22-02-LDN', 'EPR', '2022-02-07'),
-            ('ECR-22-02-LDN', 'ECR', '2022-02-21')
-                                    ]:
-        print(app_data.add_instance(short, code, start_date))
-        print(app_data.add_component_to_instance(code, 'Coursework', 100))
-        student_ids = get_instance_students_from_rems(code)['student_id'].tolist()
-        print(student_ids)
-        print(app_data.add_students_to_instance(student_ids, code, 'ian@ada.ac.uk'))
+    pass
