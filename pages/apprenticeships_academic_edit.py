@@ -106,7 +106,7 @@ def update_subject_table(store_data, changed, row_data):
                 new_string_value = row.get(f'{component_name}:value', False)
                 if new_string_value:
                     try:
-                        new_value = int(new_string_value)
+                        new_value = float(new_string_value)
                     except ValueError:
                         break
                     update_data_only = app_data.set_result_by_component_name_instance_code(student_id, new_value, component_name, instance_code, lecturer)
