@@ -137,7 +137,7 @@ def get_results_for_instance(instance_code):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            select students.id, round(cast(sum(value * weight) as numeric)/cast(sum(weight) as numeric),0) total
+            select students.id, sum(value * weight) vw, sum(weight) w, round(sum(value * weight) / sum(weight), 1) total
             from results
             left join components on components.id = results.component_id
             left join instances on instances.id = components.instance_id
@@ -330,4 +330,4 @@ def add_students_to_instance(student_ids, code, lecturer):
 
 
 if __name__ == "__main__":
-    print(get_results_for_cohort_name('L-L4-DA-NOV-20'))
+    print(get_results_for_instance('SDL010'))
