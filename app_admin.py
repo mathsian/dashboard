@@ -158,10 +158,52 @@ def get_instance_students_from_rems(instance_code):
     from remslive.dbo.TTGPTimetableGroups
     left join remslive.dbo.STGMGroupMembership
     on ttgp_isn = stgm_group_isn
-    where TTGP_Group_code = ?;
+    where trim(TTGP_Group_code) = ?;
     """
     group_df = pd.read_sql(group_sql, conn, params=[instance_code])
     return group_df
 
+
+def get_instances_from_rems():
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    instances_sql = """
+        select
+           trim(TTGP_Group_Code) code
+            , format(min(REGH_Register_Start_Date), 'yyyy-MM-dd') start_date
+        from remslive.dbo.STEM
+        inner join remslive.dbo.TTPQTimetablePQU
+        on STEM_Provision_Code = TTPQ_Provision_Code and STEM_Provision_Instance = TTPQ_Provision_Instance
+        left join remslive.dbo.TTGPTimetableGroups
+        on TTPQ_Group_ISN = TTGP_ISN
+        left join remslive.dbo.REGHrghdr on TTGPTimetableGroups.TTGP_ISN = REGHrghdr.REGH_Group_ISN
+        where STEM_Aim_Type = '1'
+        and TTGP_Created_Date > '2022-01-01'
+        group by TTGP_Group_Code
+        order by min(REGH_Register_Start_Date) desc;
+    """
+    instances_df = pd.read_sql(instances_sql, conn)
+    return instances_df
+
+
 if __name__ == "__main__":
-    pass
+    for instance in get_instances_from_rems().to_dict(orient='records'):
+        print(f'Adding instance {instance.get("code")}')
+        print(app_data.add_instance(instance.get('code')[:3], instance.get('code'), instance.get('start_date')))
+        print(f'Adding component to {instance.get("code")}')
+        print(app_data.add_component_to_instance(instance.get('code'), "Coursework", 100))
+        print(f'Adding students to instance {instance.get("code")}')
+        students = get_instance_students_from_rems(instance.get('code'))['student_id'].to_list()
+        print(students)
+        if students != [None]:
+            print(app_data.add_students_to_instance(students, instance.get('code'), 'ian@ada.ac.uk'))
+        
+
