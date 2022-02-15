@@ -53,6 +53,7 @@ def update_student_report(store_data):
         }, children=[
             dbc.CardHeader(f'{student.get("given_name")} {student.get("family_name")}'),
             dbc.CardBody(html.Table([
+                html.Tr([html.Td("Cohort"), html.Td(student.get("cohort_name"))]),
                 html.Tr([html.Td("Employer"), html.Td(student.get("employer"))]),
                 html.Tr([html.Td("Status"), html.Td(student.get("status"))]),
                 html.Tr([html.Td("Average"), html.Td(average)])
