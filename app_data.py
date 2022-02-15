@@ -46,11 +46,24 @@ def get_students_by_cohort_name(cohort_name):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            select students.id student_id, given_name, family_name, employer, status from students
-            left join cohorts on cohorts.id = students.cohort_id where cohorts.name = %(cohort_name)s;
+            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort_name from students
+            left join cohorts on cohorts.id = students.cohort_id where cohorts.name = %(cohort_name)s
+            order by family_name, given_name;
             """, {"cohort_name": cohort_name})
             result = cur.fetchall()
     return result
+
+
+def get_all_students():
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort_name from students
+            left join cohorts on cohorts.id = students.cohort_id order by family_name, given_name;
+            """)
+            result = cur.fetchall()
+    return result
+
 
 def get_instances_from_cohort_name(cohort_name):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -153,7 +166,10 @@ def get_student_by_id(student_id):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            select * from students where students.id = %(student_id)s;
+            select family_name, given_name, status, employer, cohorts.name cohort_name
+            from students
+            left join cohorts on cohort_id = cohorts.id
+            where students.id = %(student_id)s;
             """, {"student_id": student_id})
             result = cur.fetchone()
     return result
@@ -277,12 +293,15 @@ def add_instance(short, code, start_date, second_date=None):
     return_value = False
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-            insert into instances (code, start_date, second_date, module_id, inserted_at, updated_at)
-            values (%(code)s, %(start_date)s, %(second_date)s, (select id from modules where short = %(short)s), current_timestamp, current_timestamp)
-            on conflict do nothing;
-            """, {"code": code, "short": short, "start_date": start_date, "second_date": second_date})
-            return_value = cur.rowcount
+            try:
+                cur.execute("""
+                insert into instances (code, start_date, second_date, module_id, inserted_at, updated_at)
+                values (%(code)s, %(start_date)s, %(second_date)s, (select id from modules where short = %(short)s), current_timestamp, current_timestamp)
+                on conflict do nothing;
+                """, {"code": code, "short": short, "start_date": start_date, "second_date": second_date})
+                return_value = cur.rowcount
+            except psycopg.errors.NotNullViolation:
+                return_value = 'Not null violation'
     return return_value
 
 def add_component_to_instance(code, name, weight):
@@ -308,7 +327,7 @@ def add_student_to_instance(student_id, code, lecturer):
             from instances left join components on components.instance_id = instances.id
             where code = %(code)s)
             on conflict do nothing;
-            """, {"lecturer": lecturer, "student_id": student_id, "code": code})
+            """, {"lecturer": lecturer, "student_id": int(student_id), "code": code})
             return_value = cur.rowcount
     return return_value
 
@@ -324,7 +343,7 @@ def add_students_to_instance(student_ids, code, lecturer):
                 from instances left join components on components.instance_id = instances.id
                 where code = %(code)s)
                 on conflict do nothing;
-                """, {"lecturer": lecturer, "student_id": student_id, "code": code})
+                """, {"lecturer": lecturer, "student_id": int(student_id), "code": code})
             return_value = cur.rowcount
     return return_value
 
