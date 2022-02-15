@@ -114,20 +114,23 @@ layout = [
 def update_cohorts(search, pathname, cohort):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts
-    cohorts = app_data.get_cohort_list()
+    cohorts = ['All'] + app_data.get_cohort_list()
     cohort_query = search_dict.get('cohort', False)
     # Default to first cohort
     cohort = cohort or cohorts[0]
     # If cohort in query is valid switch to that
     if cohort_query:
-        if cohort_query[0] in cohorts:
+        if cohort_query[0] in cohorts :
             cohort = cohort_query[0]
     cohort_items = []
     for c in cohorts:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     # Get students in scope
-    students = app_data.get_students_by_cohort_name(cohort)
+    if cohort == 'All':
+        students = app_data.get_all_students()
+    else:
+        students = app_data.get_students_by_cohort_name(cohort)
     store_data = {"students": students}
     return (cohort, cohort_items, store_data)
 
