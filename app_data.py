@@ -187,7 +187,19 @@ def get_permissions(email):
             result = cur.fetchone()
     return result
 
+def get_user_list():
+    '''
+    Returns a list of known users
+    '''
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            select email from users;
+            """)
+            result = [e[0] for e in cur.fetchall()]
+    return result
 
+ 
 def get_components_by_instance_code(instance_code):
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -301,19 +313,22 @@ def add_instance(short, code, start_date, second_date=None):
                 """, {"code": code, "short": short, "start_date": start_date, "second_date": second_date})
                 return_value = cur.rowcount
             except psycopg.errors.NotNullViolation:
-                return_value = 'Not null violation'
+                return_value = False
     return return_value
 
 def add_component_to_instance(code, name, weight):
     return_value = False
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-            insert into components (name, weight, instance_id, inserted_at, updated_at)
-            values (%(name)s, %(weight)s, (select instances.id from instances where instances.code = %(code)s), current_timestamp, current_timestamp)
-            on conflict do nothing;
-            """, {"code": code, "name": name, "weight": weight})
-            return_value = cur.rowcount
+            try:
+                cur.execute("""
+                insert into components (name, weight, instance_id, inserted_at, updated_at)
+                values (%(name)s, %(weight)s, (select instances.id from instances where instances.code = %(code)s), current_timestamp, current_timestamp)
+                on conflict do nothing;
+                """, {"code": code, "name": name, "weight": weight})
+                return_value = cur.rowcount
+            except psycopg.errors.NotNullViolation:
+                return_value = False
     return return_value
 
 
@@ -321,22 +336,7 @@ def add_student_to_instance(student_id, code, lecturer):
     return_value = False
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-            insert into results (lecturer, missing, component_id, student_id, inserted_at, updated_at)
-            (select %(lecturer)s, True, components.id, %(student_id)s, current_timestamp, current_timestamp
-            from instances left join components on components.instance_id = instances.id
-            where code = %(code)s)
-            on conflict do nothing;
-            """, {"lecturer": lecturer, "student_id": int(student_id), "code": code})
-            return_value = cur.rowcount
-    return return_value
-
-
-def add_students_to_instance(student_ids, code, lecturer):
-    return_value = False
-    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            for student_id in student_ids:
+            try:
                 cur.execute("""
                 insert into results (lecturer, missing, component_id, student_id, inserted_at, updated_at)
                 (select %(lecturer)s, True, components.id, %(student_id)s, current_timestamp, current_timestamp
@@ -344,9 +344,32 @@ def add_students_to_instance(student_ids, code, lecturer):
                 where code = %(code)s)
                 on conflict do nothing;
                 """, {"lecturer": lecturer, "student_id": int(student_id), "code": code})
-            return_value = cur.rowcount
+                return_value = cur.rowcount
+            except psycopg.errors.NotNullViolation:
+                return_value = False
+    return return_value
+
+
+def add_students_to_instance(student_ids, code, lecturer):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            return_value = 0
+            for student_id in student_ids:
+                try:
+                    cur.execute("""
+                    insert into results (lecturer, missing, component_id, student_id, inserted_at, updated_at)
+                    (select %(lecturer)s, True, components.id, %(student_id)s, current_timestamp, current_timestamp
+                    from instances left join components on components.instance_id = instances.id
+                    where code = %(code)s)
+                    on conflict do nothing;
+                    """, {"lecturer": lecturer, "student_id": int(student_id), "code": code})
+                    return_value += cur.rowcount
+                except psycopg.errors.NotNullViolation:
+                    return_value = False
     return return_value
 
 
 if __name__ == "__main__":
-    print(get_results_for_instance('SDL010'))
+    print(get_user_list())
+    # print(get_results_for_instance('SDL010'))
