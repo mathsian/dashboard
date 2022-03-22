@@ -88,24 +88,24 @@ def location_change(pathname, active_tab, global_history):
         if not section:
             if global_history:
                 section_path, page_path, tab_path = global_history[-1]
-                section = home.children.get(section_path)
-                page = section.children.get(page_path)
-                tab = page.children.get(tab_path)
+                section = home.children.get(section_path, list(home.children.values())[0])
+                page = section.children.get(page_path, list(section.children.values())[0])
+                tab = page.children.get(tab_path, list(page.children.values())[0])
             else:
                 section = list(home.children.values())[0]
         if not page:
             page_matches = [(p, t) for s, p, t in global_history if s == section.path]
             if page_matches:
                 page_path, tab_path = page_matches[-1]
-                page = section.children.get(page_path)
-                tab = page.children.get(tab_path)
+                page = section.children.get(page_path, list(section.children.values())[0])
+                tab = page.children.get(tab_path, list(page.children.values())[0])
             else:
                 page = list(section.children.values())[0]
         if not tab:
             tab_matches = [t for s, p, t in global_history if s == section.path and p == page.path]
             if tab_matches:
                 tab_path = tab_matches[-1]
-                tab = page.children.get(tab_path)
+                tab = page.children.get(tab_path, list(page.children.values())[0])
             else:
                 tab = list(page.children.values())[0]
         # Get the previous location from active_tab
@@ -116,7 +116,8 @@ def location_change(pathname, active_tab, global_history):
         section, page, tab = parse(active_tab)
         # Get the previous location from pathname
         previous_section, previous_page, previous_tab = parse(pathname)
-        pathname = active_tab
+
+    pathname = active_tab
 
     # If the section hasn't changed we don't need to update section_links
     if previous_section and (section.path == previous_section.path):
@@ -157,7 +158,7 @@ def location_change(pathname, active_tab, global_history):
     if (section.path, page.path, tab.path) in global_history:
         global_history.remove((section.path, page.path, tab.path))
     global_history.append((section.path, page.path, tab.path))
-    if len(global_history) > 20:
+    if len(global_history) > 5:
         global_history.pop(0)
 
     return [

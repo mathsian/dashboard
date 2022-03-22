@@ -53,7 +53,7 @@ kudos_table = dash_tabulator.DashTabulator(
     }],
 )
 
-layout = dbc.Row(dbc.Col(kudos_table))
+layout = dbc.Row(dbc.Col(dcc.Loading(kudos_table)))
 
 @app.callback(
     Output(

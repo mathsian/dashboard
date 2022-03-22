@@ -82,7 +82,15 @@ single_report_kudos = dbc.AccordionItem([
                     "id": "date"
                 },
             ],
-            style_cell={
+            sort_by=[{"column_id": "date", "direction": "desc"}],
+            style_header={
+                "textAlign": "left",
+        'overflow': 'hidden',
+        'textOverflow': 'ellipsis',
+        'maxWidth': 0
+                },
+            sort_action='native',
+            style_data={
                 "textAlign": "left",
                 "height": "auto",
                 "whiteSpace": "normal",
@@ -122,7 +130,15 @@ single_report_concerns = dbc.AccordionItem([
                     "id": "discrimination"
                 },
             ],
-            style_cell={
+            sort_by=[{"column_id": "date", "direction": "desc"}],
+            sort_action='native',
+            style_header={
+                "textAlign": "left",
+        'overflow': 'hidden',
+        'textOverflow': 'ellipsis',
+        'maxWidth': 0
+                },
+             style_data={
                 "textAlign": "left",
                 "height": "auto",
                 "whiteSpace": "normal",
@@ -207,7 +223,7 @@ def update_student_report(store_data):
     assessment_children = []
     if len(assessment_docs) > 0:
         assessment_df = pd.DataFrame.from_records(assessment_docs).set_index(
-            ['subject_name', 'assessment'])
+            ['subject_name', 'assessment']).query("report != 2")
         for subject_name in assessment_df.index.unique(level=0):
             assessment_children.append(html.H4(subject_name))
             for assessment in assessment_df.loc[subject_name].index.unique():

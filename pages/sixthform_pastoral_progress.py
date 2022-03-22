@@ -31,7 +31,7 @@ import curriculum
 #                              ],
 #                              value='Alphabetical')
 
-layout = dbc.Container(id='progress-content')
+layout = dbc.Container(dcc.Loading(html.Div(id='progress-content')))
 
 
 @app.callback(Output('progress-content', 'children'), [

@@ -112,7 +112,7 @@ concern_table = dash_tabulator.DashTabulator(
     },
 )
 
-layout = dbc.Container(concern_table)
+layout = dbc.Container(dcc.Loading(concern_table))
 
 
 @app.callback(

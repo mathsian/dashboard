@@ -1,20 +1,21 @@
 import dash_html_components as html
 
-from pages import (sixthform_attendance, sixthform_attendance_year,
-                   sixthform_attendance_unauthorized, sixthform_attendance_punctuality,
-                   sixthform_attendance_missing, sixthform_pastoral,
-                   sixthform_attendance_daily,
-                   sixthform_pastoral_progress, sixthform_pastoral_attendance,
-                   sixthform_pastoral_weekly, sixthform_pastoral_kudos,
-                   sixthform_pastoral_concern, sixthform_academic,
-                   sixthform_academic_view, sixthform_academic_edit,
-                   sixthform_student, sixthform_student_report,
-                   sixthform_student_kudos, sixthform_student_concern,
-                   apprenticeships_academic, apprenticeships_academic_edit, apprenticeships_academic_view,
-                   apprenticeships_attendance, apprenticeships_attendance_year,
-                   apprenticeships_student, apprenticeships_student_report,
-                   apprenticeships_academic_details,
-                   admin_records, admin_records_kudos, admin_records_concern)
+from pages import (
+    sixthform_attendance, sixthform_attendance_year,
+    sixthform_attendance_unauthorized, sixthform_attendance_punctuality,
+    sixthform_attendance_missing, sixthform_pastoral,
+    sixthform_attendance_daily, sixthform_pastoral_progress,
+    sixthform_pastoral_attendance, sixthform_pastoral_weekly,
+    sixthform_pastoral_kudos, sixthform_pastoral_concern, sixthform_academic,
+    sixthform_academic_view, sixthform_academic_edit, sixthform_student,
+    sixthform_student_report, sixthform_student_kudos,
+    sixthform_student_concern, apprenticeships_academic,
+    apprenticeships_academic_edit, apprenticeships_academic_view, apprenticeships_academic_details,
+    apprenticeships_attendance, apprenticeships_attendance_year,
+    apprenticeships_cohorts, apprenticeships_cohorts_report,
+    apprenticeships_employers, apprenticeships_employers_report, apprenticeships_employers_summary,
+    # stats_enrolment, stats_enrolment_view,
+    admin_records, admin_records_kudos, admin_records_concern)
 
 
 class PathExistsError(Exception):
@@ -100,13 +101,15 @@ class Tab(Container):
 #         }
 # }
 
-content= {
+content = {
     Section("Sixth Form", "sixthform"): {
         Page("Attendance", "attendance", sixthform_attendance.layout): [
             Tab("Year", "year", sixthform_attendance_year.layout),
-            Tab("Punctuality", "punctuality", sixthform_attendance_punctuality.layout),
-            Tab("Unauthorized", "unauthorized",sixthform_attendance_unauthorized.layout),
-            Tab("Daily", "daily",sixthform_attendance_daily.layout),
+            Tab("Punctuality", "punctuality",
+                sixthform_attendance_punctuality.layout),
+            Tab("Unauthorized", "unauthorized",
+                sixthform_attendance_unauthorized.layout),
+            Tab("Daily", "daily", sixthform_attendance_daily.layout),
             Tab("Missing marks", "missing",
                 sixthform_attendance_missing.layout)
         ],
@@ -130,24 +133,25 @@ content= {
         ]
     },
     Section("Apprenticeships", "apprenticeships"): {
-        Page("Academic", "academic", apprenticeships_academic.layout):
-        [
+        Page("Academic", "academic", apprenticeships_academic.layout): [
             Tab("Edit", "edit", apprenticeships_academic_edit.layout),
             Tab("View", "view", apprenticeships_academic_view.layout),
             Tab("Details", "details", apprenticeships_academic_details.layout)
         ],
         Page("Attendance", "attendance", apprenticeships_attendance.layout):
-        [
-            Tab("Year", "year", apprenticeships_attendance_year.layout)
-        ],
-        Page("Student", "student", apprenticeships_student.layout):
-        [
-            Tab("Report", "report", apprenticeships_student_report.layout)
-        ]
+        [Tab("Year", "year", apprenticeships_attendance_year.layout)],
+        Page("Cohorts", "cohorts", apprenticeships_cohorts.layout):
+        [Tab("Report", "report", apprenticeships_cohorts_report.layout)],
+        Page("Employers", "employers", apprenticeships_employers.layout):
+        [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
+        Tab("Report", "report", apprenticeships_employers_report.layout)]
     },
+#     Section("Stats", "stats"): {
+#         Page("Enrolment", "enrolment", stats_enrolment.layout):
+#         [Tab("View", "view", stats_enrolment_view.layout)]
+#     },
     Section("Admin", "admin"): {
-        Page("My records", "records", admin_records.layout):
-        [
+        Page("My records", "records", admin_records.layout): [
             Tab("Kudos", "kudos", admin_records_kudos.layout),
             Tab("Concern", "concern", admin_records_concern.layout)
         ]

@@ -29,7 +29,10 @@ attendance_table = dash_tabulator.DashTabulator(
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
-layout = dbc.Container(attendance_table)
+layout = dbc.Container(
+    dcc.Loading(attendance_table)
+    )
+
 
 @app.callback(
     [
