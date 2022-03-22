@@ -88,8 +88,8 @@ filter_nav = dbc.Nav([
 layout =[
     dcc.Store(id="sixthform-pastoral-store", storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col(gauge_overall)),
-    dbc.Row(dbc.Col(kudos_radar))
+    dbc.Row(dbc.Col(dcc.Loading(gauge_overall))),
+    dbc.Row(dbc.Col(dcc.Loading(kudos_radar)))
     ]
 
 
@@ -102,8 +102,8 @@ layout =[
 ], [
     Input("location", "pathname"),
     Input("location", "search"),
-], [State("team-dropdown", "label")])
-def update_teams(pathname, search, team):
+], [State("team-dropdown", "label"), State("cohort-dropdown", "label")])
+def update_teams(pathname, search, team, cohort):
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
