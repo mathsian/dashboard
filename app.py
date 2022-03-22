@@ -44,7 +44,11 @@ CORS(server)
 # Redirect if unauthorized
 @server.before_request
 def before_request_fun():
-    if not auth.is_authorized() and request.path != "/login/google/authorized":
+    try:
+        authorised = auth.is_authorized()
+    except (GoogleOAuth.InvalidGrantError, GoogleOAuth.TokenExpiredError) as e:
+        return redirect('/login/google')
+    if not authorised and request.path != "/login/google/authorized":
         if request.path != '/login/google':
             return redirect('/login/google')
         else:
