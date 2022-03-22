@@ -104,6 +104,9 @@ layout =[
     Input("location", "search"),
 ], [State("team-dropdown", "label"), State("cohort-dropdown", "label")])
 def update_teams(pathname, search, team, cohort):
+    current_team = team
+    current_cohort = cohort
+
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
@@ -111,6 +114,9 @@ def update_teams(pathname, search, team, cohort):
     teams = data.get_teams(cohort)
     # Get list of teams
     team = search_dict.get("team", ['All'])[0]
+    # If the team and cohort both haven't changed then no need to update
+    if team == current_team and cohort == current_cohort:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
     # Populate the dropdowns
     team_items = [dbc.DropdownMenuItem()]
     for t in ['All'] + teams:
