@@ -23,7 +23,7 @@ cohort_dropdown = dbc.DropdownMenu(
     id={
         "type": "dropdown",
         "section": "apprenticeships",
-        "page": "student",
+        "page": "cohorts",
         "name": "cohort"
     },
     nav=True,
@@ -37,7 +37,7 @@ student_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "section": "apprenticeships",
-        "page": "student",
+        "page": "cohorts",
         "name": "list"
     },
     options={
@@ -81,36 +81,52 @@ student_table = dash_tabulator.DashTabulator(
 )
 
 layout = [
-    dcc.Store(id="apprenticeships-student-store", storage_type='memory'),
-    dcc.Store(id="apprenticeships-selected-store", storage_type='memory'),
+    dcc.Store(id={
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "cohorts",
+        "name": "selected"
+    },
+              storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
     dbc.Row(dbc.Col(student_table))
 ]
 
 
 @app.callback([
-    Output({
-        "type": "dropdown",
-        "section": "apprenticeships",
-        "page": "student",
-        "name": "cohort"
-    }, "label"),
-    Output({
-        "type": "dropdown",
-        "section": "apprenticeships",
-        "page": "student",
-        "name": "cohort"
-    }, "children"),
-    Output("apprenticeships-student-store", "data")
+    Output(
+        {
+            "type": "dropdown",
+            "section": "apprenticeships",
+            "page": "cohorts",
+            "name": "cohort"
+        }, "label"),
+    Output(
+        {
+            "type": "dropdown",
+            "section": "apprenticeships",
+            "page": "cohorts",
+            "name": "cohort"
+        }, "children"),
+    Output(
+        {
+            "type": "table",
+            "section": "apprenticeships",
+            "page": "cohorts",
+            "name": "list"
+        }, "data")
 ], [
     Input("location", "search"),
-], [State("location", "pathname"),
-    State({
-        "type": "dropdown",
-        "section": "apprenticeships",
-        "page": "student",
-        "name": "cohort"
-    }, "label")])
+], [
+    State("location", "pathname"),
+    State(
+        {
+            "type": "dropdown",
+            "section": "apprenticeships",
+            "page": "cohorts",
+            "name": "cohort"
+        }, "label")
+])
 def update_cohorts(search, pathname, cohort):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts
@@ -120,7 +136,7 @@ def update_cohorts(search, pathname, cohort):
     cohort = cohort or cohorts[0]
     # If cohort in query is valid switch to that
     if cohort_query:
-        if cohort_query[0] in cohorts :
+        if cohort_query[0] in cohorts:
             cohort = cohort_query[0]
     cohort_items = []
     for c in cohorts:
@@ -131,20 +147,26 @@ def update_cohorts(search, pathname, cohort):
         students = app_data.get_all_students()
     else:
         students = app_data.get_students_by_cohort_name(cohort)
-    store_data = {"students": students}
-    return (cohort, cohort_items, store_data)
+    return (cohort, cohort_items, students)
 
 
-@app.callback(Output("apprenticeships-selected-store", "data"),
-[
-    Input({
-        "type": "table",
-        "section": "apprenticeships",
-        "page": "student",
-        "name": "list"
-    }, "multiRowsClicked"),
-    Input("location", "hash")
-])
+@app.callback(
+    Output(
+        {
+            "type": "storage",
+            "section": "apprenticeships",
+            "page": "cohorts",
+            "name": "selected"
+        }, "data"), [
+            Input(
+                {
+                    "type": "table",
+                    "section": "apprenticeships",
+                    "page": "cohorts",
+                    "name": "list"
+                }, "multiRowsClicked"),
+            Input("location", "hash")
+        ])
 def update_selected_students(multiRowsClicked, url_hash):
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if input_id == 'location':
@@ -153,15 +175,3 @@ def update_selected_students(multiRowsClicked, url_hash):
         multiRowsClicked = multiRowsClicked or []
         selected_ids = [row.get('student_id') for row in multiRowsClicked]
     return selected_ids
-
-@app.callback(Output({
-        "type": "table",
-        "section": "apprenticeships",
-        "page": "student",
-        "name": "list"
-    }
- , "data"),
-              [Input("apprenticeships-student-store", "data")])
-def update_student_table(store_data):
-    students = store_data.get("students")
-    return students
