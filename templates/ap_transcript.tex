@@ -59,17 +59,14 @@
 \end{tabular}
 
 \begin{center}
-\begin{tabular}{l l r r l}
-\uppercase{Module name} & \uppercase{Module code} & \uppercase{Started} & \uppercase{Total} & \uppercase{Class}\\
+\begin{tabular}{r l r r l}
+\uppercase{Level} & \uppercase{Module name} & \uppercase{Credits} & \uppercase{Total} & \uppercase{Class}\\
 \hline
-%% for level in modules
-\uppercase{Level \VAR{level.level}} \\
-%% for module in level.results
-\textsf{\VAR{module.name}} & \textsf{\VAR{module.code}} & \textsf{\VAR{module.first}} & \textsf{\VAR{module.total}} & \textsf{\VAR{module.class}}\\
-%% endfor
+%% for module in modules
+\textsf{\VAR{module.level}} & \textsf{\VAR{module.name}} & \textsf{\VAR{module.credits}} & \textsf{\VAR{module.total}} & \textsf{\VAR{module.class}}\\
 %% endfor
 \hline
-&&& \textbf{\textsf{\VAR{overall}}} & \textbf{\textsf{\VAR{overall_class}}}
+&& \textbf{\textsf{\VAR{overall_credits}}} & \textbf{\textsf{\VAR{overall}}} & \textbf{\textsf{\VAR{overall_class}}}
 \end{tabular}
 \end{center}
 

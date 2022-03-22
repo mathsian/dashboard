@@ -2,6 +2,9 @@ from os.path import abspath
 import jinja2
 from jinja2 import Template
 import pandas as pd
+import sys 
+sys.path.append('..')
+import app_data
 
 latex_jinja_env = jinja2.Environment(
     variable_start_string = '\VAR{',
@@ -11,21 +14,6 @@ latex_jinja_env = jinja2.Environment(
     autoescape = False,
     loader = jinja2.FileSystemLoader(abspath('../templates'))
 )
-
-df = pd.read_csv('./_newMarksheet - CACHE.csv')
-progrs = pd.read_csv('./programmes.csv')
-
-df.columns = ['student_id', 'student_name', 'name', 'code', 'level', 'total', 'class', 'first', 'company']
-
-df = pd.merge(df, progrs, on='student_id')
-
-df = df.set_index(['student_id', 'student_name', 'programme', 'level'])
-
-df['class'] = df['class'].str.title().replace({"Tba": "tba"})
-df['total'] = df['total'].str.title().replace({"Tba": "tba"})
-df.dropna(inplace=True)
-
-df = df.sort_index().astype(str)
 
 def get_class(mark):
     if mark >= 69.5:
@@ -40,24 +28,26 @@ def get_class(mark):
 def populate_template(student_id):
     if isinstance(student_id, str):
         student_id = int(student_id)
-    student_name = df.loc[student_id].index.unique(0)[0]
-    programme = df.loc[student_id].index.unique(1)[0]
-    # there are level -1 in here, is that a mistake or a code?
-    levels = filter(lambda l: l>=4, df.loc[student_id].index.unique(2))
-    modules = [{"level": level, "results": df.loc[student_id, student_name, programme, level].to_dict(orient='records')} for level in levels]
-    results = df.loc[student_id].query('total.str.isnumeric() and level > 3')
-    overall = round(results['total'].astype(int).mean())
+    student_dict = app_data.get_student_by_id(student_id)
+    results_dict = app_data.get_detailed_results_for_student(student_id)
+    results_df = pd.DataFrame.from_records(results_dict)
+    results_df['class'] = results_df['total'].apply(lambda t: get_class(t))
+    results_df.sort_values(by=['level', 'name'], inplace=True)
+    overall = round(results_df['total'].astype(int).mean())
     overall_class = get_class(overall)
+    overall_credits = results_df['credits'].sum()
     template = latex_jinja_env.get_template('ap_transcript.tex')
-    with open("../latex/{} {}.tex".format(student_id, student_name),'w') as f:
-        template_data = {"student_name": student_name,
+    full_name = f'{student_dict.get("given_name")} {student_dict.get("family_name")}'
+    with open("../latex/{} {}.tex".format(student_id, full_name),'w') as f:
+        template_data = {"student_name": full_name, 
                          "student_id": student_id,
-                         "issued": "23/11/21",
-                         "programme": programme,
-                         "modules": modules,
+                         "issued": "24/02/22",
+                         "programme": "Foundation Degree in Digital Innovation",
+                         "modules": results_df.to_dict(orient='records'),
                          "overall": overall,
-                         "overall_class": overall_class
+                         "overall_class": overall_class,
+                         "overall_credits": overall_credits
                         }
         f.write(template.render(template_data))
 
-populate_template('000000')
+populate_template(999999)
