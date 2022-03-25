@@ -478,6 +478,26 @@ def add_students_to_instance(student_ids, code, lecturer):
     return return_value
 
 
+def update_learners(learners):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            return_value = 0
+            for learner in learners:
+                cur.execute("""
+insert into students (id, given_name, family_name, status, employer, cohort_id, inserted_at, updated_at)
+                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), current_timestamp, current_timestamp)
+                on conflict (id) do update
+                set given_name = excluded.given_name,
+                    family_name = excluded.family_name,
+                    status = excluded.status,
+                    employer = excluded.employer,
+                    cohort_id = excluded.cohort_id,
+                    updated_at = excluded.updated_at;
+                """, learner)
+                return_value += cur.rowcount
+    return return_value
+
 if __name__ == "__main__":
     # print(get_user_list())
     # print(get_results_for_instance('SDL010'))
