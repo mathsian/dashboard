@@ -118,6 +118,7 @@ def update_progress_content(store_data):
 
 
 def low_grade(grade, scale):
+    print(grade, scale)
     if scale == 'Expectations':
         return (grade == 'Below Expectations')
     elif scale == 'BTEC-Single':

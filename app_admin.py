@@ -164,6 +164,23 @@ def get_instance_students_from_rems(instance_code):
     return group_df
 
 
+def get_apprentices_from_rems():
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    query = open('./sql/all_apprentices.sql', 'r')
+    apps_df = pd.read_sql_query(query.read(), conn)
+    query.close()
+    return apps_df.to_dict(orient='records')
+
+
 def get_instances_from_rems():
     # Get connection settings
     config_object = ConfigParser()
@@ -195,15 +212,15 @@ def get_instances_from_rems():
 
 
 if __name__ == "__main__":
-    for instance in get_instances_from_rems().to_dict(orient='records'):
-        print(f'Adding instance {instance.get("code")}')
-        print(app_data.add_instance(instance.get('code')[:3], instance.get('code'), instance.get('start_date')))
-        print(f'Adding component to {instance.get("code")}')
-        print(app_data.add_component_to_instance(instance.get('code'), "Coursework", 100))
-        print(f'Adding students to instance {instance.get("code")}')
-        students = get_instance_students_from_rems(instance.get('code'))['student_id'].to_list()
-        print(students)
-        if students != [None]:
-            print(app_data.add_students_to_instance(students, instance.get('code'), 'ian@ada.ac.uk'))
-        
-
+    # for instance in get_instances_from_rems().to_dict(orient='records'):
+    #     print(f'Adding instance {instance.get("code")}')
+    #     print(app_data.add_instance(instance.get('code')[:3], instance.get('code'), instance.get('start_date')))
+    #     print(f'Adding component to {instance.get("code")}')
+    #     print(app_data.add_component_to_instance(instance.get('code'), "Coursework", 100))
+    #     print(f'Adding students to instance {instance.get("code")}')
+    #     students = get_instance_students_from_rems(instance.get('code'))['student_id'].to_list()
+    #     print(students)
+    #     if students != [None]:
+    #         print(app_data.add_students_to_instance(students, instance.get('code'), 'ian@ada.ac.uk'))
+    learners = get_apprentices_from_rems()
+    print(app_data.update_learners(learners))

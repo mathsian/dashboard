@@ -1,4 +1,4 @@
-from flask import session
+from flask import request
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -23,7 +23,7 @@ def update_instance_form(store_data):
     instance_code = store_data.get("instance_code")
     if not instance_code:
         return []
-    permissions = app_data.get_permissions(session.get('email'))
+    permissions = app_data.get_permissions(request.headers.get('X-Email'))
     components = app_data.get_components_by_instance_code(instance_code)
     instance = app_data.get_instance_by_instance_code(instance_code)
     header = html.Div([

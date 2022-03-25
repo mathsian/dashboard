@@ -1,4 +1,4 @@
-from flask import session
+from flask import request
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
@@ -150,9 +150,8 @@ def location_change(pathname, active_tab, global_history):
                 tab_id="/".join(["", section.path, page.path, t.path]))
         for _, t in page.children.items()
     ]
-
     # set the user email as the link to user admin
-    user_link = dbc.NavItem(dbc.NavLink(session.get("email", "Not signed in"), href="/admin"))
+    user_link = dbc.NavItem(dbc.NavLink(request.headers.get("X-Email", "Not signed in"), href="/admin"))
 
     # update history
     if (section.path, page.path, tab.path) in global_history:

@@ -114,9 +114,6 @@ def update_teams(pathname, search, team, cohort):
     teams = data.get_teams(cohort)
     # Get list of teams
     team = search_dict.get("team", ['All'])[0]
-    # If the team and cohort both haven't changed then no need to update
-    if team == current_team and cohort == current_cohort:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
     # Populate the dropdowns
     team_items = [dbc.DropdownMenuItem()]
     for t in ['All'] + teams:
@@ -126,6 +123,9 @@ def update_teams(pathname, search, team, cohort):
     for c in ['2022', '2123']:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
+    # If the team and cohort both haven't changed then no need to update data
+    if team == current_team and cohort == current_cohort:
+        return (cohort, cohort_items, team, team_items, dash.no_update)
     # Get data in scope
     enrolment_docs = data.get_enrolment_by_cohort_team(cohort, team)
     student_ids = [e.get('_id') for e in enrolment_docs]
@@ -148,7 +148,7 @@ def update_teams(pathname, search, team, cohort):
     ).reindex(curriculum.values, axis=1, fill_value=0)
     kudos_pivot_df["total"] = kudos_pivot_df.sum(axis=1)
     kudos_pivot_df = kudos_pivot_df.reset_index()
-    kudos_pivot_docs = kudos_pivot_df.to_dict(orient='records')
+    kudos_pivot_docs = kudos_pivot_df.sort_values('total', ascending=False).to_dict(orient='records')
 
     concern_docs = data.get_data("concern", "student_id", student_ids)
     store_data = {

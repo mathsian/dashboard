@@ -8,12 +8,12 @@ from app import app
 import data
 import curriculum
 
-# Attendance tab content
-attendance_table = dash_tabulator.DashTabulator(
+# Punctuality tab content
+punctuality_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
         "page": "pastoral",
-        "tab": "attendance"
+        "tab": "punctuality"
     },
     options={
         "resizableColumns": False,
@@ -24,7 +24,7 @@ attendance_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
 )
 layout = dbc.Container(
-    dcc.Loading(attendance_table)
+    dcc.Loading(punctuality_table)
     )
 
 
@@ -33,27 +33,27 @@ layout = dbc.Container(
         Output({
             "type": "table",
             "page": "pastoral",
-            "tab": "attendance"
+            "tab": "punctuality"
         }, "columns"),
         Output({
             "type": "table",
             "page": "pastoral",
-            "tab": "attendance"
+            "tab": "punctuality"
         }, "data"),
    ],
     [
         Input("sixthform-pastoral-store", "data")
     ],
 )
-def update_pastoral_attendance(store_data):
+def update_pastoral_punctuality(store_data):
     enrolment_docs = store_data.get('enrolment_docs')
-    attendance_docs = store_data.get('attendance_docs')
-    if not attendance_docs:
+    punctuality_docs = store_data.get('attendance_docs')
+    if not punctuality_docs:
         return [], []
     this_year_start = curriculum.this_year_start
-    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
+    punctuality_df = pd.DataFrame.from_records(punctuality_docs).query(
         'date > @this_year_start')
-    weekly_df = attendance_df.query("subtype == 'weekly'")
+    weekly_df = punctuality_df.query("subtype == 'weekly'")
     # Merge on student id
     merged_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
                          weekly_df,
@@ -62,25 +62,26 @@ def update_pastoral_attendance(store_data):
                          how='left')
     # Get per student totals
     cumulative_df = merged_df.groupby("student_id").sum().reset_index()
-    cumulative_df['cumulative_percent_present'] = round(
-        100 * cumulative_df['actual'] / cumulative_df['possible'])
-    # Calculate percent present for recent weeks
+    cumulative_df['cumulative_percent_punctual'] = round(
+        100 - 100 * cumulative_df['late'] / cumulative_df['possible'])
+    # Calculate percent _punctual for recent weeks
     four_weeks_ago = (date.today() - timedelta(weeks=4)).isoformat()
     merged_df.query('date > @four_weeks_ago', inplace=True)
-    merged_df['percent_present'] = round(100 * merged_df['actual'] /
+    merged_df['percent_punctual'] = round(100 - 100 * merged_df['late'] /
                                          merged_df['possible'])
     # Pivot to bring dates to columns
-    attendance_pivot = merged_df.set_index(
+    punctuality_pivot = merged_df.set_index(
         ["student_id", "given_name", "family_name",
-         "date"])["percent_present"].unstack().reset_index()
+         "date"])["percent_punctual"].unstack().reset_index()
     # Add the cumulative column
-    attendance_pivot = pd.merge(
-        attendance_pivot,
-        cumulative_df[["student_id", "cumulative_percent_present"]],
+    punctuality_pivot = pd.merge(
+        punctuality_pivot,
+        cumulative_df[["student_id", "cumulative_percent_punctual"]],
         how='left',
         left_on="student_id",
         right_on="student_id",
         suffixes=("", "_y"))
+    print(punctuality_pivot.columns)
     columns = [
         {
             "title": "Given name",
@@ -102,15 +103,15 @@ def update_pastoral_attendance(store_data):
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in attendance_pivot.columns[3:-1]
+        } for d in punctuality_pivot.columns[3:-1]
     ])
     columns.append({
         "title": "This year",
-        "field": "cumulative_percent_present",
+        "field": "cumulative_percent_punctual",
         "headerHozAlign": "right",
         "hozAlign": "right",
         "headerFilter": True,
         "headerFilterFunc": "<",
         "headerFilterPlaceholder": "Less than",
     })
-    return columns, attendance_pivot.sort_values('cumulative_percent_present').to_dict(orient='records')
+    return columns, punctuality_pivot.sort_values('cumulative_percent_punctual').to_dict(orient='records')

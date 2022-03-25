@@ -105,26 +105,25 @@ def update_cohort_dropdown(store_data):
         ])
 def update_table(cohort, employer):
     results = app_data.get_results_for_cohort_employer(cohort, employer)
+    if not results:
+        return "No results for these learners."
     results_df = pd.DataFrame.from_records(results)
     results_df['Class'] = pd.Categorical(
-        results_df['total'].apply(lambda t: get_class(t)),
-        ['Missing', 'Fail', 'Pass', 'Merit', 'Distinction'])
+        results_df['total'].fillna(-1).apply(lambda t: get_class(t)),
+        ['TBA', 'Fail', 'Pass', 'Merit', 'Distinction'])
     grouped_df = results_df.groupby(
         ['Level', 'Module'], observed=True)['Class'].value_counts().unstack(-1)
-    print(grouped_df)
-    # grouped_df = results_df.pivot_table(index=['Level', 'Module'], columns='Class', values='student_id', aggfunc='count')
     return dbc.Table.from_dataframe(grouped_df.reset_index())
 
 
 def get_class(mark):
-    if mark is not None:
-        if mark >= 69.5:
-            return 'Distinction'
-        elif mark >= 59.5:
-            return 'Merit'
-        elif mark >= 39.5:
-            return 'Pass'
-        else:
-            return 'Fail'
+    if mark >= 69.5:
+        return 'Distinction'
+    elif mark >= 59.5:
+        return 'Merit'
+    elif mark >= 39.5:
+        return 'Pass'
+    elif mark >= 0:
+        return 'Fail'
     else:
-        return 'Missing'
+        return 'TBA'

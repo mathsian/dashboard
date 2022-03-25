@@ -1,5 +1,5 @@
 from dash import callback_context as cc
-from flask import session
+from flask import request
 import dash_tabulator
 import dash
 import plotly.express as px
@@ -205,7 +205,7 @@ layout = dbc.Container(concern_form)
 def update_concern_message(selected_student_ids, description, category, stage,
                            discrimination, n_clicks, button_color):
     # We need the number of outputs so we can set disabled on all but the first two
-    editable = app_data.get_permissions(session.get("email")).get("can_edit_sf")
+    editable = app_data.get_permissions(request.headers.get("X-Email")).get("can_edit_sf")
     # Pattern matched outputs is a sublist of cc.outputs
     pattern_matched_outputs = cc.outputs_list[2]
     disabled_outputs = [not editable for o in pattern_matched_outputs]
@@ -230,7 +230,7 @@ def update_concern_message(selected_student_ids, description, category, stage,
                 "discrimination": discrimination,
                 "description": description if description else "",
                 "date": date,
-                "from": session.get('email', "none"),
+                "from": request.headers.get('X-Email', "none"),
             } for s in selected_student_ids]
             data.save_docs(docs)
             return "Concern raised", "secondary", disabled_outputs

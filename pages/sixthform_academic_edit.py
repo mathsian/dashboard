@@ -1,4 +1,4 @@
-from flask import session
+from flask import request
 import filters
 import dash_tabulator
 import dash
@@ -82,7 +82,7 @@ def update_subject_table(store_data, changed, row_data, cohort):
         return [], []
     assessment_subject_cohort = store_data.get("assessment_subject_cohort")
     trigger = dash.callback_context.triggered[0].get("prop_id")
-    permissions = app_data.get_permissions(session.get("email"))
+    permissions = app_data.get_permissions(request.headers.get("X-Email"))
     # If we're here because a cell has been edited
     if "cellEdited" in trigger and permissions.get("can_edit_sf"):
         row = changed.get("row")
