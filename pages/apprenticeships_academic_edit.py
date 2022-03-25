@@ -1,4 +1,4 @@
-from flask import session
+from flask import request
 import dash_tabulator
 import dash
 from dash.dash import no_update
@@ -87,12 +87,12 @@ def update_subject_table(store_data, changed, row_data):
         return [], [], "No instance selected"
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
     trigger = dash.callback_context.triggered[0].get("prop_id")
-    permissions = app_data.get_permissions(session.get("email"))
+    permissions = app_data.get_permissions(request.headers.get("X-Email"))
     # If we're here because a cell has been edited
     if "cellEdited" in trigger and permissions.get("can_edit_ap"):
         update_data_only = update_result(changed)
     elif "clipboardPasted" in trigger and permissions.get("can_edit_ap") and not instance_dict.get('moderated'):
-        lecturer = session.get("email")
+        lecturer = request.headers.get("X-Email")
         for row in row_data:
             # check student id
             student_id_string = row.get('student_id', False)
@@ -152,7 +152,7 @@ def update_result(changed):
         new_value = None
     new_capped = row.get(f'{component_name}:capped')
     new_comment = row.get(f'{component_name}:comment')
-    lecturer = session.get("email")
+    lecturer = request.headers.get("X-Email")
     success = app_data.set_result(result_id, new_value, new_capped, new_comment, lecturer)
     return success
 

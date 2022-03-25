@@ -1,11 +1,11 @@
 from app import app
-import dash_bootstrap_components as dbc
 import dash_tabulator
 from dash.dependencies import Input, Output
 import data
 import curriculum
 from dash import callback_context
-from flask import session
+import dash_bootstrap_components as dbc
+from flask import request
 import pandas as pd
 from dash_extensions.javascript import Namespace
 ns = Namespace("myNameSpace", "tabulator")
@@ -112,7 +112,8 @@ concern_table = dash_tabulator.DashTabulator(
     ],
     theme='bootstrap/tabulator_bootstrap4',
     options={
-        "maxHeight": "95%",
+        "height": "70vh",
+        "pagination": "local",
         "index": "_id",
     },
 )
@@ -156,7 +157,7 @@ def update_concern_table(changed, dataChanged, deleted):
         data.save_docs([doc])
     elif "dataChanged" in trigger:
         # For now we are here because a row has been deleted
-        concern_docs = data.get_data("concern", "from", [session.get('email')])
+        concern_docs = data.get_data("concern", "from", [request.headers.get('X-Email')])
         keep_ids = [d.get("_id") for d in dataChanged]
         deleted_ids = [
             d.get("_id") for d in concern_docs if d.get("_id") not in keep_ids
@@ -168,13 +169,13 @@ def update_concern_table(changed, dataChanged, deleted):
         row = deleted.get("row")
         doc = data.get_doc(row.get("_id"))
         data.delete_docs([doc])
-    concern_docs = data.get_data("concern", "from", [session.get('email')])
+    concern_docs = data.get_data("concern", "from", [request.headers.get('X-Email')])
     # If email has no concerns then concern docs will be empty
     # which means concern_df will have no columns and throw an error when we use one
     # better just save everyone's time and bail now
     if not concern_docs:
         return []
-    concern_df = pd.DataFrame(concern_docs)
+    concern_df = pd.DataFrame(concern_docs).sort_values('date', ascending=False)
     student_ids = list(concern_df["student_id"].unique())
     enrolment_docs = data.get_data("enrolment", "_id", student_ids)
     enrolment_df = pd.DataFrame(enrolment_docs)

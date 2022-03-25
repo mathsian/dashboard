@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State, ALL
 import data
 import curriculum
 from dash import callback_context
-from flask import session
+from flask import request
 import pandas as pd
 from dash_extensions.javascript import Namespace
 ns = Namespace("myNameSpace", "tabulator")
@@ -97,6 +97,8 @@ kudos_table = dash_tabulator.DashTabulator(
     options={
     #    "maxHeight": "95%",
         "index": "_id",
+        "pagination": "local",
+        "height": "70vh"
     },
 )
 
@@ -133,16 +135,16 @@ def update_kudos_table(changed, dataChanged):
         data.save_docs([doc])
     elif "dataChanged" in trigger:
         # For now we are here because a row has been deleted
-        kudos_docs = data.get_data("kudos", "from", [session.get('email')])
+        kudos_docs = data.get_data("kudos", "from", [request.headers.get('X-Email')])
         keep_ids = [d.get("_id") for d in dataChanged]
         deleted_ids = [
             d.get("_id") for d in kudos_docs if d.get("_id") not in keep_ids
         ]
         data.delete_docs(deleted_ids)
-    kudos_docs = data.get_data("kudos", "from", [session.get('email')])
+    kudos_docs = data.get_data("kudos", "from", [request.headers.get('X-Email')])
     if not kudos_docs:
         return []
-    kudos_df = pd.DataFrame(kudos_docs)
+    kudos_df = pd.DataFrame(kudos_docs).sort_values('date', ascending=False)
     student_ids = list(kudos_df["student_id"].unique())
     enrolment_docs = data.get_data("enrolment", "_id", student_ids)
     enrolment_df = pd.DataFrame(enrolment_docs)
