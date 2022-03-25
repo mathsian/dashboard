@@ -449,3 +449,4 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None)
     sync_rems_attendance("weekly", "ada")
     sync_rems_attendance("monthly", "ada")
+    
