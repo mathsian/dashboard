@@ -23,8 +23,8 @@ kudos_table = dash_tabulator.DashTabulator(
     theme='bootstrap/tabulator_bootstrap4',
     options={
         "resizableColumns": False,
-#        "layout": "fitData",
-#        "maxHeight": "60vh",
+        "height": "70vh",
+        "pagination": "local",
         "clipboard": "copy"
     },
     columns=[

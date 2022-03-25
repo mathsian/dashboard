@@ -1,15 +1,9 @@
 import dash_tabulator
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import dash_daq as daq
-from datetime import date
-
+from datetime import date, timedelta
 from app import app
 import data
 import curriculum
@@ -23,9 +17,9 @@ attendance_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
-        # "layout": "fitData",
-        # "maxHeight": "70vh",
-        "clipboard": "copy"
+        "clipboard": "copy",
+        "height": "70vh",
+        "pagination": "local"
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
@@ -70,7 +64,9 @@ def update_pastoral_attendance(store_data):
     cumulative_df = merged_df.groupby("student_id").sum().reset_index()
     cumulative_df['cumulative_percent_present'] = round(
         100 * cumulative_df['actual'] / cumulative_df['possible'])
-    # Calculate percent present
+    # Calculate percent present for recent weeks
+    four_weeks_ago = (date.today() - timedelta(weeks=4)).isoformat()
+    merged_df.query('date > @four_weeks_ago', inplace=True)
     merged_df['percent_present'] = round(100 * merged_df['actual'] /
                                          merged_df['possible'])
     # Pivot to bring dates to columns
@@ -99,15 +95,14 @@ def update_pastoral_attendance(store_data):
     ]
     columns.extend([
         {
-            #"name": data.format_date(d),
-            "title": "This week",
+            "title": data.format_date(d),
             "field": d,
             "headerHozAlign": "right",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in attendance_pivot.columns[-2:-1]
+        } for d in attendance_pivot.columns[3:-1]
     ])
     columns.append({
         "title": "This year",
@@ -118,4 +113,4 @@ def update_pastoral_attendance(store_data):
         "headerFilterFunc": "<",
         "headerFilterPlaceholder": "Less than",
     })
-    return columns, attendance_pivot.to_dict(orient='records')
+    return columns, attendance_pivot.sort_values('cumulative_percent_present').to_dict(orient='records')
