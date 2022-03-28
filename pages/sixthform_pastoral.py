@@ -1,9 +1,8 @@
 from urllib.parse import parse_qs, urlencode
 import dash
 from app import app
-import dash_core_components as dcc
+from dash import dcc, html
 import dash_bootstrap_components as dbc
-import dash_html_components as html
 import dash_daq as daq
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -17,13 +16,16 @@ cohort_dropdown = dbc.DropdownMenu(id="cohort-dropdown",
                                    nav=True,)
 team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True)
 
-fig = make_subplots(specs=[[{"type": "polar"}]])
+fig = make_subplots(specs=[[{"type": "polar"}]], subplot_titles=['Kudos this year'])
 fig.add_trace(
     go.Scatterpolar(theta=curriculum.values,
                     r=[0 for v in curriculum.values],
                     subplot="polar",
                     fill="toself"), 1, 1)
-fig.update_layout(polar=dict(radialaxis=dict(visible=False)), height=300)
+fig.update_layout(polar=dict(radialaxis=dict(visible=False)), height=300,
+                  # title={'text': 'Kudos this year', 'x': 0, 'y': 0, 'xanchor': 'right', 'yanchor': 'bottom'},
+                  margin={'t': 16},
+                  title_font={'family': 'Titillium'})
 
 kudos_radar = dcc.Graph(id={
     "type": "graph",
@@ -35,27 +37,6 @@ kudos_radar = dcc.Graph(id={
                         figure=fig,
 )
 
-# gauge_last = daq.Gauge(
-#     id={
-#         "type": "gauge",
-#         "section": "sixthform",
-#         "page": "pastoral",
-#         "tab": "attendance",
-#         "name": "last_week"
-#     },
-#     label="This week",
-#     scale={
-#         "start": 0,
-#         "interval": 10,
-#         "labelInterval": 2,
-#     },
-#     size=180,
-#     showCurrentValue=True,
-#     units="%",
-#     value=0,
-#     min=0,
-#     max=100,
-# ),
 gauge_overall = daq.Gauge(
     id={
         "type": "gauge",
@@ -63,7 +44,7 @@ gauge_overall = daq.Gauge(
         "page": "pastoral",
         "name": "year"
     },
-    label="This year",
+    label="Attendance this year",
     scale={
         "start": 0,
         "interval": 10,
