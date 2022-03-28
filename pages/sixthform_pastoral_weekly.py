@@ -1,14 +1,8 @@
-import filters
 import dash_tabulator
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import dash_daq as daq
 from datetime import date
 
 from app import app
@@ -20,6 +14,7 @@ weekly_header = html.H4(children=[
     "Week beginning ",
     html.Span(id={
         "type": "text",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly",
         "name": "wb"
@@ -29,13 +24,14 @@ weekly_header = html.H4(children=[
 weekly_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly"
     },
     options={
         "resizableColumns": False,
-        # "layout": "fitData",
-        # "maxHeight": "70vh",
+        "height": "70vh",
+        "pagination": "local",
         "clipboard": "copy"
     },
     columns=[
@@ -87,6 +83,7 @@ weekly_table = dash_tabulator.DashTabulator(
 weekly_picker = dcc.DatePickerSingle(
     id={
         "type": "picker",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly"
     },
@@ -108,11 +105,13 @@ layout = dbc.Container([
 @app.callback([
     Output({
         "type": "table",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly"
     }, "data"),
     Output({
         "type": "text",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly",
         "name": "wb"
@@ -121,14 +120,16 @@ layout = dbc.Container([
     Input("sixthform-pastoral-store", "data"),
     Input({
         "type": "picker",
+        "section": "sixthform",
         "page": "pastoral",
         "tab": "weekly"
     }, "date")
 ])
 def update_weekly_table(store_data, picker_value):
-    enrolment_docs = store_data.get('enrolment_docs')
-    attendance_docs = store_data.get('attendance_docs')
-    enrolment_df = pd.DataFrame.from_records(enrolment_docs)
+    attendance_docs = store_data.get("attendance_docs")
+    enrolment_docs = store_data.get("enrolment_docs")
+    student_ids = store_data.get("student_ids")
+
     # Get attendance for the latest week before the chosen date
     attendance_df = pd.DataFrame.from_records(attendance_docs).query("subtype == 'weekly'").query("date <= @picker_value").query("date == date.max()")
     # Picked too early a date?
@@ -140,6 +141,8 @@ def update_weekly_table(store_data, picker_value):
     attendance_df.eval("un = 100*unauthorised/possible", inplace=True)
     attendance_df.eval("au = 100*authorised/possible", inplace=True)
     attendance_df.eval("la = 100*late/actual", inplace=True)
+
+    enrolment_df = pd.DataFrame.from_records(enrolment_docs)
     merged_df = pd.DataFrame.merge(enrolment_df,
                                    attendance_df.round(),
                                    how='left',
