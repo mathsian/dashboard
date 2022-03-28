@@ -147,6 +147,6 @@ def update_weekly_table(store_data, picker_value):
                                    attendance_df.round(),
                                    how='left',
                                    left_on='_id',
-                                   right_on='student_id')
+                                   right_on='student_id').sort_values('pr')
     return merged_df.to_dict(orient='records'), data.format_date(attendance_df["date"].iloc[0])
 
