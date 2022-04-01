@@ -117,7 +117,9 @@ def update_subject_table(store_data, changed, row_data):
     # Calculate module results from components
     components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer')
     components_df.eval("weighted_value = value * weight", inplace=True)
-    results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"].round(0).astype("Int64")
+    # kludge to get python to round up appropriately - add 0.0001
+    # needs a better fix
+    results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight + 0.0001")["total"].round(0).astype("Int64")
     # Number duplicate components so we can unstack the dataframe later
     components_df["name"] = components_df["name"] + components_df.groupby(["student_id", "name"]).cumcount().astype(str).replace('0', '')
     components_df = components_df.set_index(["student_id", "given_name", "family_name", "name"])[["result_id", "value", "capped", "comment"]]
