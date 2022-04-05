@@ -135,7 +135,7 @@ def update_subject_table(store_data, changed, row_data):
         columns = no_update
         table_data = pivoted_components_df.sort_values(["family_name", "given_name"]).to_dict(orient='records')
     else:
-        heading = f'{instance_dict.get("name")} - {instance_code} - {instance_dict.get("start_date")}'
+        heading = f'{instance_code} - {"Moderated" if instance_dict.get("moderated") else "Unmoderated"}'
         columns = build_columns(pivoted_components_df, permissions.get("can_edit_ap") and not instance_dict.get("moderated"))
         table_data = pivoted_components_df.sort_values(["family_name", "given_name"]).to_dict(orient='records')
     return table_data, columns, heading
