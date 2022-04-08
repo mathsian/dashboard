@@ -409,6 +409,19 @@ def add_module(short, name, level, credits):
     return return_value
 
 
+def add_cohort(name):
+    return_value = False
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            insert into cohorts (name, inserted_at, updated_at)
+            values (%(name)s, current_timestamp, current_timestamp)
+            on conflict do nothing;
+            """, {"name": name})
+            return_value = cur.rowcount
+    return return_value
+
+
 def add_instance(short, code, start_date, second_date=None):
     return_value = False
     with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
