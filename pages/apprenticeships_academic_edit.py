@@ -115,7 +115,7 @@ def update_subject_table(store_data, changed, row_data):
         return [], [], "There are no students in this instance yet"
     components_df = pd.DataFrame.from_records(components_dicts, columns=["result_id", "given_name", "family_name", "student_id", "name", "value", "capped", "weight", "comment"])
     # Calculate module results from components
-    components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer')
+    components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer').round(2)
     components_df.eval("weighted_value = value * weight", inplace=True)
     # kludge to get python to round up appropriately - add 0.0001
     # needs a better fix
