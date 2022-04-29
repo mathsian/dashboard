@@ -7,7 +7,6 @@ from dash.dependencies import Input, Output, State
 from app import app, server
 
 from structure import home
-from history import History
 
 navbar = dbc.Navbar(dbc.Container([
     dbc.Col(dbc.NavbarBrand("data@ada"), width=1),
@@ -35,7 +34,6 @@ app.layout = html.Div([
     dbc.Row([dbc.Col(sidebar, width=3),
              dbc.Col(card, width=9)], class_name='g-0')
 ])
-
 
 def parse(pathname):
     '''Parse the url.
