@@ -18,3 +18,8 @@ cred_file = FIRESTORE_CREDENTIALS_FILE
 username = username
 password = password
 database = database
+[SMTP]
+username = email_address_to_send_notifications_from
+password = generated_app_password
+port = port
+server = server

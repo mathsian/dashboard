@@ -81,7 +81,6 @@ def update_pastoral_punctuality(store_data):
         left_on="student_id",
         right_on="student_id",
         suffixes=("", "_y"))
-    print(punctuality_pivot.columns)
     columns = [
         {
             "title": "Given name",

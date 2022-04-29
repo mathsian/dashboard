@@ -1,13 +1,14 @@
 from flask import request
+from flask_mailman import EmailMessage
 import dash_tabulator
 import dash
 import plotly.express as px
 import plotly.subplots as sp
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
+from dash import dash_table
 from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
@@ -51,6 +52,18 @@ points_input = html.Div([
                value=curriculum.kudos_points_dropdown["default"])
 ])
 
+kudos_notify_checkbox = html.Div([
+    dbc.Label("Notify student(s) by email"),
+    dbc.Checkbox(id={
+        "section": "sixthform",
+        "type": "checkbox",
+        "page": "student",
+        "tab": "kudos",
+        "name": "notify"
+    },
+                 persistence=True)
+])
+
 kudos_description_input = html.Div([
     dbc.Label("Description"),
     dbc.Textarea(id={
@@ -77,7 +90,7 @@ kudos_message_input = html.Div([
 kudos_submit_input = html.Div([
     dbc.Button("Award kudos",
                id={
-        "section": "sixthform",
+                   "section": "sixthform",
                    "type": "button",
                    "page": "student",
                    "tab": "kudos",
@@ -88,12 +101,20 @@ kudos_submit_input = html.Div([
 ])
 
 kudos_form = dbc.Row(children=[
-    dbc.Col([value_input, kudos_description_input, kudos_submit_input, kudos_message_input]),
-    dbc.Col([points_input], width=4)
+   dbc.Col([value_input, html.Br(), kudos_description_input, html.Br(), kudos_submit_input, html.Br(), kudos_message_input]),
+    dbc.Col([points_input, html.Br(), kudos_notify_checkbox,     dbc.Toast(id={
+                "section": "sixthform",
+                "type": "toast",
+                "page": "student",
+                "tab": "kudos",
+                "name": "notifications"
+    },
+              is_open=False,
+              duration=5000),
+ ], width=4)
 ])
 
 layout = dbc.Container(kudos_form)
-
 
 @app.callback([
     Output(
@@ -119,7 +140,7 @@ layout = dbc.Container(kudos_form)
         "tab": "kudos",
         "type": ALL,
         "name": ALL
-    }, "disabled")
+    }, "disabled"),
 ], [
     Input("sixthform-selected-store", "data"),
     Input(
@@ -163,18 +184,28 @@ layout = dbc.Container(kudos_form)
             "tab": "kudos",
             "name": "submit"
         }, "color"),
-])
+    State(
+    {
+        "section": "sixthform",
+        "type": "checkbox",
+        "page": "student",
+        "tab": "kudos",
+        "name": "notify"
+    }, "value"),
+],
+)
 def update_kudos_message(selected_student_ids, description, ada_value, points,
-                         n_clicks, button_color):
+                         n_clicks, button_color, notify):
     # We need the number of outputs so we can set disabled on all but the first two
-    editable = app_data.get_permissions(request.headers.get("X-Email")).get("can_edit_sf")
+    user_email = request.headers.get("X-Email")
+    editable = app_data.get_permissions(user_email).get("can_edit_sf")
     # Pattern matched outputs is a sublist of cc.outputs
     pattern_matched_outputs = cc.outputs_list[2]
     disabled_outputs = [not editable for o in pattern_matched_outputs]
     if selected_student_ids and editable:
         enrolment_docs = data.get_students(selected_student_ids)
         intro = html.Div(
-            f'Award {points} {ada_value} kudos from {request.headers.get("X-Email")} to')
+            f'Award {points} {ada_value} kudos from {user_email} to')
         desc = html.Div(["For ", html.Blockquote(description)
                          ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
@@ -191,7 +222,7 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
                 "points": int(points), # the values are ints already but somehow they end up a string
                 "description": description if description else "",
                 "date": date,
-                "from": request.headers.get('X-Email', "none"),
+                "from": user_email,
             } for s in selected_student_ids]
             data.save_docs(docs)
             return "Kudos awarded", "secondary", disabled_outputs
@@ -200,4 +231,103 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
         return "Select one or more students to award kudos", "secondary", disabled_outputs
     else:
         return "Only Sixth Form staff can award kudos to these students", "secondary", disabled_outputs
+
+@app.callback(
+[
+    Output({
+                "section": "sixthform",
+                "type": "toast",
+                "page": "student",
+                "tab": "kudos",
+                "name": "notifications"
+    }, "is_open"),
+    Output({
+                "section": "sixthform",
+                "type": "toast",
+                "page": "student",
+                "tab": "kudos",
+                "name": "notifications"
+    }, "children"),
+],
+[
+    Input(
+        {
+        "section": "sixthform",
+            "type": "button",
+            "page": "student",
+            "tab": "kudos",
+            "name": "submit"
+        }, "n_clicks")
+], [
+   State("sixthform-selected-store", "data"),
+    State(
+        {
+        "section": "sixthform",
+            "type": "input",
+            "page": "student",
+            "tab": "kudos",
+            "name": "description"
+        }, "value"),
+    State(
+        {
+        "section": "sixthform",
+            "type": "dropdown",
+            "page": "student",
+            "tab": "kudos",
+            "name": "value"
+        }, "value"),
+    State(
+        {
+        "section": "sixthform",
+            "type": "dropdown",
+            "page": "student",
+            "tab": "kudos",
+            "name": "points"
+        }, "value"),
+    State(
+        {
+        "section": "sixthform",
+            "type": "button",
+            "page": "student",
+            "tab": "kudos",
+            "name": "submit"
+        }, "color"),
+    State(
+    {
+        "section": "sixthform",
+        "type": "checkbox",
+        "page": "student",
+        "tab": "kudos",
+        "name": "notify"
+    }, "value"),
+]
+,
+    prevent_initial_call=True)
+def send_email(n_clicks, selected_student_ids, description, ada_value, points, button_color, notify):
+    if not notify or not selected_student_ids or n_clicks < 1 or button_color != 'primary':
+        raise PreventUpdate
+
+    user_email = request.headers.get("X-Email")
+    enrolment_docs = data.get_students(selected_student_ids)
+    emails = [doc.get('student_email') for doc in enrolment_docs if doc.get('student_email', False)]
+    body = f'''
+        Well done!
+
+        You've been awarded {int(points)} kudos {"points" if points > 1  else "point"} for {ada_value} from {user_email}.
+        '''
+    if description:
+        body += f'''
+        They said,
+        "{description}"
+        '''
+    message = EmailMessage(subject='Kudos!', body=body, bcc=emails)
+    try:
+        app.logger.info(f"Sending email: kudos from {user_email} to {emails}")
+        message.send(fail_silently=False)
+        app.logger.info(f"Email sent: kudos from {user_email} to {emails}")
+        return True, f"Email sent to {', '.join(emails)}"
+    except:
+        app.logger.info(f"Email failed: kudos from {user_email} to {emails}")
+        return True, f"Email not sent. The problem has been logged"
+
 

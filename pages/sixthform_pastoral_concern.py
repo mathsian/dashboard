@@ -1,10 +1,8 @@
-import filters
 import dash_tabulator
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
-import dash_table
+from dash import dash_table
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots

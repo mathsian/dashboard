@@ -229,4 +229,5 @@ def get_instances_from_rems():
 
 
 if __name__ == "__main__":
-    pass
+    app_data.update_learners(get_apprentices_from_rems())
+
