@@ -1,12 +1,11 @@
-import os
 from flask import Flask
+import os
+from configparser import ConfigParser
 from flask_mailman import Mail
 import dash
 import dash_bootstrap_components as dbc
-from configparser import ConfigParser
 
 server = Flask(__name__)
-mail = Mail()
 
 config_object = ConfigParser()
 config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
@@ -23,6 +22,7 @@ server.config['MAIL_TIMEOUT'] = 10
 server.config['MAIL_DEFAULT_SENDER'] = mail_config['username']
 server.config['MAIL_BACKEND'] = 'smtp'
 
+mail = Mail()
 mail.init_app(server)
 
 # Create dash app
