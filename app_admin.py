@@ -229,5 +229,6 @@ def get_instances_from_rems():
 
 
 if __name__ == "__main__":
+    for c in get_cohorts_from_rems():
+        app_data.add_cohort(c.get('cohort'))
     app_data.update_learners(get_apprentices_from_rems())
-
