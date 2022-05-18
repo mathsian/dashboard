@@ -26,7 +26,7 @@ select
     , concat(trim(code), '-', trim(instance)) cohort
     , isnull(CMPN_Company_Name, 'No employer') employer
     , case
-               when completion_stat = 1 and year < (select max(CCAL_Year) from remslive.dbo.CCALCalend)
+               when completion_stat = 1 and year < '2021'
                    then 'Withdrawn'
                when completion_stat = 1 then 'Continuing'
                when completion_stat = 3 and reason = 40 then 'Transferred'
