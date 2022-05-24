@@ -160,8 +160,9 @@ def get_subjects(cohort, db_name=None):
 def get_assessments(cohort, subject, db_name=None):
     with Connection(db_name) as db:
         result = db.get_view_result('assessment', 'unique_cohort_subject_assessments',
-                                    group=True)[[cohort, subject]:[cohort, subject, 'ZZZ']]
-    return [r['key'][2] for r in result]
+                                    group=True, descending=True)[[cohort, subject, '3000-01-01', 'ZZZ']:[cohort, subject, '2000-01-01', None]]
+        print(result)
+    return [r['key'][3] for r in result]
 
 def get_doc(id, db_name=None):
     with Connection(db_name) as db:
