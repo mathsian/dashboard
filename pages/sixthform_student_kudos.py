@@ -1,5 +1,4 @@
 from flask import request
-from flask_mailman import EmailMessage
 import dash_tabulator
 import dash
 import plotly.express as px
@@ -22,6 +21,18 @@ from dash_extensions.javascript import Namespace
 from flask import session
 from dash import callback_context as cc
 import datetime
+
+
+#import tasks
+from configparser import ConfigParser
+from redmail import gmail
+config_object = ConfigParser()
+config_file = 'config.ini'
+config_object.read(config_file)
+mail_config = config_object['SMTP']
+
+gmail.username = mail_config['username']
+gmail.password = mail_config['password']
 
 ns = Namespace("myNameSpace", "tabulator")
 value_input = html.Div([
@@ -320,14 +331,15 @@ def send_email(n_clicks, selected_student_ids, description, ada_value, points, b
         They said,
         "{description}"
         '''
-    message = EmailMessage(subject='Kudos!', body=body, bcc=emails)
     try:
         app.logger.info(f"Sending email: kudos from {user_email} to {emails}")
-        message.send(fail_silently=False)
+        gmail.send(subject='Kudos!',
+                bcc=["ian@ada.ac.uk"],
+                text=body
+                )
         app.logger.info(f"Email sent: kudos from {user_email} to {emails}")
         return True, f"Email sent to {', '.join(emails)}"
-    except:
+    except Exception as e:
         app.logger.info(f"Email failed: kudos from {user_email} to {emails}")
+        app.logger.info(f"{e}")
         return True, f"Email not sent. The problem has been logged"
-
-
