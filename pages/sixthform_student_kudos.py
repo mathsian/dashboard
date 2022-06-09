@@ -334,7 +334,7 @@ def send_email(n_clicks, selected_student_ids, description, ada_value, points, b
     try:
         app.logger.info(f"Sending email: kudos from {user_email} to {emails}")
         gmail.send(subject='Kudos!',
-                bcc=["ian@ada.ac.uk"],
+                bcc=emails,
                 text=body
                 )
         app.logger.info(f"Email sent: kudos from {user_email} to {emails}")
