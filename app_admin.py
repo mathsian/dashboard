@@ -51,7 +51,8 @@ def upload_apps_from_firestore(db_name):
                          left_on='student_id',
                          right_on='_id',
                          suffixes=('', '_old'))
-    to_add = merged_df.query('_id.isnull()').eval('_id = student_id')[data.APPRENTICE_SCHEMA].copy()
+    to_add = merged_df.query('_id.isnull()').eval('_id = student_id')[
+        data.APPRENTICE_SCHEMA].copy()
     to_update = merged_df.query('not _id.isnull() and not student_id.isnull()'
                                 )[data.APPRENTICE_SCHEMA + ['_rev']].copy()
     to_remove = merged_df.query('student_id.isnull()').copy()
@@ -86,9 +87,11 @@ def upload_modules_from_firestore(db_name):
             result = m.get().to_dict()
             result.update({'student_id': student_id})
             result.update({'type': "result"})
-            unused_keys = [k for k in result.keys() if k not in data.RESULT_SCHEMA]
+            unused_keys = [
+                k for k in result.keys() if k not in data.RESULT_SCHEMA
+            ]
             for k in unused_keys:
-                result.pop(k, None) # remove unused key if it exists
+                result.pop(k, None)  # remove unused key if it exists
             module_records.append(result)
     firestore_df = pd.DataFrame.from_records(module_records)
     # convert from google datetimeinnanoseconds to string and fill nas with ''
