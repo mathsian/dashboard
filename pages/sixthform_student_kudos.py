@@ -324,7 +324,7 @@ def send_email(n_clicks, selected_student_ids, description, ada_value, points, b
     body = f'''
         Well done!
 
-        You've been awarded {int(points)} kudos {"points" if points > 1  else "point"} for {ada_value} from {user_email}.
+        You've been awarded {int(points)} kudos {"point" if int(points) == 1  else "points"} for {ada_value} from {user_email}.
         '''
     if description:
         body += f'''
