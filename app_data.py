@@ -26,6 +26,22 @@ def get_cohort_list():
     return result
 
 
+def get_cohorts_by_employer(employer):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            select distinct name
+            from cohorts
+            left join students on students.cohort_id = cohorts.id
+            where students.employer = %(employer)s
+            order by name;
+            """, {"employer": employer})
+            # default is list of tuples
+            result = [c[0] for c in cur.fetchall()]
+    return result
+
+
 def get_employer_list():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -179,6 +195,48 @@ def get_student_results_by_cohort_instance(cohort_name, instance_code):
     return result
 
 
+def get_student_results_by_employer_cohort(employer, cohort_name=None):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            sql = """
+                select
+                    s.family_name
+                    , s.given_name
+                    , m.level
+                    , m.name
+                    , i.start_date
+                    , i.code
+                    , round(cast(sum(r.value * c.weight) as float)/sum(c.weight)) mark
+                from cohorts h
+                left join students s on h.id = s.cohort_id
+                left join results r on s.id = r.student_id
+                left join components c on r.component_id = c.id
+                left join instances i on c.instance_id = i.id
+                left join modules m on i.module_id = m.id
+                where s.employer = %(employer)s
+                """
+            if cohort_name and cohort_name != "All":
+                sql += """
+                and h.name = %(cohort_name)s
+                """
+            sql += """
+                group by
+                s.family_name
+                , s.given_name
+                , m.level
+                , m.name
+                , i.start_date
+                , i.code;
+               """
+            cur.execute(sql, {
+                "cohort_name": cohort_name,
+                "employer": employer
+            })
+            result = cur.fetchall()
+    return result
+
+
 def get_results_for_student(student_id):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -257,7 +315,7 @@ def get_result_for_instance(student_id, instance_code):
                     else sum(c.weight)
                 end ::integer "Weighting"
                 , case
-                    when grouping(c.name) = 1 then round(cast(sum(r.value * c.weight) as float)/100)
+                    when grouping(c.name) = 1 then round(cast(sum(r.value * c.weight) as float)/sum(c.weight))
                     else r.value
                 end ::integer "Mark"
                 from instances i
@@ -683,6 +741,24 @@ insert into students (id, given_name, family_name, status, employer, cohort_id, 
                     updated_at = excluded.updated_at;
                 """, learner)
                 return_value += cur.rowcount
+    return return_value
+
+
+def update_component_name(instance_code, old_name, new_name, weight):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                    update components set name = %(new_name)s, weight = %(weight)s
+                    where name = %(old_name)s and instance_id = (select id from instances where code = %(instance_code)s);
+                    """, {
+                    "old_name": old_name,
+                    "new_name": new_name,
+                    "instance_code": instance_code,
+                    "weight": weight
+                })
+            return_value = cur.rowcount
     return return_value
 
 
