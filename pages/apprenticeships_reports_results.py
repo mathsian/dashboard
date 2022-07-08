@@ -21,7 +21,6 @@ results_table = dash_tabulator.DashTabulator(
         options={
             "resizableColumns": False,
             "height": "70vh",
-            "pagination": "local",
             "clipboard": "copy",
             "layout": "fitData"
         }
@@ -60,7 +59,8 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
 def update_table(results):
     if not results:
         return "No results for these learners."
-    results_df = pd.DataFrame.from_records(results).sort_values(['level', 'start_date', 'family_name', 'given_name' ])
+    # drop if name is None - learners with no module results yet
+    results_df = pd.DataFrame.from_records(results).sort_values(['level', 'start_date', 'family_name', 'given_name' ]).dropna(subset=['name', 'short'])
     # results_df['Class'] = pd.Categorical(
     #     results_df['mark'].fillna(-1).apply(lambda t: get_class(t)),
     #     ['TBA', 'Fail', 'Pass', 'Merit', 'Distinction'])
@@ -97,16 +97,3 @@ def update_table(results):
     results_df.columns = [s for l,n,s in results_df.columns]
     data = results_df.reset_index().to_dict(orient='records')
     return columns, data
-
-
-def get_class(mark):
-    if mark >= 69.5:
-        return 'Distinction'
-    elif mark >= 59.5:
-        return 'Merit'
-    elif mark >= 39.5:
-        return 'Pass'
-    elif mark >= 0:
-        return 'Fail'
-    else:
-        return 'TBA'
