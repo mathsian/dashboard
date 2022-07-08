@@ -9,18 +9,29 @@ import pandas as pd
 from app import app
 import app_data
 
-results_table = html.Div(
-    id={
-        "section": "apprenticeships",
-        "page": "reports",
-        "tab": "results",
-        "type": "table",
-        "name": "results"
-    })
-layout = dbc.Container([dbc.Row([dbc.Col([results_table])])])
+results_table = dash_tabulator.DashTabulator(
+        id={
+                "section": "apprenticeships",
+                "page": "reports",
+                "tab": "results",
+                "type": "table",
+                "name": "results"
+            },
+        theme='bootstrap/tabulator_bootstrap4',
+        options={
+            "resizableColumns": False,
+            "height": "70vh",
+            "pagination": "local",
+            "clipboard": "copy",
+            "layout": "fitData"
+        }
+    )
+
+layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
 
 
 @app.callback(
+    [
     Output(
         {
             "section": "apprenticeships",
@@ -28,7 +39,16 @@ layout = dbc.Container([dbc.Row([dbc.Col([results_table])])])
             "tab": "results",
             "type": "table",
             "name": "results"
-        }, "children"), [
+        }, "columns"),
+    Output(
+        {
+            "section": "apprenticeships",
+            "page": "reports",
+            "tab": "results",
+            "type": "table",
+            "name": "results"
+        }, "data"),
+    ],[
             Input(
                 {
                     "type": "storage",
@@ -44,11 +64,39 @@ def update_table(results):
     # results_df['Class'] = pd.Categorical(
     #     results_df['mark'].fillna(-1).apply(lambda t: get_class(t)),
     #     ['TBA', 'Fail', 'Pass', 'Merit', 'Distinction'])
-    results_df = results_df.drop_duplicates(subset=['family_name', 'given_name', 'level', 'name'], keep='last')
-    results_df = results_df.set_index(['family_name', 'given_name', 'level', 'name'])['mark']
-    results_df = results_df.unstack(['level', 'name'], fill_value="")
+    results_df = results_df.drop_duplicates(subset=['family_name', 'given_name', 'level', 'name', 'short'], keep='last')
+    results_df = results_df.set_index(['family_name', 'given_name', 'level', 'name', 'short'])['mark']
+    results_df = results_df.unstack(['level', 'name', 'short'], fill_value="")
     results_df.index.set_names(['Family name', 'Given name'], inplace=True)
-    return dbc.Table.from_dataframe(results_df, index=True, responsive=True)
+    group_columns = [
+        {"title": l,
+         "columns": [
+            {
+                "title": s,
+                "field": s,
+                "headerTooltip": n,
+            } for (n,s) in results_df[(l,)].columns
+        ]} for l in results_df.columns.unique(0)
+    ]
+    columns=[
+        {
+            "title": "Family name",
+            "field": "Family name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "search",
+            "frozen": True
+        },
+        {
+            "title": "Given name",
+            "field": "Given name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "search",
+            "frozen": True
+        },
+    ] + group_columns
+    results_df.columns = [s for l,n,s in results_df.columns]
+    data = results_df.reset_index().to_dict(orient='records')
+    return columns, data
 
 
 def get_class(mark):
