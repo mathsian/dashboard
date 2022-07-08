@@ -205,6 +205,7 @@ def get_student_results_by_employer_cohort(employer, cohort_name=None):
                     , s.given_name
                     , m.level
                     , m.name
+                    , m.short
                     , i.start_date
                     , i.code
                     , round(cast(sum(r.value * c.weight) as float)/sum(c.weight)) mark
@@ -226,6 +227,7 @@ def get_student_results_by_employer_cohort(employer, cohort_name=None):
                 , s.given_name
                 , m.level
                 , m.name
+                , m.short
                 , i.start_date
                 , i.code;
                """
