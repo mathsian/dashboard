@@ -17,7 +17,7 @@ from (
 	from reports.DASH.vw_Current_Full_Marks
 	where past = 1
 	and StuType = 'AP'
-	and RGAT_Possible = 1
+	and (RGAT_Possible = 1 or MissingMark = 1)
 	and LiveStu = 1
 	group by cube(REGT_Student_ID, month_start)
 
