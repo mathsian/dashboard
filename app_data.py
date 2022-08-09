@@ -160,7 +160,7 @@ def get_results_for_instance_code(instance_code):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select results.id result_id, given_name, family_name, students.id student_id,
+            select results.id result_id, given_name, family_name, college_email, students.id student_id,
             components.name, value, capped, weight, comment
             from results
             left join components on results.component_id = components.id
