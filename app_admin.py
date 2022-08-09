@@ -201,7 +201,7 @@ def get_cohorts_from_rems():
     return cohorts_df.to_dict(orient='records')
 
 
-def get_instances_from_rems():
+def get_upcoming_instances_from_rems():
     # Get connection settings
     config_object = ConfigParser()
     config_object.read("config.ini")
@@ -212,23 +212,25 @@ def get_instances_from_rems():
     conn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
-    instances_sql = """
-        select
-           trim(TTGP_Group_Code) code
-            , format(min(REGH_Register_Start_Date), 'yyyy-MM-dd') start_date
-        from remslive.dbo.STEM
-        inner join remslive.dbo.TTPQTimetablePQU
-        on STEM_Provision_Code = TTPQ_Provision_Code and STEM_Provision_Instance = TTPQ_Provision_Instance
-        left join remslive.dbo.TTGPTimetableGroups
-        on TTPQ_Group_ISN = TTGP_ISN
-        left join remslive.dbo.REGHrghdr on TTGPTimetableGroups.TTGP_ISN = REGHrghdr.REGH_Group_ISN
-        where STEM_Aim_Type = '1'
-        and TTGP_Created_Date > '2022-01-01'
-        group by TTGP_Group_Code
-        order by min(REGH_Register_Start_Date) desc;
-    """
-    instances_df = pd.read_sql(instances_sql, conn)
+    query = open('./sql/upcoming_apprenticeship_teaching_groups.sql', 'r')
+    instances_df = pd.read_sql_query(query.read(), conn)
     return instances_df
+
+
+def get_upcoming_students_from_rems():
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    query = open('./sql/upcoming_apprenticeship_students.sql', 'r')
+    students_df = pd.read_sql_query(query.read(), conn)
+    return students_df
 
 
 if __name__ == "__main__":
