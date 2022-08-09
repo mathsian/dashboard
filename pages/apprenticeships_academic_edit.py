@@ -113,7 +113,7 @@ def update_subject_table(store_data, changed, row_data):
     components_dicts = app_data.get_results_for_instance_code(instance_code)
     if not components_dicts:
         return [], [], "There are no students in this instance yet"
-    components_df = pd.DataFrame.from_records(components_dicts, columns=["result_id", "given_name", "family_name", "student_id", "name", "value", "capped", "weight", "comment"])
+    components_df = pd.DataFrame.from_records(components_dicts, columns=["result_id", "given_name", "family_name", "college_email", "student_id", "name", "value", "capped", "weight", "comment"])
     # Calculate module results from components
     components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer').round(2)
     components_df.eval("weighted_value = value * weight", inplace=True)
@@ -122,7 +122,7 @@ def update_subject_table(store_data, changed, row_data):
     results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight + 0.0001")["total"].round(0).astype("Int64")
     # Number duplicate components so we can unstack the dataframe later
     components_df["name"] = components_df["name"] + components_df.groupby(["student_id", "name"]).cumcount().astype(str).replace('0', '')
-    components_df = components_df.set_index(["student_id", "given_name", "family_name", "name"])[["result_id", "value", "capped", "comment"]]
+    components_df = components_df.set_index(["student_id", "given_name", "family_name", "college_email", "name"])[["result_id", "value", "capped", "comment"]]
     pivoted_components_df = components_df.unstack().swaplevel(axis=1).sort_index(axis=1, ascending=[True, False])
     # Columns is still a multiindex
     component_columns = pivoted_components_df.columns.to_flat_index()
@@ -185,7 +185,7 @@ def build_columns(pivoted_components_df, editable):
         },
         {
             "title": "Email",
-            "field": "email",
+            "field": "college_email",
             "visible": False,
             "clipboard": "true",
             "download": "true"
@@ -209,14 +209,14 @@ def build_columns(pivoted_components_df, editable):
                                    "editor": editable,
                                    "align": "center",
                                    "clipboard": False,
-                                   "download": True,
+                                   "download": False,
                                    "formatter": "tickCross",
                                    "formatterParams": {"crossElement": False}, "widthGrow": 1})
         elif column_type == 'comment':
             columns_middle.append({"title": "Comment",
                                    "field": f'{component}:comment',
                                    "clipboard": False,
-                                   "download": True,
+                                   "download": False,
                                    "editor": "textarea" if editable else False})
 
     columns_end = [{
@@ -224,7 +224,7 @@ def build_columns(pivoted_components_df, editable):
             "field": "total",
             "widthGrow": 1,
         "clipboard": False,
-        "download": True
+        "download": False
         },
                        ]
     return columns_start + columns_middle + columns_end
