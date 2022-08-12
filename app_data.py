@@ -501,6 +501,32 @@ def get_results_by_employer_cohort_module(employer, cohort, module):
     return result
 
 
+def get_upcoming_class_lists():
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                select
+                i.code code
+                , i.start_date start_date
+                , si.student_id student_id
+                , s.given_name given_name
+                , s.family_name family_name
+                , s.college_email email
+                , s.employer employer
+                , c.name cohort
+                from students_instances si
+                left join students s on si.student_id = s.id
+                left join instances i on si.instance_id = i.id
+                left join cohorts c on c.id = s.cohort_id
+                where date_part('days', i.start_date - now()) > -90
+           """)
+            result = cur.fetchall()
+    return result
+
+
+
 def set_result(result_id, new_value, new_capped, new_comment, lecturer):
     return_value = False
     with psycopg.connect(
