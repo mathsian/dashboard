@@ -12,6 +12,7 @@ from pages import (
     sixthform_academic_view, sixthform_academic_edit, sixthform_student,
     sixthform_student_report, sixthform_student_kudos,
     sixthform_student_concern, apprenticeships_academic,
+    apprenticeships_info, apprenticeships_info_upcoming,
     apprenticeships_academic_edit, apprenticeships_academic_view, apprenticeships_academic_details,
     apprenticeships_attendance, apprenticeships_attendance_year,
     apprenticeships_cohorts, apprenticeships_cohorts_report,
@@ -136,6 +137,9 @@ content = {
         ]
     },
     Section("Apprenticeships", "apprenticeships"): {
+        Page("Info", "info", apprenticeships_info.layout): [
+            Tab("Upcoming", "upcoming", apprenticeships_info_upcoming.layout),
+        ],
         Page("Academic", "academic", apprenticeships_academic.layout): [
             Tab("Edit", "edit", apprenticeships_academic_edit.layout),
             Tab("View", "view", apprenticeships_academic_view.layout),
