@@ -1,19 +1,13 @@
-import dash_tabulator
-import datetime
 import pyodbc
 from os.path import abspath
 import jinja2
 from configparser import ConfigParser
-from dash import dcc, html
+from dash import dcc
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
-import plotly.graph_objects as go
-import numpy as np
-import curriculum
 from app import app
-import data
 from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
