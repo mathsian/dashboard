@@ -38,7 +38,8 @@ student_table = dash_tabulator.DashTabulator(
         "selectable": True,
         "maxHeight": "70vh",
         "dataLoaded": ns("dataLoaded"),
-        "rowSelected": ns("rowSelected")
+        "rowSelected": ns("rowSelected"),
+        "initialSort": [{'column': 'given_name', 'dir': 'asc'}, {'column': 'family_name', 'dir': 'asc'}]
     },
     theme='bootstrap/tabulator_bootstrap4',
     columns=[
@@ -78,7 +79,7 @@ layout = [
     dcc.Store(id="sixthform-student-store", storage_type='memory'),
     dcc.Store(id="sixthform-selected-store", storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col(student_table))
+    dbc.Row(dbc.Col(dcc.Loading(student_table)))
 ]
 
 
