@@ -78,8 +78,11 @@ def update_assessments(pathname, search, subject):
         return cohort, cohort_items, "", [], [], []
     subject = search_dict.get("subject", subjects)[0]
     assessments = data.get_assessments(cohort, subject)
-    assessment = search_dict.get("assessment",
+    if assessments:
+        assessment = search_dict.get("assessment",
                                  assessments)[0].replace('+', ' ')
+    else:
+        assessment = ""
     assessment_items = []
     for ass in assessments:
         s = urlencode(query={
