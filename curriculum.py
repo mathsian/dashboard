@@ -26,7 +26,7 @@ register_marks = {
     'Z': {'name': 'asleep', 'possible': 0, 'actual': 0},
 }
 
-this_year_start = "2021-08-01"
+this_year_start = "2022-08-01"
 
 concern_categories = ["Conduct", "Academic", "Attendance"]
 concern_categories_dropdown = {
@@ -63,7 +63,7 @@ kudos_points_dropdown = {
     ],
     "default": 1,
 }
-cohorts = ["2022", "2123"]
+cohorts = ["2123", "2224"]
 cohorts_dropdown = {
     "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
     "default": cohorts[-1],
