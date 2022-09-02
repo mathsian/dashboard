@@ -134,4 +134,5 @@ def update_pastoral_concern(store_data):
                           left_on="_id",
                           right_on="student_id").sort_values("date",
                                                              ascending=False)
-    return concern_df.to_dict(orient="records")
+    this_year_start = curriculum.this_year_start
+    return concern_df.query("date >= @this_year_start").to_dict(orient="records")

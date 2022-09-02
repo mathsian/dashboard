@@ -96,7 +96,7 @@ def update_teams(search, pathname, team):
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
-    cohort = search_dict.get('cohort', ['2123'])[0]
+    cohort = search_dict.get('cohort', [curriculum.cohorts[-1]])[0]
     teams = data.get_teams(cohort)
     # Get list of teams
     team = search_dict.get("team", ['All'])[0]
@@ -106,18 +106,19 @@ def update_teams(search, pathname, team):
         s = urlencode(query={'cohort': cohort, 'team': t})
         team_items.append(dbc.DropdownMenuItem(t, href=f'{pathname}?{s}'))
     cohort_items = []
-    for c in ['2022', '2123']:
+    for c in curriculum.cohorts:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     # Get data in scope
+    this_year_start = curriculum.this_year_start
     enrolment_docs = data.get_enrolment_by_cohort_team(cohort, team)
     student_ids = [e.get('_id') for e in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
     assessment_docs = data.get_data("assessment", "student_id", student_ids)
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
-    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
-                        pd.DataFrame.from_records(kudos_docs),
+    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
+                        pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'date', 'ada_value', 'points', 'from', 'description']).query("date >= @this_year_start"),
                         how="left",
                         left_on="_id",
                         right_on="student_id")

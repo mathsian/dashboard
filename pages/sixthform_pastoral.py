@@ -91,7 +91,7 @@ def update_teams(pathname, search, team, cohort):
     # Set teams and cohort from location
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
-    cohort = search_dict.get('cohort', ['2123'])[0]
+    cohort = search_dict.get('cohort', [curriculum.cohorts[-1]])[0]
     teams = data.get_teams(cohort)
     # Get list of teams
     team = search_dict.get("team", ['All'])[0]
@@ -101,7 +101,7 @@ def update_teams(pathname, search, team, cohort):
         s = urlencode(query={'cohort': cohort, 'team': t})
         team_items.append(dbc.DropdownMenuItem(t, href=f'{pathname}?{s}'))
     cohort_items = []
-    for c in ['2022', '2123']:
+    for c in curriculum.cohorts:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     # If the team and cohort both haven't changed then no need to update data
@@ -114,8 +114,9 @@ def update_teams(pathname, search, team, cohort):
     assessment_docs = data.get_data("assessment", "student_id", student_ids)
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
-    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
-                        pd.DataFrame.from_records(kudos_docs),
+    this_year_start = curriculum.this_year_start
+    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
+                        pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @this_year_start"),
                         how="left",
                         left_on="_id",
                         right_on="student_id")
@@ -162,11 +163,10 @@ def update_kudos_radar(store_data, current_figure):
     kudos_pivot_docs = store_data.get('kudos_pivot_docs')
     if not kudos_pivot_docs:
         current_figure["data"][0]["r"] = [0 for v in curriculum.values]
-        return [], current_figure
+        return current_figure
     kudos_pivot_df = pd.DataFrame.from_records(kudos_pivot_docs)
     r = [kudos_pivot_df[v].sum() for v in curriculum.values]
     current_figure["data"][0]["r"] = r
-    total_kudos = sum(r)
     return current_figure
 
 

@@ -68,8 +68,14 @@ layout = [
 def update_assessments(pathname, search, subject):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts from query
-    cohort = search_dict.get('cohort', ['2123'])[0]
+    cohort = search_dict.get('cohort', [curriculum.cohorts[-1]])[0]
+    cohort_items = []
+    for c in curriculum.cohorts:
+        s = urlencode(query={'cohort': c})
+        cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     subjects = [s_c for s_c, s_n in data.get_subjects(cohort)]
+    if not subjects:
+        return cohort, cohort_items, "", [], [], []
     subject = search_dict.get("subject", subjects)[0]
     assessments = data.get_assessments(cohort, subject)
     assessment = search_dict.get("assessment",
@@ -90,10 +96,6 @@ def update_assessments(pathname, search, subject):
     for sub in subjects:
         s = urlencode(query={'cohort': cohort, 'subject': sub})
         subject_items.append(dbc.DropdownMenuItem(sub, href=f'{pathname}?{s}'))
-    cohort_items = []
-    for c in ['2022', '2123']:
-        s = urlencode(query={'cohort': c})
-        cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     assessment_docs = data.get_data("assessment", "assessment_subject_cohort",
                                     [(assessment, subject, cohort)])
     enrolment_docs = data.get_data(
