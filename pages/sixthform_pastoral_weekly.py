@@ -29,7 +29,8 @@ weekly_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "height": "70vh",
         "pagination": "local",
-        "clipboard": "copy"
+        "clipboard": "copy",
+        "initialSort": [{"column": "family_name", "dir": "asc"}, {"column": "given_name", "dir": "asc"}, {"column": "pr", "dir": "asc"}]
     },
     columns=[
         {
@@ -45,6 +46,7 @@ weekly_table = dash_tabulator.DashTabulator(
         {
             "title": "Present",
             "field": "pr",
+            "sorter": "number",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": "<",
@@ -53,6 +55,7 @@ weekly_table = dash_tabulator.DashTabulator(
         {
             "title": "Authorised",
             "field": "au",
+            "sorter": "number",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": ">",
@@ -61,6 +64,7 @@ weekly_table = dash_tabulator.DashTabulator(
         {
             "title": "Unauthorised",
             "field": "un",
+            "sorter": "number",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": ">",
@@ -69,6 +73,7 @@ weekly_table = dash_tabulator.DashTabulator(
         {
             "title": "Late",
             "field": "la",
+            "sorter": "number",
             "hozAlign": "right",
             "headerFilter": True,
             "headerFilterFunc": ">",
@@ -146,6 +151,6 @@ def update_weekly_table(store_data, picker_value):
                                    attendance_df.round(),
                                    how='left',
                                    left_on='_id',
-                                   right_on='student_id').sort_values('pr')
+                                   right_on='student_id')
     return merged_df.to_dict(orient='records'), "Week beginning " + data.format_date(attendance_df["date"].iloc[0])
 

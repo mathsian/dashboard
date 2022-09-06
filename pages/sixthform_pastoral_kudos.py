@@ -24,7 +24,8 @@ kudos_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "height": "70vh",
         "pagination": "local",
-        "clipboard": "copy"
+        "clipboard": "copy",
+        "initialSort": [{"column": "family_name", "dir": "asc"}, {"column": "given_name", "dir": "asc"}, {"column": "total", "dir": "desc"}]
     },
     columns=[
         {
@@ -40,12 +41,14 @@ kudos_table = dash_tabulator.DashTabulator(
     ] + [{
         "title": v,
         "field": v,
+        "sorter": "number",
         "headerHozAlign": "right",
         "hozAlign": "right",
         "topCalc": "sum"
     } for v in curriculum.values] + [{
         "title": "Total",
         "field": "total",
+        "sorter": "number",
         "headerHozAlign": "right",
         "hozAlign": "right",
         "topCalc": "sum"

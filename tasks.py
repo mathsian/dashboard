@@ -10,6 +10,7 @@ import data
 import app_data
 from configparser import ConfigParser
 import curriculum
+import admin
 
 config_object = ConfigParser()
 config_file = 'config.ini'
@@ -36,6 +37,17 @@ app = Celery(
     f'couchdb://{couchdb_user}:{couchdb_password}@{couchdb_ip}:{couchdb_port}/{couchdb_db}',
     broker=f'amqp://{rabbitmq_user}:{rabbitmq_password}@localhost:5672/')
 
+app.conf.beat_schedule = {
+    "sync sf attendance": {
+        "task": "tasks.sync_attendance",
+        "schedule": 60
+    }
+}
+
+@app.task
+def sync_attendance():
+    admin.sync_rems_attendance("weekly", "ada")
+    admin.sync_rems_attendance("monthly", "ada")
 
 @app.task
 def send_email(subject, body, to_list=None, cc_list=None, bcc_list=None):
