@@ -106,7 +106,8 @@ concern_table = dash_tabulator.DashTabulator(
         # "maxHeight": "70vh",
         "clipboard": "copy",
         "height": "70vh",
-        "pagination": "local"
+        "pagination": "local",
+        "initialSort": [{"column": "family_name", "dir": "asc"}, {"column": "given_name", "dir": "asc"}, {"column": "date", "dir": "desc"}]
     },
 )
 

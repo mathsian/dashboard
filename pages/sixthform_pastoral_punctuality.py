@@ -19,6 +19,7 @@ punctuality_table = dash_tabulator.DashTabulator(
         "resizableColumns": False,
         "clipboard": "copy",
         "height": "70vh",
+        "initialSort": [{"column": "family_name", "dir": "asc"}, {"column": "given_name", "dir": "asc"}, {"column": "cumulative_percent_punctual", "dir": "asc"}],
         "pagination": "local"
     },
     theme='bootstrap/tabulator_bootstrap4',
@@ -97,6 +98,7 @@ def update_pastoral_punctuality(store_data):
         {
             "title": data.format_date(d),
             "field": d,
+            "sorter": "number",
             "headerHozAlign": "right",
             "hozAlign": "right",
             "headerFilter": True,
@@ -107,6 +109,7 @@ def update_pastoral_punctuality(store_data):
     columns.append({
         "title": "This year",
         "field": "cumulative_percent_punctual",
+        "sorter": "number",
         "headerHozAlign": "right",
         "hozAlign": "right",
         "headerFilter": True,
