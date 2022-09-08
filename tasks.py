@@ -1,5 +1,6 @@
 from pathlib import Path
 from celery import Celery
+from celery.schedules import crontab
 from datetime import date
 import os
 from redmail import gmail
@@ -40,7 +41,7 @@ app = Celery(
 app.conf.beat_schedule = {
     "sync sf attendance": {
         "task": "tasks.sync_attendance",
-        "schedule": 60
+        "schedule": crontab(minute='*/15', hour='8-16', day_of_week='mon-fri')
     }
 }
 
