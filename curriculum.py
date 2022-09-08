@@ -96,6 +96,7 @@ scales = {
         "D*D*D*",
     ],
     "Expectations": ["Insufficient Information", "Below Expectations", "Meets Expectations", "Exceeds Expectations"],
+    "Expectations22": ["Below Expectations", "Meets Expectations"],
     "Certificate": ["Not yet passed", "Passed"],
     "Percentage": []
 }
