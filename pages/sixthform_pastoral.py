@@ -111,7 +111,7 @@ def update_teams(pathname, search, team, cohort):
     enrolment_docs = data.get_enrolment_by_cohort_team(cohort, team)
     student_ids = [e.get('_id') for e in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
-    assessment_docs = data.get_data("assessment", "student_id", student_ids)
+    # assessment_docs = data.get_data("assessment", "student_id", student_ids)
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
     this_year_start = curriculum.this_year_start
@@ -137,7 +137,7 @@ def update_teams(pathname, search, team, cohort):
         "student_ids": student_ids,
         "enrolment_docs": enrolment_docs,
         "attendance_docs": attendance_docs,
-        "assessment_docs": assessment_docs,
+        # "assessment_docs": assessment_docs,
         "kudos_docs": kudos_docs,
         "kudos_pivot_docs": kudos_pivot_docs,
         "concern_docs": concern_docs,
