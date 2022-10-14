@@ -166,7 +166,7 @@ def build_columns(pivoted_components_df, editable):
             "headerFilter": True,
             "headerFilterPlaceholder": "Search",
             "widthGrow": 2,
-           "frozen": True
+            "frozen": True
         },
        {
             "title": "Family name",
