@@ -218,7 +218,7 @@ def update_student_report(store_data):
         return "Select a student to view their report", "", blank_figure, [], [], []
     student_id = store_data[-1]
     enrolment_doc = data.get_student(student_id)
-    heading = f'{enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'
+    heading = f'{enrolment_doc.get("_id")} {enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'
     assessment_docs = data.get_data("assessment", "student_id", student_id)
     assessment_children = []
     if len(assessment_docs) > 0:
