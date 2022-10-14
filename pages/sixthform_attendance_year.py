@@ -104,10 +104,10 @@ def update_attendance_dashboard(threshold, store_data):
     rems_df["lowc"] = (rems_df["cumulative"] < threshold).astype('int')
     # For monthly graph
     monthly_df = rems_df.query('date != "Year" & student_id == "All"')
-    months = list(monthly_df['date'])
+    monthly_df['date'] = monthly_df['date'].astype('datetime64')
     monthly_figure = go.Figure(
         data=[
-            go.Bar(x=monthly_df['date'].astype('datetime64'),
+            go.Bar(x=monthly_df['date'],
                    y=monthly_df['attendance'],
                    text=monthly_df['attendance'],
                    textposition='auto',
@@ -116,7 +116,7 @@ def update_attendance_dashboard(threshold, store_data):
                    xperiod='M1',
                    xperiodalignment='middle',
                    name="Monthly"),
-            go.Scatter(x=monthly_df['date'].astype('datetime64'),
+            go.Scatter(x=monthly_df['date'],
                        y=monthly_df['cumulative'],
                        text=monthly_df['cumulative'],
                        textposition='top center',
