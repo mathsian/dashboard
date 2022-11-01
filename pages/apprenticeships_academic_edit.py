@@ -21,7 +21,7 @@ result_table = dash_tabulator.DashTabulator(
     },
     options={
         "layout": "fitDataTable",
-        "height": "65vh",
+        #"height": "65vh",
         "placeholder": "Select a module",
         "resizableColumns": False,
         "index": "_id",
