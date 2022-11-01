@@ -1,6 +1,7 @@
 import pyodbc
 import data
 import app_data
+import tasks
 import pandas as pd
 from configparser import ConfigParser
 import datetime
@@ -228,12 +229,45 @@ def get_upcoming_students_from_rems():
     conn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
-    query = open('./sql/upcoming_apprenticeship_students.sql', 'r')
+    query = open('./sql/upcoming_apprenticeships_students.sql', 'r')
     students_df = pd.read_sql_query(query.read(), conn)
     return students_df
 
+
+def merge_from_rems():
+    # add new instances
+    instances_rems_df = get_upcoming_instances_from_rems().set_index('code')
+    for code in instances_rems_df.index:
+        result = app_data.add_instance(instances_rems_df.loc[code, 'short'], code, instances_rems_df.loc[code, 'starting'])
+        # If instance exists then result will be 0
+        # Otherwise result will be 1
+        if result == 1:
+            app_data.add_component_to_instance(code, 'Coursework', 100)
+        # But for already created instances we can check the number of components and add one if there aren't any
+        components = app_data.get_components_by_instance_code(code)
+        if not components:
+            app_data.add_component_to_instance(code, 'Coursework', 100)
+    # sync class lists
+    upcoming_rems_df = get_upcoming_students_from_rems()
+    upcoming_rems_df['student_id'] = pd.to_numeric(upcoming_rems_df['student_id'])
+    upcoming_rems_df.set_index(['code', 'student_id'], inplace=True)
+    upcoming_pg_df = pd.DataFrame.from_records(app_data.get_upcoming_students_instances()).set_index(['code', 'student_id'])
+    upcoming_merge_df = pd.merge(left=upcoming_rems_df, right=upcoming_pg_df, how='outer', left_index=True, right_index=True, indicator=True)
+    # add missing students to instances
+    for (code, student_id) in upcoming_merge_df.query('_merge == "left_only"').index:
+        app_data.add_student_to_instance(student_id, code, 'ian@ada.ac.uk')
+    # remove students who are no longer in instance, only if they have no results
+    for (code, student_id) in upcoming_merge_df.query('_merge == "right_only"').index:
+        print(code, student_id)
+
+def add_and_populate_instance(short, code, start_date, components, student_ids):
+    app_data.add_instance(short, code, start_date)
+    for component in components:
+        app_data.add_component_to_instance(code, component['name'], component['weight'])
+    app_data.add_students_to_instance(student_ids, code, 'ian@ada.ac.uk')
 
 if __name__ == "__main__":
     for c in get_cohorts_from_rems():
         app_data.add_cohort(c.get('cohort'))
     app_data.update_learners(get_apprentices_from_rems())
+    merge_from_rems()
