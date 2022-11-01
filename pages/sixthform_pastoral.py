@@ -115,8 +115,9 @@ def update_teams(pathname, search, team, cohort):
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
     this_year_start = curriculum.this_year_start
+    kudos_start = curriculum.kudos_start
     kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
-                        pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @this_year_start"),
+                        pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @kudos_start"),
                         how="left",
                         left_on="_id",
                         right_on="student_id")

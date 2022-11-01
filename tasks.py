@@ -148,10 +148,21 @@ def send_result(student_id, instance_code):
     components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component').fillna("")
     student_dict = app_data.get_student_by_id(student_id)
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
+    results_dict = app_data.get_detailed_results_for_student(student_id)
+    results_df = pd.DataFrame.from_records(results_dict).query('moderated')
+    results_df.sort_values(by=['level', 'name'], inplace=True)
+    results_df.drop(['code', 'moderated'], axis=1, inplace=True)
+    results_df.rename(columns={'level': 'Level', 'name': 'Module', 'credits': 'Credits', 'total': 'Mark'}, inplace=True)
+    results_df.set_index('Module', inplace=True)
+    results_df = results_df.dropna().astype('int64')
     html = f"<p>Hi {student_dict.get('given_name')},<br/>"
-    html += f"Your marks for {instance_dict.get('name')} have now been released:</p>"
+    html += f"Your marks for {instance_dict.get('name')} have now been released.</p>"
+    html += f"<h4>{instance_dict.get('name')}</h4>"
     html += "<p>{{ marks_table }}</p>"
-    html += f"<p>This email is not monitored. If you have any queries about this result please raise a ticket with your apprenticeships helpdesk.</p>"
+    html += "<h4>Your modules</h4>"
+    html += "<p>Your moderated results so far are as follows<p>"
+    html += "<p>{{ results_table }}<p>"
+    html += f"<p>This email is not monitored. If you have any queries about any of your results please raise a ticket with your apprenticeships helpdesk.</p>"
     subject = f"{instance_dict.get('name')} result"
     receivers=[student_dict.get('college_email', 'ian@ada.ac.uk')]
     #receivers=['ian@ada.ac.uk']
@@ -159,7 +170,7 @@ def send_result(student_id, instance_code):
         receivers=receivers,
         subject=subject,
         html=html,
-        body_tables={'marks_table': components_df}
+        body_tables={'marks_table': components_df, 'results_table': results_df}
     )
     return msg.as_string()
 

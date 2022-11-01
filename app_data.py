@@ -16,7 +16,7 @@ pg_db = pg_settings["database"]
 
 def get_cohort_list():
     with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}', options='-c search_path=public') as conn:
         with conn.cursor() as cur:
             cur.execute("""
             select name from cohorts order by name;
@@ -44,7 +44,7 @@ def get_cohorts_by_employer(employer):
 
 def get_employer_list():
     with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}', options='-c search_path=public') as conn:
         with conn.cursor() as cur:
             cur.execute("""
             select distinct employer from students order by employer;
@@ -376,9 +376,10 @@ def get_student_by_id(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email
+            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, cohorts.start_date, cohorts.top_up, programmes.degree, programmes.title, programmes.pathway
             from students
             left join cohorts on cohort_id = cohorts.id
+            left join programmes on programmes.id = cohorts.programme_id
             where students.id = %(student_id)s;
             """, {"student_id": student_id})
             result = cur.fetchone()
@@ -501,26 +502,47 @@ def get_results_by_employer_cohort_module(employer, cohort, module):
     return result
 
 
+def get_upcoming_students_instances():
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                select distinct
+                  i.code code
+                , s.id student_id
+                from students s
+                left join results r on r.student_id = s.id
+                left join components p on p.id = r.component_id
+                left join instances i on i.id = p.instance_id
+                where date_part('days', i.start_date - now()) > -90
+           """)
+            result = cur.fetchall()
+    return result
+
+
 def get_upcoming_class_lists():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-                select
+                select distinct
                 i.code code
                 , i.start_date start_date
-                , si.student_id student_id
+                , s.id student_id
                 , s.given_name given_name
                 , s.family_name family_name
                 , s.college_email email
                 , s.employer employer
                 , c.name cohort
-                from students_instances si
-                left join students s on si.student_id = s.id
-                left join instances i on si.instance_id = i.id
+                from instances i
+                left join components p on p.instance_id = i.id
+                left join results r on r.component_id = p.id
+                left join students s on r.student_id = s.id
                 left join cohorts c on c.id = s.cohort_id
                 where date_part('days', i.start_date - now()) > -90
+                order by start_date desc, code, family_name, given_name
            """)
             result = cur.fetchall()
     return result
