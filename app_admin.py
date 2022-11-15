@@ -237,28 +237,35 @@ def get_upcoming_students_from_rems():
 def merge_from_rems():
     # add new instances
     instances_rems_df = get_upcoming_instances_from_rems().set_index('code')
-    for code in instances_rems_df.index:
-        result = app_data.add_instance(instances_rems_df.loc[code, 'short'], code, instances_rems_df.loc[code, 'starting'])
-        # If instance exists then result will be 0
-        # Otherwise result will be 1
-        if result == 1:
-            app_data.add_component_to_instance(code, 'Coursework', 100)
-        # But for already created instances we can check the number of components and add one if there aren't any
-        components = app_data.get_components_by_instance_code(code)
-        if not components:
-            app_data.add_component_to_instance(code, 'Coursework', 100)
-    # sync class lists
+    # all upcoming class lists
     upcoming_rems_df = get_upcoming_students_from_rems()
     upcoming_rems_df['student_id'] = pd.to_numeric(upcoming_rems_df['student_id'])
     upcoming_rems_df.set_index(['code', 'student_id'], inplace=True)
-    upcoming_pg_df = pd.DataFrame.from_records(app_data.get_upcoming_students_instances()).set_index(['code', 'student_id'])
-    upcoming_merge_df = pd.merge(left=upcoming_rems_df, right=upcoming_pg_df, how='outer', left_index=True, right_index=True, indicator=True)
-    # add missing students to instances
-    for (code, student_id) in upcoming_merge_df.query('_merge == "left_only"').index:
-        app_data.add_student_to_instance(student_id, code, 'ian@ada.ac.uk')
-    # remove students who are no longer in instance, only if they have no results
-    for (code, student_id) in upcoming_merge_df.query('_merge == "right_only"').index:
-        print(code, student_id)
+    for code in instances_rems_df.index:
+        print(f"Syncing {code}")
+        our_instance = app_data.get_instance_by_instance_code(code)
+        # Create instance if it doesn't exist
+        if not our_instance:
+            print(f"{code} not in data@ada")
+            result = app_data.add_instance(instances_rems_df.loc[code, 'short'], code, instances_rems_df.loc[code, 'starting'])
+            app_data.add_component_to_instance(code, 'Coursework', 100)
+            print(f"{code} created")
+        rems_class_list = upcoming_rems_df.loc[code]
+        our_class_list = app_data.get_students_by_instance(code)
+        # add missing students to instance
+        for student_id in rems_class_list.index:
+            if student_id not in our_class_list:
+                print(f"Adding {student_id} to {code}")
+                print(app_data.add_student_to_instance(student_id, code, 'ian@ada.ac.uk'))
+        # remove students who are no longer in instance, only if they have no results
+        for student_id in our_class_list:
+            # Empty our_class_list is actually [None]
+            if student_id and student_id not in rems_class_list.index:
+                results = app_data.get_result_for_instance(student_id, code)
+                if any([component['Mark'] for component in results]):
+                    print(f"Not deleting {student_id} from {code} as they have a result")
+                else:
+                    print(app_data.delete_student_from_instance(student_id, code), f" deleted {student_id} from {code}")
 
 def add_and_populate_instance(short, code, start_date, components, student_ids):
     app_data.add_instance(short, code, start_date)
@@ -271,3 +278,4 @@ if __name__ == "__main__":
         app_data.add_cohort(c.get('cohort'))
     app_data.update_learners(get_apprentices_from_rems())
     merge_from_rems()
+    # add_and_populate_instance("RME", "RME-22-02-LDN", "2022-02-07", [{"name": "Proposal", "weight": 100}], [180709,180708,180713,180710,180712])

@@ -27,7 +27,7 @@ register_marks = {
 }
 
 this_year_start = "2022-08-01"
-kudos_start = "2022-11-31"
+kudos_start = "2022-10-31"
 
 concern_categories = ["Conduct", "Academic", "Attendance"]
 concern_categories_dropdown = {

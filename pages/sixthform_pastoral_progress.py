@@ -19,6 +19,8 @@ progress_table = dash_tabulator.DashTabulator(
     },
     options={
         "resizableColumns": False,
+        # by default tabulator uses a period as a nested field separator. Disable this
+        "nestedFieldSeparator": False,
         "layout": "fitDataTable",
         "height": "70vh",
         "clipboard": "copy",
@@ -58,8 +60,8 @@ def update_progress_content(store_data):
     assessment_docs = data.get_data("assessment", "student_id", student_ids)
     assessment_df = pd.DataFrame.from_records(assessment_docs).sort_values(['student_id', 'subject_name', 'assessment'])[['student_id', 'subject_code', 'assessment', 'grade']]
     assessment_df['category'] = assessment_df['subject_code'].apply(subject_category)
-    cs_df = assessment_df.query('category == "Computer Science"').rename({'subject_code': 'Computer Science'}, axis=1).pivot(index=['student_id', 'Computer Science'], columns='assessment', values='grade').reset_index()
-    ss_df = assessment_df.query('category == "Second subject"').rename({'subject_code': 'Second subject'}, axis=1).pivot(index=['student_id', 'Second subject'], columns='assessment', values='grade').reset_index()
+    cs_df = assessment_df.query('category == "Computer Science"').rename({'subject_code': 'Computer Science'}, axis=1).pivot(index=['student_id', 'Computer Science'], columns='assessment', values='grade').add_suffix("_cs").reset_index()
+    ss_df = assessment_df.query('category == "Second subject"').rename({'subject_code': 'Second subject'}, axis=1).pivot(index=['student_id', 'Second subject'], columns='assessment', values='grade').add_suffix("_ss").reset_index()
     csss_df = pd.merge(left=cs_df, right=ss_df, how='left', on='student_id')
     merged_df = pd.merge(enrolment_df, csss_df, left_on='_id', right_on='student_id')
     attendance_docs = store_data.get('attendance_docs')
@@ -106,20 +108,20 @@ def update_progress_content(store_data):
             "headerFilter": True,
         }]
     cs_columns += [{
-            "title": assessment[:-2],
+            "title": assessment[:-3],
             "field": assessment,
             "headerFilter": True,
-        } for assessment in merged_df.columns if assessment.endswith('_x')]
+        } for assessment in merged_df.columns if assessment.endswith('_cs')]
     ss_columns = [{
             "title": "Second subject",
             "field": "Second subject",
             "headerFilter": True,
     }]
     ss_columns += [{
-            "title": assessment[:-2],
+            "title": assessment[:-3],
             "field": assessment,
             "headerFilter": True,
-        } for assessment in merged_df.columns if assessment.endswith('_y')]
+        } for assessment in merged_df.columns if assessment.endswith('_ss')]
     return columns+cs_columns+ss_columns, merged_df.to_dict(orient='records')
 
 
@@ -134,7 +136,6 @@ def subject_category(subject_code):
         return 'Second subject'
 
 def low_grade(grade, scale):
-    print(grade, scale)
     if scale == 'Expectations':
         return (grade == 'Below Expectations')
     elif scale == 'BTEC-Single':
