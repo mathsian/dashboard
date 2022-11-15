@@ -12,5 +12,5 @@ inner join remslive.dbo.TTGPTimetableGroups on regh_group_isn = TTGP_ISN
 inner join remslive.dbo.REGSrgsessn on REGH_ISN = REGS_REGH_ISN
 where sten_year = '2022' and STEN_Funding_Stream = '36' and STEN_Completion_Stat = '1'
 group by TTGP_Group_Code
-having max(REGS_Session_Date) >= getdate()
+having min(REGS_Session_Date) > DATEADD(day, -90, getdate())
 order by [starting];
