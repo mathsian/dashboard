@@ -812,6 +812,23 @@ def update_component_name(instance_code, old_name, new_name, weight):
     return return_value
 
 
+def delete_student_from_instance(student_id, code):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                delete from results where
+                component_id in (select id from components where instance_id = (select id from instances where code = %(code)s)) and student_id = %(student_id)s and value is null;
+                    """, {
+                    "code": code,
+                    "student_id": student_id
+                })
+            return_value = cur.rowcount
+    return return_value
+
+
+
 if __name__ == "__main__":
     # print(get_user_list())
     # print(get_results_for_instance('SDL010'))
