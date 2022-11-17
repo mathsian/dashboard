@@ -19,7 +19,7 @@ def get_cohort_list():
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}', options='-c search_path=public') as conn:
         with conn.cursor() as cur:
             cur.execute("""
-            select name from cohorts order by name;
+            select name from cohorts order by start_date desc, name;
             """)
             # default is list of tuples
             result = [c[0] for c in cur.fetchall()]
@@ -31,11 +31,12 @@ def get_cohorts_by_employer(employer):
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor() as cur:
             cur.execute("""
-            select distinct name
+            select distinct name, min(start_date)
             from cohorts
             left join students on students.cohort_id = cohorts.id
             where students.employer = %(employer)s
-            order by name;
+            group by name 
+            order by min(start_date) desc, name;
             """, {"employer": employer})
             # default is list of tuples
             result = [c[0] for c in cur.fetchall()]
@@ -661,17 +662,17 @@ def add_module(short, name, level, credits):
     return return_value
 
 
-def add_cohort(name):
+def add_cohort(name, start_date):
     return_value = False
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            insert into cohorts (name, inserted_at, updated_at)
-            values (%(name)s, current_timestamp, current_timestamp)
-            on conflict do nothing;
-            """, {"name": name})
+            insert into cohorts (name, start_date, inserted_at, updated_at)
+            values (%(name)s, %(start_date)s, current_timestamp, current_timestamp)
+            on conflict (name) do update set (start_date, updated_at) = (excluded.start_date, current_timestamp);
+            """, {"name": name, "start_date": start_date})
             return_value = cur.rowcount
     return return_value
 

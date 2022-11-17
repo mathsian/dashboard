@@ -1,15 +1,13 @@
 import sys
-sys.path.append('..')
-from operator import itemgetter
 from os.path import abspath
-import jinja2
-from jinja2 import Template
 import subprocess
+import jinja2
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
+sys.path.append('..')
 import data
 import curriculum
-import plotly.graph_objects as go
 
 
 def generate_report(student_id):
@@ -20,7 +18,6 @@ def generate_report(student_id):
                                                 "grade", "date", "comment",
                                                 "report"
                                             ]).query("report != 2").sort_values(by='date')
-    academic_df["grade"] = academic_df["grade"].str.replace("S", "A*")
     academic_df["comment"] = academic_df["comment"].str.replace('%', '\%').replace('&', '\&')
     academic_df["comment"].fillna("", inplace=True)
     academic_multiindex = academic_df.set_index(["subject_name", "assessment"])[["grade", "date", "comment", "report"]]
@@ -41,7 +38,7 @@ def generate_report(student_id):
     with open(f"../latex/{student.get('_id')} {student_name}.tex", 'w') as f:
         template_data = {
             "name": student_name,
-            "date": "March 2022",
+            "date": "May 2022",
             "team": student.get("team"),
             "academic": academic_dict,
         }
