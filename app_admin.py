@@ -275,7 +275,7 @@ def add_and_populate_instance(short, code, start_date, components, student_ids):
 
 if __name__ == "__main__":
     for c in get_cohorts_from_rems():
-        app_data.add_cohort(c.get('cohort'))
+        app_data.add_cohort(c.get('cohort'), c.get('start_date'))
     app_data.update_learners(get_apprentices_from_rems())
     merge_from_rems()
     # add_and_populate_instance("RME", "RME-22-02-LDN", "2022-02-07", [{"name": "Proposal", "weight": 100}], [180709,180708,180713,180710,180712])

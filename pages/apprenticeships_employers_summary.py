@@ -64,14 +64,22 @@ layout = dbc.Container([
                 "page": "employers",
                 "name": "students"
             }, "data")
-    ],
+    ],[
+            State(
+                {
+                    "section": "apprenticeships",
+                    "page": "employers",
+                    "type": "dropdown",
+                    "name": "employer"
+                }, "label")
+        ]
 )
-def update_cohort_dropdown(store_data):
+def update_cohort_dropdown(store_data, employer):
     if not store_data:
         return [html.H4("No students with this employer")]
 
     student_df = pd.DataFrame.from_records(store_data)
-    cohorts = student_df['cohort_name'].sort_values().unique()
+    cohorts = app_data.get_cohorts_by_employer(employer)
     cohort_options = [{'label': c, 'value': c} for c in cohorts]
     cohort_value = cohort_options[0].get('value')
     return cohort_value, cohort_options
@@ -83,7 +91,7 @@ def update_cohort_dropdown(store_data):
             "section": "apprenticeships",
             "page": "employers",
             "tab": "summary",
-            "type": "table",
+            "type": "table", 
             "name": "results"
         }, "children"), [
             Input(
