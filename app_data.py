@@ -403,6 +403,25 @@ def get_student_list_by_instance_code(code):
     return result
 
 
+def get_null_results():
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+            select m.name, i.code, count(distinct r.student_id)
+            from instances i
+            left join modules m on i.module_id = m.id
+            left join components c on c.instance_id = i.id
+            left join results r on r.component_id = c.id
+            where r.value is null
+            group by m.name, i.code, i.start_date
+            order by i.start_date;
+            """)
+            result = cur.fetchall()
+    return result
+
+
 def get_permissions(email):
     '''
     Returns a dict of permissions for the user identified by email
