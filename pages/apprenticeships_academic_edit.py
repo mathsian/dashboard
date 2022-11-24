@@ -6,6 +6,7 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
+import numpy as np
 from app import app
 import app_data
 from dash_extensions.javascript import Namespace
@@ -117,9 +118,8 @@ def update_subject_table(store_data, changed, row_data):
     # Calculate module results from components
     components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer').round(2)
     components_df.eval("weighted_value = value * weight", inplace=True)
-    # kludge to get python to round up appropriately - add 0.0001
-    # needs a better fix
-    results_df = components_df.groupby("student_id").sum().eval("total = weighted_value / weight + 0.0001")["total"].round(0).astype("Int64")
+    results_series = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"]
+    results_series = np.floor(results_series + 0.5).astype("Int64")
     # Number duplicate components so we can unstack the dataframe later
     components_df["name"] = components_df["name"] + components_df.groupby(["student_id", "name"]).cumcount().astype(str).replace('0', '')
     components_df = components_df.set_index(["student_id", "given_name", "family_name", "college_email", "name"])[["result_id", "value", "capped", "comment"]]
@@ -129,7 +129,7 @@ def update_subject_table(store_data, changed, row_data):
     # Component columns of form component:result_id, component:value, component:capped and component:comment
     pivoted_components_df.columns = [":".join(c) for c in component_columns]
     # Join overall results
-    pivoted_components_df = pivoted_components_df.join(results_df).reset_index()
+    pivoted_components_df = pivoted_components_df.join(results_series).reset_index()
     if update_data_only:
         heading = no_update
         columns = no_update
@@ -177,6 +177,14 @@ def build_columns(pivoted_components_df, editable):
             "frozen":True
         },
         {
+            "title": "Total",
+            "field": "total",
+            "widthGrow": 1,
+            "clipboard": False,
+            "download": False,
+            "frozen": True
+        },
+        {
             "title": "Student ID",
             "field": "student_id",
             "visible": False,
@@ -189,8 +197,7 @@ def build_columns(pivoted_components_df, editable):
             "visible": False,
             "clipboard": "true",
             "download": "true"
-        },
-]
+        }]
 
     # Build list of component columns for tabulator
     columns_middle = []
@@ -219,12 +226,4 @@ def build_columns(pivoted_components_df, editable):
                                    "download": False,
                                    "editor": "textarea" if editable else False})
 
-    columns_end = [{
-            "title": "Total",
-            "field": "total",
-            "widthGrow": 1,
-        "clipboard": False,
-        "download": False
-        },
-                       ]
-    return columns_start + columns_middle + columns_end
+    return columns_start + columns_middle

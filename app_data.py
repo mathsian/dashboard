@@ -266,15 +266,19 @@ def get_detailed_results_for_student(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select code, level, credits, modules.name "name", round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total, moderated
-            from results
-            left join components on components.id = results.component_id
-            left join instances on instances.id = components.instance_id
-            left join students on students.id = results.student_id
-            left join modules on instances.module_id = modules.id
-            where students.id = %(student_id)s
-            group by modules.name, level, credits, code, moderated
-            """, {"student_id": student_id})
+            with results as (
+                select code, level, credits, modules.name "name", round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
+                from results
+                left join components on components.id = results.component_id
+                left join instances on instances.id = components.instance_id
+                left join students on students.id = results.student_id
+                left join modules on instances.module_id = modules.id
+                where students.id = %(student_id)s
+                group by modules.name, level, credits, code, moderated
+                having count(*) = count(value)
+                )
+            select level "Level", credits "Credits", name "Module", max(total) "Mark" from results group by level, credits, name;
+                """, {"student_id": student_id})
             result = cur.fetchall()
     return result
 
@@ -852,4 +856,5 @@ def delete_student_from_instance(student_id, code):
 if __name__ == "__main__":
     # print(get_user_list())
     # print(get_results_for_instance('SDL010'))
+    # print([r['code'] for r in get_detailed_results_for_student()])
     pass

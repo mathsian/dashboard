@@ -9,6 +9,7 @@ import jinja2
 import pandas as pd
 import data
 import app_data
+import app_admin
 from configparser import ConfigParser
 import curriculum
 import admin
@@ -42,6 +43,10 @@ app.conf.beat_schedule = {
     "sync sf attendance": {
         "task": "tasks.sync_attendance",
         "schedule": crontab(minute='*/15', hour='8-16', day_of_week='mon-fri')
+    },
+    "sync modules": {
+        "task": "tasks.sync_modules",
+        "schedule": crontab(minute='0', hour='8,10,12,14,16', day_of_week='mon-fri')
     }
 }
 
@@ -143,20 +148,32 @@ def sixthform_academic_report(student_id):
     os.chdir(wd)
     return {"student": student, "report": file_name + '.pdf', "issued": issued}
 
-@app.task
-def send_result(student_id, instance_code):
-    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component').fillna("")
-    student_dict = app_data.get_student_by_id(student_id)
-    instance_dict = app_data.get_instance_by_instance_code(instance_code)
+def build_results_table(student_id):
+    # All results
     results_dict = app_data.get_detailed_results_for_student(student_id)
-    results_df = pd.DataFrame.from_records(results_dict).query('moderated')
-    results_df.sort_values(by=['level', 'name'], inplace=True)
-    results_df.drop(['code', 'moderated'], axis=1, inplace=True)
-    results_df.rename(columns={'level': 'Level', 'name': 'Module', 'credits': 'Credits', 'total': 'Mark'}, inplace=True)
+    results_df = pd.DataFrame.from_records(results_dict)
+    results_df.sort_values(by=['Level', 'Module'], inplace=True)
     results_df.set_index('Module', inplace=True)
     results_df = results_df.dropna().astype('int64')
-    html = f"<p>Hi {student_dict.get('given_name')},<br/>"
-    html += f"Your marks for {instance_dict.get('name')} have now been released.</p>"
+    return results_df
+
+@app.task
+def send_result(student_id, instance_code):
+    # Mark table for this instance
+    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component')
+    if components_df['Mark'].isnull().values.any():
+        return f"{student_id} {instance_code} not sent as missing marks"
+    # Student details
+    student_dict = app_data.get_student_by_id(student_id)
+    # Instance details
+    instance_dict = app_data.get_instance_by_instance_code(instance_code)
+    # Results table
+    results_df = build_results_table(student_id)
+    # Email
+    html = f"<p>Hi {student_dict.get('given_name')},</p>"
+    html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
+    # html += f"<h4>CORRECTION</h4>"
+    # html += f"<p>With apologies, your marks for {instance_dict.get('name')} have been corrected.</p>"
     html += f"<h4>{instance_dict.get('name')}</h4>"
     html += "<p>{{ marks_table }}</p>"
     html += "<h4>Your modules</h4>"
@@ -165,7 +182,7 @@ def send_result(student_id, instance_code):
     html += f"<p>This email is not monitored. If you have any queries about any of your results please raise a ticket with your apprenticeships helpdesk.</p>"
     subject = f"{instance_dict.get('name')} result"
     receivers=[student_dict.get('college_email', 'ian@ada.ac.uk')]
-    #receivers=['ian@ada.ac.uk']
+    # receivers=['ian@ada.ac.uk']
     msg = gmail.send(
         receivers=receivers,
         subject=subject,
@@ -174,6 +191,13 @@ def send_result(student_id, instance_code):
     )
     return msg.as_string()
 
+@app.task
+def sync_modules():
+    for c in app_admin.get_cohorts_from_rems():
+        app_data.add_cohort(c.get('cohort'), c.get('start_date'))
+    app_data.update_learners(app_admin.get_apprentices_from_rems())
+    app_admin.merge_from_rems()
+ 
 def cohort_reports(cohort):
     enrolment_docs = data.get_data("enrolment",
                                    "cohort",
@@ -192,4 +216,5 @@ def instance_results(instance_code):
 
 
 if __name__ == "__main__":
+    # instance_results('NET-22-09-MCR')
     pass
