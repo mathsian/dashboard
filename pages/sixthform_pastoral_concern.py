@@ -211,11 +211,9 @@ def update_pastoral_concern(store_data):
     thirty_df = year_df.query("date >= @thirty_days_ago")
     ten_days_ago = datetime.isoformat(datetime.today() - timedelta(days=10))
     ten_df = thirty_df.query("date >= @ten_days_ago")
-    print(ten_df)
     year_sum = year_df.groupby("student_id").count().rename(columns={"date": "year"})
     thirty_sum = thirty_df.groupby("student_id").count().rename(columns={"date": "thirty"})
     ten_sum = ten_df.groupby("student_id").count().rename(columns={"date": "ten"})
-    print(ten_sum)
     concern_df = pd.merge(
         pd.DataFrame.from_records(enrolment_docs).set_index("_id"),
         pd.merge(
