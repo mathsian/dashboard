@@ -8,7 +8,7 @@ from pages import (
     sixthform_pastoral_progress,
     sixthform_pastoral_attendance, sixthform_pastoral_punctuality,
     sixthform_pastoral_kudos, sixthform_pastoral_concern, sixthform_academic,
-    sixthform_pastoral_weekly,
+    sixthform_pastoral_weekly, sixthform_pastoral_details,
     sixthform_academic_view, sixthform_academic_edit, sixthform_student,
     sixthform_student_report, sixthform_student_kudos,
     sixthform_student_concern, apprenticeships_academic,
@@ -123,7 +123,8 @@ content = {
             Tab("Weekly", "weekly", sixthform_pastoral_weekly.layout),
             Tab("Punctuality", "punctuality", sixthform_pastoral_punctuality.layout),
             Tab("Kudos", "kudos", sixthform_pastoral_kudos.layout),
-            Tab("Concern", "concern", sixthform_pastoral_concern.layout),
+            Tab("Concern summary", "concern", sixthform_pastoral_concern.layout),
+            Tab("Concern details", "details", sixthform_pastoral_details.layout),
             Tab("Progress", "progress", sixthform_pastoral_progress.layout),
         ],
         Page("Academic", "academic", sixthform_academic.layout): [
