@@ -14,7 +14,7 @@ from pages import (
     sixthform_student_concern, apprenticeships_academic,
     apprenticeships_info, apprenticeships_info_upcoming, apprenticeships_info_missing,
     apprenticeships_academic_edit, apprenticeships_academic_view, apprenticeships_academic_details,
-    apprenticeships_attendance, apprenticeships_attendance_year,
+    apprenticeships_attendance, apprenticeships_attendance_year, apprenticeships_attendance_missing,
     apprenticeships_cohorts, apprenticeships_cohorts_report,
     apprenticeships_employers, apprenticeships_employers_report, apprenticeships_employers_summary,
     apprenticeships_reports, apprenticeships_reports_results,
@@ -148,7 +148,8 @@ content = {
             Tab("Details", "details", apprenticeships_academic_details.layout)
         ],
         Page("Attendance", "attendance", apprenticeships_attendance.layout):
-        [Tab("Year", "year", apprenticeships_attendance_year.layout)],
+        [Tab("Year", "year", apprenticeships_attendance_year.layout),
+         Tab("Missing", "missing", apprenticeships_attendance_missing.layout)],
         Page("Cohorts", "cohorts", apprenticeships_cohorts.layout):
         [Tab("Report", "report", apprenticeships_cohorts_report.layout)],
         Page("Employers", "employers", apprenticeships_employers.layout):
