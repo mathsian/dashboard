@@ -246,14 +246,14 @@ def get_results_for_student(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select modules.level as level, modules.name as name, instances.code as code, round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
+            select modules.level as level, modules.credits as credits, modules.name as name, instances.code as code, round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
             from results
             left join components on components.id = results.component_id
             left join instances on instances.id = components.instance_id
             left join students on students.id = results.student_id
             left join modules on instances.module_id = modules.id
             where students.id = %(student_id)s
-            group by modules.name, modules.level, instances.code
+            group by modules.name, modules.level, modules.credits, instances.code
             order by modules.level, modules.name, instances.code
             """, {"student_id": student_id})
             result = cur.fetchall()
