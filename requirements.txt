@@ -69,7 +69,7 @@ httpcore==0.14.7
 httpx==0.23.0
 idna==3.3
 ipaddr==2.2.0
-ipython==8.3.0
+ipython==8.10.0
 isort==5.9.3
 itsdangerous==2.0.1
 jedi==0.18.0
