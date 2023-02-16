@@ -151,6 +151,6 @@ URLObject==2.4.3
 vine==5.0.0
 wcwidth==0.2.5
 webencodings==0.5.1
-Werkzeug==2.0.2
+Werkzeug==2.2.3
 wrapt==1.13.2
 yapf==0.31.0
