@@ -55,7 +55,7 @@ def sync_attendance():
     admin.sync_rems_attendance("weekly", "ada")
     admin.sync_rems_attendance("monthly", "ada")
 
-@app.task
+@app.task(rate_limit='10/m')
 def send_email(subject, body, to_list=None, cc_list=None, bcc_list=None):
     params = {
         'subject': subject,
@@ -170,7 +170,7 @@ def send_result(student_id, instance_code):
     # Results table
     results_df = build_results_table(student_id)
     # Email
-    html = f"<p>Hi {student_dict.get('given_name')},</p>"
+    html = f"<p>Dear {student_dict.get('given_name')} {student_dict.get('family_name')},</p>"
     html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
     # html += f"<h4>CORRECTION</h4>"
     # html += f"<p>With apologies, your marks for {instance_dict.get('name')} have been corrected.</p>"
@@ -216,5 +216,5 @@ def instance_results(instance_code):
 
 
 if __name__ == "__main__":
-    # instance_results('NET-22-09-MCR')
+    # instance_results('TEP-22-10-LDN')
     pass

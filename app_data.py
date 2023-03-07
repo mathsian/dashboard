@@ -246,7 +246,13 @@ def get_results_for_student(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select modules.level as level, modules.credits as credits, modules.name as name, instances.code as code, round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
+            select modules.level as level,
+                case when round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int > 39
+                then modules.credits
+                else 0 end as credits,
+                modules.name as name,
+                instances.code as code,
+                round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
             from results
             left join components on components.id = results.component_id
             left join instances on instances.id = components.instance_id
@@ -277,7 +283,7 @@ def get_detailed_results_for_student(student_id):
                 group by modules.name, level, credits, code, moderated
                 having count(*) = count(value)
                 )
-            select level "Level", credits "Credits", name "Module", max(total) "Mark" from results group by level, credits, name;
+            select level "Level", case when max(total) > 39 then credits else 0 end "Credits", name "Module", max(total) "Mark" from results group by level, credits, name;
                 """, {"student_id": student_id})
             result = cur.fetchall()
     return result
