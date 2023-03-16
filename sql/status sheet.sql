@@ -3,9 +3,9 @@ with ap_enrolments as (select
                             , format(STEM_Start_Date, 'yyyy-MM') Start_Date
                             , StandardName
                             , case
-                                when datediff(yy, STUD_DOB, STEN_Annual_Start_Date) < 18 then '<18'
-                                when datediff(yy, STUD_DOB, STEN_Annual_Start_Date) = 18 then '18'
-                                when datediff(yy, STUD_DOB, STEN_Annual_Start_Date) > 18 then '19+'
+                                when styr_age_end_aug < 18 then '<18'
+                                when styr_age_end_aug = 18 then '18'
+                                when styr_age_end_aug > 18 then '19+'
                             end Age
                        , case
                            when STEN_Completion_Stat = 1 then 'Continuing'
@@ -21,6 +21,7 @@ with ap_enrolments as (select
                                                                STEM.STEM_Provision_Instance
                                 left join remslive.dbo.STUDstudent on STEM.STEM_Student_ID = STUDstudent.STUD_Student_ID
                        left join lars.dbo.Core_LARS_Standard on STEM_Apprenticeship_Standard = Core_LARS_Standard.StandardCode
+                       left join remslive.dbo.styrstudentyr on sten_year = styr_year and sten_student_id = styr_student_id
                        where STEN_Year = (select max(STEN_Year) from remslive.dbo.sten)
                          and STEN_Funding_Stream = 36
                          and (STEN_Completion_Stat <> '3' or STEN_Reason_ended <> 40)
