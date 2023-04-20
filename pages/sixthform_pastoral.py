@@ -108,14 +108,16 @@ def update_teams(pathname, search, team, cohort):
     if team == current_team and cohort == current_cohort:
         return (cohort, cohort_items, team, team_items, dash.no_update)
     # Get data in scope
+    term_date = data.get_term_date_from_rems()
+
     enrolment_docs = data.get_enrolment_by_cohort_team(cohort, team)
     student_ids = [e.get('_id') for e in enrolment_docs]
     attendance_docs = data.get_data("attendance", "student_id", student_ids)
     # assessment_docs = data.get_data("assessment", "student_id", student_ids)
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
-    this_year_start = curriculum.this_year_start
-    kudos_start = curriculum.kudos_start
+    this_year_start = term_date['year_start']
+    kudos_start = term_date['term_start']
     kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
                         pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @kudos_start"),
                         how="left",
@@ -142,6 +144,7 @@ def update_teams(pathname, search, team, cohort):
         "kudos_docs": kudos_docs,
         "kudos_pivot_docs": kudos_pivot_docs,
         "concern_docs": concern_docs,
+        "term_date": term_date
     }
     return (cohort, cohort_items, team, team_items, store_data)
 
@@ -186,9 +189,10 @@ Output(
 )
 def update_year_gauge(store_data):
     attendance_docs = store_data.get('attendance_docs')
+    term_date = store_data.get('term_date')
     if not attendance_docs:
         return 0
-    this_year_start = curriculum.this_year_start
+    this_year_start = term_date['year_start']
     attendance_df = pd.DataFrame.from_records(attendance_docs).query(
         'date > @this_year_start')
     weekly_df = attendance_df.query("subtype == 'weekly'")
