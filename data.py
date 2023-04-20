@@ -1,3 +1,4 @@
+import pyodbc
 from configparser import ConfigParser
 from cloudant.client import CouchDB
 import pandas as pd
@@ -196,3 +197,31 @@ def safe_json(d):
     elif isinstance(d, dict):
         return all(isinstance(k, str) and safe_json(v) for k, v in d.items())
     return False
+
+def get_term_date_from_rems():
+    # Get connection settings
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    rems_settings = config_object["REMS"]
+    rems_server = rems_settings["ip"]
+    rems_uid = rems_settings["uid"]
+    rems_pwd = rems_settings["pwd"]
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    term_sql = """
+    -- get academic year, term and start of term from calendar
+    select top 1 Year, format(Year_Start, 'yyyy-MM-dd') Year_Start, Term, format(Term_Start, 'yyyy-MM-dd') Term_Start from
+    (select ccal_year Year, ccal_autumn_term_start Year_Start, CCAL_Autumn_Term_Start Autumn, CCAL_Spring_Term_Start Spring, CCAL_Summer_Term_Start Summer from remslive.dbo.CCALCalend) p
+    unpivot (
+    Term_Start for Term in (Autumn, Spring, Summer)
+    )
+    as unpvt
+    where Term_Start < getdate()
+    order by Term_Start desc;
+    """
+    term_data = conn.execute(term_sql).fetchone()
+    return {"year": term_data[0], "year_start": term_data[1], "term": term_data[2], "term_start": term_data[3]}
+
+if __name__ == "__main__":
+    print(get_term_date_from_rems())
