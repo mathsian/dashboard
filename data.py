@@ -201,7 +201,7 @@ def safe_json(d):
 def get_term_date_from_rems():
     # Get connection settings
     config_object = ConfigParser()
-    config_object.read("config.ini")
+    config_object.read(os.path.join(os.path.dirname(__file__), "config.ini"))
     rems_settings = config_object["REMS"]
     rems_server = rems_settings["ip"]
     rems_uid = rems_settings["uid"]
