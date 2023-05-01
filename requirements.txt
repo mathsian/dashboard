@@ -50,7 +50,7 @@ email-validator==1.2.0
 entrypoints==0.3
 executing==0.8.3
 flake8==4.0.1
-Flask==2.0.2
+Flask==2.3.2
 Flask-Caching==2.0.1
 Flask-Compress==1.10.1
 Flask-Cors==3.0.10
