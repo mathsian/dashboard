@@ -16,7 +16,7 @@ cohort_dropdown = dbc.DropdownMenu(id="cohort-dropdown",
                                    nav=True,)
 team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True)
 
-fig = make_subplots(specs=[[{"type": "polar"}]], subplot_titles=['Kudos this year'])
+fig = make_subplots(specs=[[{"type": "polar"}]], subplot_titles=['Kudos this term'])
 fig.add_trace(
     go.Scatterpolar(theta=curriculum.values,
                     r=[0 for v in curriculum.values],

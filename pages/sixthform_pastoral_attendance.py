@@ -49,11 +49,12 @@ layout = dbc.Container(
 def update_pastoral_attendance(store_data):
     enrolment_docs = store_data.get('enrolment_docs')
     attendance_docs = store_data.get('attendance_docs')
+    term_date = store_data.get('term_date')
     if not attendance_docs:
         return [], []
-    this_year_start = curriculum.this_year_start
-    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
-        'date > @this_year_start')
+    this_year_start = term_date['year_start']
+    term_start = term_date['term_start']
+    attendance_df = pd.DataFrame.from_records(attendance_docs).query('date >= @this_year_start')
     weekly_df = attendance_df.query("subtype == 'weekly'")
     # Merge on student id
     merged_df = pd.merge(pd.DataFrame.from_records(enrolment_docs),
@@ -65,18 +66,30 @@ def update_pastoral_attendance(store_data):
     cumulative_df = merged_df.groupby("student_id").sum().reset_index()
     cumulative_df['cumulative_percent_present'] = round(
         100 * cumulative_df['actual'] / cumulative_df['possible'])
+    # Get per student term totals
+    term_cumulative_df = merged_df.query('date >= @term_start').groupby("student_id").sum().reset_index()
+    term_cumulative_df['term_cumulative_percent_present'] = round(
+        100 * term_cumulative_df['actual'] / term_cumulative_df['possible'])
     # Calculate percent present for recent weeks
-    four_weeks_ago = (date.today() - timedelta(weeks=4)).isoformat()
-    merged_df.query('date > @four_weeks_ago', inplace=True)
+    three_weeks_ago = (date.today() - timedelta(weeks=3)).isoformat()
+    merged_df.query('date > @three_weeks_ago', inplace=True)
     merged_df['percent_present'] = round(100 * merged_df['actual'] /
                                          merged_df['possible'])
     # Pivot to bring dates to columns
-    attendance_pivot = merged_df.set_index(
+    attendance_pivot_a = merged_df.set_index(
         ["student_id", "given_name", "family_name",
          "date"])["percent_present"].unstack().reset_index()
+    # Add the term cumulative column
+    attendance_pivot_b = pd.merge(
+        attendance_pivot_a,
+        term_cumulative_df[["student_id", "term_cumulative_percent_present"]],
+        how='left',
+        left_on="student_id",
+        right_on="student_id",
+        suffixes=("", "_z"))
     # Add the cumulative column
     attendance_pivot = pd.merge(
-        attendance_pivot,
+        attendance_pivot_b,
         cumulative_df[["student_id", "cumulative_percent_present"]],
         how='left',
         left_on="student_id",
@@ -104,8 +117,18 @@ def update_pastoral_attendance(store_data):
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in attendance_pivot.columns[3:-1]
+        } for d in attendance_pivot.columns[3:-2]
     ])
+    columns.append({
+        "title": "This term",
+        "field": "term_cumulative_percent_present",
+        "sorter": "number",
+        "headerHozAlign": "right",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": "<",
+        "headerFilterPlaceholder": "Less than",
+    })
     columns.append({
         "title": "This year",
         "field": "cumulative_percent_present",
