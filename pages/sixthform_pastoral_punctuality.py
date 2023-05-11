@@ -6,7 +6,6 @@ import pandas as pd
 from datetime import date, timedelta
 from app import app
 import data
-import curriculum
 
 # Punctuality tab content
 punctuality_table = dash_tabulator.DashTabulator(
@@ -51,7 +50,9 @@ def update_pastoral_punctuality(store_data):
     punctuality_docs = store_data.get('attendance_docs')
     if not punctuality_docs:
         return [], []
-    this_year_start = curriculum.this_year_start
+    term_date = store_data.get('term_date')
+    this_year_start = term_date['year_start']
+    term_start = term_date['term_start']
     punctuality_df = pd.DataFrame.from_records(punctuality_docs).query(
         'date > @this_year_start')
     weekly_df = punctuality_df.query("subtype == 'weekly'")
@@ -65,18 +66,30 @@ def update_pastoral_punctuality(store_data):
     cumulative_df = merged_df.groupby("student_id").sum().reset_index()
     cumulative_df['cumulative_percent_punctual'] = round(
         100 - 100 * cumulative_df['late'] / cumulative_df['possible'])
+    # Get per student term totals
+    term_cumulative_df = merged_df.query('date >= @term_start').groupby("student_id").sum().reset_index()
+    term_cumulative_df['term_cumulative_percent_punctual'] = round(
+        100 - 100 * term_cumulative_df['late'] / term_cumulative_df['possible'])
     # Calculate percent _punctual for recent weeks
-    four_weeks_ago = (date.today() - timedelta(weeks=4)).isoformat()
-    merged_df.query('date > @four_weeks_ago', inplace=True)
+    three_weeks_ago = (date.today() - timedelta(weeks=3)).isoformat()
+    merged_df.query('date > @three_weeks_ago', inplace=True)
     merged_df['percent_punctual'] = round(100 - 100 * merged_df['late'] /
                                          merged_df['possible'])
     # Pivot to bring dates to columns
-    punctuality_pivot = merged_df.set_index(
+    punctuality_pivot_a = merged_df.set_index(
         ["student_id", "given_name", "family_name",
          "date"])["percent_punctual"].unstack().reset_index()
+    # Add the term cumulative column
+    punctuality_pivot_b = pd.merge(
+        punctuality_pivot_a,
+        term_cumulative_df[["student_id", "term_cumulative_percent_punctual"]],
+        how='left',
+        left_on="student_id",
+        right_on="student_id",
+        suffixes=("", "_z"))
     # Add the cumulative column
     punctuality_pivot = pd.merge(
-        punctuality_pivot,
+        punctuality_pivot_b,
         cumulative_df[["student_id", "cumulative_percent_punctual"]],
         how='left',
         left_on="student_id",
@@ -104,8 +117,18 @@ def update_pastoral_punctuality(store_data):
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in punctuality_pivot.columns[3:-1]
+        } for d in punctuality_pivot.columns[3:-2]
     ])
+    columns.append({
+        "title": "This term",
+        "field": "term_cumulative_percent_punctual",
+        "sorter": "number",
+        "headerHozAlign": "right",
+        "hozAlign": "right",
+        "headerFilter": True,
+        "headerFilterFunc": "<",
+        "headerFilterPlaceholder": "Less than",
+    })
     columns.append({
         "title": "This year",
         "field": "cumulative_percent_punctual",
