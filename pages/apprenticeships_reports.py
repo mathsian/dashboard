@@ -172,6 +172,5 @@ def update_cohorts(employer, cohort, search, pathname):
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     results = app_data.get_student_results_by_employer_cohort(employer, cohort)
     attendance = app_data.get_apprentice_attendance_by_employer_cohort(employer, cohort)
-    print(attendance[:3])
     return (cohort, cohort_items, results, attendance)
 
