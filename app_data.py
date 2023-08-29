@@ -1,9 +1,12 @@
 from configparser import ConfigParser
+import pyodbc
 import psycopg
+import jinja2
 from psycopg.rows import dict_row
+import pandas as pd
 import os
 
-# Get connection settings
+# Get postgres connection settings
 config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'config.ini')
 config_object = ConfigParser()
@@ -13,6 +16,23 @@ pg_uid = pg_settings["username"]
 pg_pwd = pg_settings["password"]
 pg_db = pg_settings["database"]
 
+# Get REMS connection settings
+rems_settings = config_object["REMS"]
+rems_server = rems_settings["ip"]
+rems_uid = rems_settings["uid"]
+rems_pwd = rems_settings["pwd"]
+
+def get_apprentice_attendance_by_employer_cohort(employer, cohort):
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader('sql')
+    )
+    sql_template = sql_jinja_env.get_template('apprentice attendance by employer and cohort.sql')
+    sql = sql_template.render(employer=employer, cohort=cohort)
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    attendance_df = pd.read_sql(sql, conn)
+    return attendance_df.to_dict(orient='records')
 
 def get_cohort_list():
     with psycopg.connect(
@@ -58,23 +78,22 @@ def get_employer_list():
 def get_module_list():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor() as cur:
+        with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-            select name from modules order by name;
+            select short, name from modules order by short;
             """)
-            # default is list of tuples
-            result = [c[0] for c in cur.fetchall()]
+            result = cur.fetchall()
     return result
 
 
-def get_instances_of_module(module_name):
+def get_instances_of_module(module_short):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select * from modules left join instances on instances.module_id = modules.id where modules.name = %(module_name)s order by start_date desc;
-            """, {"module_name": module_name})
+            select * from modules left join instances on instances.module_id = modules.id where modules.short = %(module_short)s order by start_date desc;
+            """, {"module_short": module_short})
             result = cur.fetchall()
     return result
 

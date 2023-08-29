@@ -1,6 +1,8 @@
 -- get all apprentice teaching groups with sessions in the future
 select
-left(TTGP_Group_Code, 3) [short]
+case when charindex('-', TTGP_Group_Code) = 4 then left(TTGP_Group_Code, 3)
+when charindex('-', TTGP_Group_Code) = 5 then left(TTGP_Group_Code, 4)
+else 'Unknown' end short
 , trim(TTGP_Group_Code) [code]
 , format(min(REGS_Session_Date), 'yyyy-MM-dd') [starting]
 , count(distinct REGS_Session_Date) days

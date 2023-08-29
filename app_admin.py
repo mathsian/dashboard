@@ -248,17 +248,24 @@ def merge_from_rems():
         if not our_instance:
             print(f"{code} not in data@ada")
             result = app_data.add_instance(instances_rems_df.loc[code, 'short'], code, instances_rems_df.loc[code, 'starting'])
-            app_data.add_component_to_instance(code, 'Coursework', 100)
-            print(f"{code} created")
+            if result:
+                our_instance = app_data.get_instance_by_instance_code(code)
+                app_data.add_component_to_instance(code, 'Coursework', 100)
+                print(f"{code} created")
+            else:
+                print(f"Couldn't create {code}")
+                continue
         rems_class_list = upcoming_rems_df.loc[code]
         our_class_list = app_data.get_students_by_instance(code)
-        # add missing students to instance
-        for student_id in rems_class_list.index:
-            if student_id not in our_class_list:
-                print(f"Adding {student_id} to {code}")
-                print(app_data.add_student_to_instance(student_id, code, 'ian@ada.ac.uk'))
+        # add missing students to instance, if it's not marked as moderated
+        if not our_instance.get("moderated", False):
+            for student_id in rems_class_list.index:
+                if student_id not in our_class_list:
+                    print(f"Adding {student_id} to {code}")
+                    print(app_data.add_student_to_instance(student_id, code, 'ian@ada.ac.uk'))
         # remove students who are no longer in instance, only if they have no results
         for student_id in our_class_list:
+            print(f"Checking {student_id} is still in {code}")
             # Empty our_class_list is actually [None]
             if student_id and student_id not in rems_class_list.index:
                 results = app_data.get_result_for_instance(student_id, code)
@@ -273,9 +280,30 @@ def add_and_populate_instance(short, code, start_date, components, student_ids):
         app_data.add_component_to_instance(code, component['name'], component['weight'])
     app_data.add_students_to_instance(student_ids, code, 'ian@ada.ac.uk')
 
+
+def update_and_add_components(code, components):
+    app_data.update_component_name(code, 'Coursework', components[0].get('name'), components[0].get('weight'))
+    for component in components[1:]:
+        app_data.add_component_to_instance(code, component.get('name'), component.get('weight'))
+    student_ids = app_data.get_students_by_instance(code)
+    app_data.add_students_to_instance([s for s in student_ids if s], code, 'ian@ada.ac.uk')
+
+
 if __name__ == "__main__":
-    for c in get_cohorts_from_rems():
-        app_data.add_cohort(c.get('cohort'), c.get('start_date'))
-    app_data.update_learners(get_apprentices_from_rems())
-    merge_from_rems()
-    # add_and_populate_instance("RME", "RME-22-02-LDN", "2022-02-07", [{"name": "Proposal", "weight": 100}], [180709,180708,180713,180710,180712])
+    # for c in get_cohorts_from_rems():
+        # app_data.add_cohort(c.get('cohort'), c.get('start_date'))
+    # app_data.update_learners(get_apprentices_from_rems())
+    # merge_from_rems()
+    # add_and_populate_instance("VIS", "VIS-22-03-LDN", "2022-03-14", [{"name": "Coursework", "weight": 100}], [201090,190892,201080])
+    # student_ids = app_data.get_students_by_instance('PRG-22-11-MCR')
+    # app_data.add_students_to_instance([s for s in student_ids if s], 'PRG-22-11-MCR', 'ian@ada.ac.uk')
+    # update_and_add_components('DIS-23-05-MCR', [
+    #  {'name': 'Task 1', 'weight': 10},
+    #  {'name': 'Task 2', 'weight': 30},
+    #  {'name': 'Task 3', 'weight': 60},
+    #  ])
+    # app_data.update_component_name('ECR-23-05-MCR', '4 KSB Reflection', '4 KSB Reflection', 10)
+    # tasks.instance_results('SDL-23-04-MCR')
+    # tasks.send_result.delay(221589, 'ECR-23-04-2-LDN')
+    # app_data.add_student_to_instance(180646, 'RME-23-04-LDN', 'ian@ada.ac.uk')
+    pass

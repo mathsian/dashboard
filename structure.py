@@ -18,6 +18,7 @@ from pages import (
     apprenticeships_cohorts, apprenticeships_cohorts_report,
     apprenticeships_employers, apprenticeships_employers_report, apprenticeships_employers_summary,
     apprenticeships_reports, apprenticeships_reports_results,
+    apprenticeships_report_attendance,
     # stats_enrolment, stats_enrolment_view,
     admin_records, admin_records_kudos, admin_records_concern)
 
@@ -157,7 +158,8 @@ content = {
         [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
          Tab("Report", "report", apprenticeships_employers_report.layout)],
         Page("Reports", "reports", apprenticeships_reports.layout):
-        [Tab("Results", "results", apprenticeships_reports_results.layout)]
+        [Tab("Results", "results", apprenticeships_reports_results.layout),
+         Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)]
     },
 #     Section("Stats", "stats"): {
 #         Page("Enrolment", "enrolment", stats_enrolment.layout):
