@@ -79,23 +79,24 @@ layout = [
     "type": "dropdown",
         "name": "module"}, "label"),
 ])
-def update_results(pathname, search, module_name):
+def update_results(pathname, search, module_short):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get all modules
+    # This is now a list of dicts
     modules = app_data.get_module_list()
     # If module is in state, default to it else pick the first from the list
-    module_name = module_name or modules[0]
+    module_short = module_short or modules[0].get('short')
     # Get module from query and use it if valid
     if module_query := search_dict.get('module', False):
-        if module_query[0] in modules:
-            module_name = module_query[0]
+        if module_query[0] in [m.get('short') for m in modules]:
+            module_short = module_query[0]
     # Build module selector options
     module_select_items = []
     for m in modules:
-        s = urlencode(query={'module': m})
-        module_select_items.append(dbc.DropdownMenuItem(m, href=f'{pathname}?{s}'))
+        s = urlencode(query={'module': m.get('short')})
+        module_select_items.append(dbc.DropdownMenuItem(f'{m.get("short")}: {m.get("name")}', href=f'{pathname}?{s}'))
     # Get module instances
-    instances = app_data.get_instances_of_module(module_name)
+    instances = [i for i in app_data.get_instances_of_module(module_short) if i.get('id', None)]
     instance_nav_items = []
     if len(instances):
         # default to first instance
@@ -108,7 +109,7 @@ def update_results(pathname, search, module_name):
         # Generate nav of modules
         for i_dict in instances:
             q = urlencode(query={
-                'module': i_dict.get("name"),
+                'module': i_dict.get("short"),
                 'instance': i_dict.get("code")
             })
             active = 'exact' if i_dict.get("code") == instance_dict.get("code") else False
@@ -122,4 +123,4 @@ def update_results(pathname, search, module_name):
     store_data = {
         "instance_code": instance_dict.get("code", False),
         }
-    return module_name, module_select_items, instance_nav_items, store_data
+    return module_short, module_select_items, instance_nav_items, store_data

@@ -38,9 +38,14 @@ layout = [
         "section": "apprenticeships",
         "page": "reports",
         "name": "results"
-    },
-              storage_type='memory'),
-     dbc.Row(dbc.Col(filter_nav)),
+    }, storage_type='memory'),
+    dcc.Store(id={
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "attendance"
+    }, storage_type='memory'),
+    dbc.Row(dbc.Col(filter_nav)),
 ]
 
 
@@ -113,6 +118,14 @@ def update_employers(search, pathname, employer):
         "page": "reports",
         "name": "results"
     }, 'data'
+    ),
+    Output(
+{
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "attendance"
+    }, 'data'
     )
 ],
 [
@@ -158,5 +171,7 @@ def update_cohorts(employer, cohort, search, pathname):
         s = urlencode(query={'employer': employer, 'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     results = app_data.get_student_results_by_employer_cohort(employer, cohort)
-    return (cohort, cohort_items, results)
+    attendance = app_data.get_apprentice_attendance_by_employer_cohort(employer, cohort)
+    print(attendance[:3])
+    return (cohort, cohort_items, results, attendance)
 

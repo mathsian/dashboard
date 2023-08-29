@@ -183,6 +183,7 @@ def update_provisions(standard, start_date, store_data):
     options = [{"label": s, "value": s} for s in provisions]
     selected = 'All provisions'
     return options, selected
+
 @app.callback(
     Output(
         {

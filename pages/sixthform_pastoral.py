@@ -16,6 +16,18 @@ cohort_dropdown = dbc.DropdownMenu(id="cohort-dropdown",
                                    nav=True,)
 team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True)
 
+kudos_switch = html.Div(
+[
+    dbc.Label("Kudos from"),
+    dbc.RadioItems(
+        options=[
+            {"label": "Start of academic year", "value": "y"},
+            {"label": "Start of term", "value": "t"},
+        ],
+        value="t",
+        id="kudos-switch")
+])
+
 fig = make_subplots(specs=[[{"type": "polar"}]], subplot_titles=['Kudos this term'])
 fig.add_trace(
     go.Scatterpolar(theta=curriculum.values,
@@ -70,7 +82,8 @@ layout =[
     dcc.Store(id="sixthform-pastoral-store", storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
     dbc.Row(dbc.Col(dcc.Loading(gauge_overall))),
-    dbc.Row(dbc.Col(dcc.Loading(kudos_radar)))
+    dbc.Row(dbc.Col(dcc.Loading(kudos_radar))),
+    dbc.Row(kudos_switch),
     ]
 
 
@@ -83,8 +96,11 @@ layout =[
 ], [
     Input("location", "pathname"),
     Input("location", "search"),
-], [State("team-dropdown", "label"), State("cohort-dropdown", "label")])
-def update_teams(pathname, search, team, cohort):
+    Input("kudos-switch", "value"),
+], [State("team-dropdown", "label"),
+    State("cohort-dropdown", "label"),
+    State("sixthform-pastoral-store", "data")])
+def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data):
     current_team = team
     current_cohort = cohort
 
@@ -117,7 +133,8 @@ def update_teams(pathname, search, team, cohort):
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
     this_year_start = term_date['year_start']
-    kudos_start = term_date['term_start']
+    term_start = term_date['term_start']
+    kudos_start = this_year_start if kudos_switch_value == 'y' else term_start
     kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
                         pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @kudos_start"),
                         how="left",
