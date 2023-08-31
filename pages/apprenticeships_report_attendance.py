@@ -28,12 +28,14 @@ attendance_table = dash_tabulator.DashTabulator(
         {
             "title": "Student ID",
             "field": "Student ID",
+                "frozen": True,
             "visible": False,
             "clipboard": True
         },
             {
             "title": "Family name",
             "field": "Family name",
+                "frozen": True,
             "headerFilter": True,
             "headerFilterPlaceholder": "search",
                 "clipboard": True,
@@ -41,6 +43,7 @@ attendance_table = dash_tabulator.DashTabulator(
         {
             "title": "Given name",
             "field": "Given name",
+                "frozen": True,
             "headerFilter": True,
             "headerFilterPlaceholder": "search",
                 "clipboard": True,
@@ -67,14 +70,16 @@ attendance_table = dash_tabulator.DashTabulator(
             "title": "All time attendance (%)",
             "field": "All time attendance (%)",
             "headerFilter": True,
-            "headerFilterPlaceholder": "search",
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
                 "clipboard": True,
         },
             {
             "title": "All time punctuality (%)",
             "field": "All time punctuality (%)",
             "headerFilter": True,
-            "headerFilterPlaceholder": "search",
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
                 "clipboard": True,
         },
              {
@@ -99,19 +104,23 @@ attendance_table = dash_tabulator.DashTabulator(
             "title": "90 day attendance (%)",
             "field": "90 day attendance (%)",
             "headerFilter": True,
-            "headerFilterPlaceholder": "search",
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
                 "clipboard": True,
         },
             {
             "title": "90 day punctuality (%)",
             "field": "90 day punctuality (%)",
             "headerFilter": True,
-            "headerFilterPlaceholder": "search",
+            "headerFilterFunc": "<",
+            "headerFilterPlaceholder": "Less than",
                 "clipboard": True,
         },
     ]    )
 
-layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(attendance_table)])])])
+layout = dbc.Container([dbc.Row([dbc.Col([
+    dcc.Loading(attendance_table)
+])])])
 
 
 @app.callback(
