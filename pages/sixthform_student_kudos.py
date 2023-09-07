@@ -111,9 +111,7 @@ kudos_submit_input = html.Div([
                n_clicks=0),
 ])
 
-kudos_form = dbc.Row(children=[
-   dbc.Col([value_input, html.Br(), kudos_description_input, html.Br(), kudos_submit_input, html.Br(), kudos_message_input]),
-    dbc.Col([points_input, html.Br(), kudos_notify_checkbox,     dbc.Toast(id={
+kudos_toast = dbc.Toast(id={
                 "section": "sixthform",
                 "type": "toast",
                 "page": "student",
@@ -121,8 +119,18 @@ kudos_form = dbc.Row(children=[
                 "name": "notifications"
     },
               is_open=False,
-              duration=5000),
- ], width=4)
+              duration=5000)
+
+kudos_form = dbc.Container([
+    dbc.Row(children=[
+        dbc.Col([value_input, html.Br(), kudos_description_input]),
+        dbc.Col([points_input, html.Br(), kudos_notify_checkbox], width=4)
+    ]),
+    html.Br(),
+    dbc.Row(children=[
+        dbc.Col([kudos_message_input]),
+        dbc.Col([kudos_submit_input], width=4),
+    ])
 ])
 
 layout = dbc.Container(kudos_form)
@@ -220,7 +228,7 @@ def update_kudos_message(selected_student_ids, description, ada_value, points,
         desc = html.Div(["For ", html.Blockquote(description)
                          ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
-            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
+            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}') if not s.get("notes for comments", False) else dbc.ListGroupItem([f'{s.get("given_name")} {s.get("family_name")}', html.Br(), f'{s.get("notes for comments")}'], color="primary")
             for s in enrolment_docs
         ])
         if cc.triggered and "n_clicks" in cc.triggered[0][
