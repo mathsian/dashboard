@@ -109,18 +109,23 @@ concern_form = dbc.Form([
     dbc.Row(children=[
         dbc.Col([
             category_input,
+            html.Br(),
             description_input,
         ]),
         dbc.Col([
             discrimination_input,
+            html.Br(),
             stage_input,
         ], width=2)
     ]),
+    html.Br(),
     dbc.Row(children=[
         dbc.Col([
+            concern_message_input
+        ]),
+        dbc.Col([
             concern_submit_input,
-            concern_message_input,
-        ], width=4),
+        ], width=2),
     ])
 ])
 
@@ -216,7 +221,7 @@ def update_concern_message(selected_student_ids, description, category, stage,
         desc = html.Div(["For ", html.Blockquote(description)
                          ]) if description else html.Div()
         recipients = dbc.ListGroup(children=[
-            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}')
+            dbc.ListGroupItem(f'{s.get("given_name")} {s.get("family_name")}') if not s.get("notes for comments", False) else dbc.ListGroupItem([f'{s.get("given_name")} {s.get("family_name")}', html.Br(), f'{s.get("notes for comments")}'], color="primary")
             for s in enrolment_docs
         ])
         if cc.triggered and "n_clicks" in cc.triggered[0][
