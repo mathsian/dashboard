@@ -98,57 +98,59 @@ single_report_kudos = dbc.AccordionItem([
         ))
 ],
                                         title="Kudos")
-single_report_concerns = dbc.AccordionItem([
-    html.Div(
-        dash_table.DataTable(
-            id={
-                "section": "sixthform",
-                "type": "table",
-                "page": "student",
-                "tab": "report",
-                "name": "concern"
-            },
-            columns=[
-                {
-                    "name": "Date",
-                    "id": "date"
-                },
-                {
-                    "name": "Category",
-                    "id": "category"
-                },
-                {
-                    "name": "Description",
-                    "id": "description"
-                },
-                {
-                    "name": "Raised by",
-                    "id": "from"
-                },
-                {
-                    "name": "Additional",
-                    "id": "discrimination"
-                },
-            ],
-            sort_by=[{"column_id": "date", "direction": "desc"}],
-            sort_action='native',
-            style_header={
-                "textAlign": "left",
-        'overflow': 'hidden',
-        'textOverflow': 'ellipsis',
-        'maxWidth': 0
-                },
-             style_data={
-                "textAlign": "left",
-                "height": "auto",
-                "whiteSpace": "normal",
-            },
-        ))
-],
-                                           title="Concerns")
+
+# single_report_concerns = dbc.AccordionItem([
+#     html.Div(
+#         dash_table.DataTable(
+#             id={
+#                 "section": "sixthform",
+#                 "type": "table",
+#                 "page": "student",
+#                 "tab": "report",
+#                 "name": "concern"
+#             },
+#             columns=[
+#                 {
+#                     "name": "Date",
+#                     "id": "date"
+#                 },
+#                 {
+#                     "name": "Category",
+#                     "id": "category"
+#                 },
+#                 {
+#                     "name": "Description",
+#                     "id": "description"
+#                 },
+#                 {
+#                     "name": "Raised by",
+#                     "id": "from"
+#                 },
+#                 {
+#                     "name": "Additional",
+#                     "id": "discrimination"
+#                 },
+#             ],
+#             sort_by=[{"column_id": "date", "direction": "desc"}],
+#             sort_action='native',
+#             style_header={
+#                 "textAlign": "left",
+#         'overflow': 'hidden',
+#         'textOverflow': 'ellipsis',
+#         'maxWidth': 0
+#                 },
+#              style_data={
+#                 "textAlign": "left",
+#                 "height": "auto",
+#                 "whiteSpace": "normal",
+#             },
+#         ))
+# ],
+#                                            title="Concerns")
+
 single_report = dbc.Accordion([
     single_report_attendance, single_report_academic, single_report_kudos,
-    single_report_concerns
+#    single_report_concerns
 ], start_collapsed=True)
 
 layout = html.Div([
@@ -204,14 +206,14 @@ layout = html.Div([
             "tab": "report",
             "name": "kudos"
         }, "data"),
-    Output(
-        {
-            "section": "sixthform",
-            "type": "table",
-            "page": "student",
-            "tab": "report",
-            "name": "concern"
-        }, "data"),
+#     Output(
+#         {
+#             "section": "sixthform",
+#             "type": "table",
+#             "page": "student",
+#             "tab": "report",
+#             "name": "concern"
+#         }, "data"),
 ], [Input("sixthform-selected-store", "data")])
 def update_student_report(store_data):
     if not store_data:
@@ -236,7 +238,7 @@ def update_student_report(store_data):
                     assessment_children.append(
                         html.Blockquote(result.get("comment", "")))
     kudos_docs = data.get_data("kudos", "student_id", student_id)
-    concern_docs = data.get_data("concern", "student_id", student_id)
+    # concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
     attendance_df = pd.DataFrame.from_records(attendance_docs).query(
         "subtype == 'weekly'")
@@ -249,4 +251,5 @@ def update_student_report(store_data):
         go.Bar(x=attendance_df["date"],
                y=attendance_df["percent"],
                name="Weekly attendance"))
-    return heading, attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
+    # return heading, attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
+    return heading, attendance_year, attendance_figure, assessment_children, kudos_docs

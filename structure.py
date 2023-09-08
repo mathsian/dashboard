@@ -124,8 +124,8 @@ content = {
             Tab("Weekly", "weekly", sixthform_pastoral_weekly.layout),
             Tab("Punctuality", "punctuality", sixthform_pastoral_punctuality.layout),
             Tab("Kudos", "kudos", sixthform_pastoral_kudos.layout),
-            Tab("Concern summary", "concern", sixthform_pastoral_concern.layout),
-            Tab("Concern details", "details", sixthform_pastoral_details.layout),
+            # Tab("Concern summary", "concern", sixthform_pastoral_concern.layout),
+            # Tab("Concern details", "details", sixthform_pastoral_details.layout),
             Tab("Progress", "progress", sixthform_pastoral_progress.layout),
         ],
         Page("Academic", "academic", sixthform_academic.layout): [
@@ -135,7 +135,7 @@ content = {
         Page("Student", "student", sixthform_student.layout): [
             Tab("Report", "report", sixthform_student_report.layout),
             Tab("Kudos", "kudos", sixthform_student_kudos.layout),
-            Tab("Concern", "concern", sixthform_student_concern.layout)
+            # Tab("Concern", "concern", sixthform_student_concern.layout)
         ]
     },
     Section("Apprenticeships", "apprenticeships"): {
@@ -168,7 +168,7 @@ content = {
     Section("Admin", "admin"): {
         Page("My records", "records", admin_records.layout): [
             Tab("Kudos", "kudos", admin_records_kudos.layout),
-            Tab("Concern", "concern", admin_records_concern.layout)
+            # Tab("Concern", "concern", admin_records_concern.layout)
         ]
     }
 }
