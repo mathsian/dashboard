@@ -4,6 +4,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
+import dash_daq as daq
 import pandas as pd
 from urllib.parse import parse_qs, urlencode
 from app import app
@@ -30,7 +31,85 @@ cohort_dropdown = dbc.DropdownMenu(
     nav=True,
 )
 
-filter_nav = dbc.Nav([dbc.NavItem(employer_dropdown), dbc.NavItem(cohort_dropdown)], fill=True)
+filter_nav = dbc.Form([
+    dbc.Row([
+        dbc.Col([
+            dbc.Label("Employer"), dbc.NavItem(employer_dropdown)
+            ]),
+        dbc.Col([
+            dbc.Label("Cohort"), dbc.NavItem(cohort_dropdown)
+        ])
+    ]),
+
+
+])
+
+gauge_alltime = daq.Gauge(
+    id={
+        "type": "gauge",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "alltime"
+    },
+    label="All time attendance (continuing learners)",
+    labelPosition="bottom",
+    scale={
+        "start": 0,
+        "interval": 5,
+        "labelInterval": 4,
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+    size=170,
+    style={'margin-bottom': -60},
+)
+
+# gauge_ninety = daq.Gauge(
+#     id={
+#         "type": "gauge",
+#         "section": "apprenticeships",
+#         "page": "reports",
+#         "name": "ninety"
+#     },
+#     label="90 day",
+#     labelPosition="top",
+#     scale={
+#         "start": 0,
+#         "interval": 5,
+#         "labelInterval": 4,
+#     },
+#     showCurrentValue=True,
+#     units="%",
+#     value=0,
+#     min=0,
+#     max=100,
+#     size=170,
+# )
+
+gauge_results = daq.Gauge(
+    id={
+        "type": "gauge",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "results"
+    },
+    label="Average mark (continuing learners)",
+    labelPosition="bottom",
+    scale={
+        "start": 0,
+        "interval": 10,
+        "custom": {40: "Pass", 60: "Merit", 70: "Distinction"}
+    },
+    showCurrentValue=True,
+    units="%",
+    value=0,
+    min=0,
+    max=100,
+    size=170,
+)
 
 layout = [
     dcc.Store(id={
@@ -46,6 +125,10 @@ layout = [
         "name": "attendance"
     }, storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
+    dbc.Row(dbc.Col([
+        gauge_alltime,
+        gauge_results
+    ]))
 ]
 
 
@@ -174,3 +257,53 @@ def update_cohorts(employer, cohort, search, pathname):
     attendance = app_data.get_apprentice_attendance_by_employer_cohort(employer, cohort)
     return (cohort, cohort_items, results, attendance)
 
+
+@app.callback(
+    Output(
+{
+        "type": "gauge",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "alltime"
+    }, 'value'
+    ),
+[
+    Input(
+{
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "attendance"
+    }, 'data'
+    )
+])
+def update_attendance_gauges(attendance):
+    if not attendance:
+        return 0
+    attendance_df = pd.DataFrame(attendance)
+    alltime_value = attendance_df["All time attendance (%)"].mean()
+    return alltime_value
+
+@app.callback(
+    Output(
+{
+        "type": "gauge",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "results"
+    }, 'value'
+    ),
+[
+    Input(
+{
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "results"
+    }, 'data'
+    )
+])
+def update_results_gauge(results):
+    results_df = pd.DataFrame(results).query('status == "Continuing"')
+    results_value = results_df["mark"].mean()
+    return results_value
