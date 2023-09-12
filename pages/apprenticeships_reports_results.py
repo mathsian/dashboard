@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 import pandas as pd
+import numpy as np
 from app import app
 import app_data
 
@@ -64,10 +65,13 @@ def update_table(results):
     # results_df['Class'] = pd.Categorical(
     #     results_df['mark'].fillna(-1).apply(lambda t: get_class(t)),
     #     ['TBA', 'Fail', 'Pass', 'Merit', 'Distinction'])
-    results_df = results_df.drop_duplicates(subset=['family_name', 'given_name', 'level', 'name', 'short'], keep='last')
-    results_df = results_df.set_index(['family_name', 'given_name', 'level', 'name', 'short'])['mark']
+    results_df = results_df.drop_duplicates(subset=['family_name', 'given_name', 'status', 'level', 'name', 'short'], keep='last')
+    averages_df = results_df.groupby(['family_name', 'given_name', 'status'])['mark'].mean().add(0.5).pipe(np.floor).to_frame()
+    averages_df.columns = pd.MultiIndex.from_tuples([(None, 'Mean', 'Average')], names=['level', 'name', 'short'])
+    results_df = results_df.set_index(['family_name', 'given_name', 'status', 'level', 'name', 'short'])['mark']
     results_df = results_df.unstack(['level', 'name', 'short'], fill_value="")
-    results_df.index.set_names(['Family name', 'Given name'], inplace=True)
+    results_df = pd.merge(averages_df, results_df, left_index=True, right_index=True)
+    results_df.index.set_names(['Family name', 'Given name', 'Status'], inplace=True)
     group_columns = [
         {"title": l,
          "columns": [
@@ -89,6 +93,13 @@ def update_table(results):
         {
             "title": "Given name",
             "field": "Given name",
+            "headerFilter": True,
+            "headerFilterPlaceholder": "search",
+            "frozen": True
+        },
+        {
+            "title": "Status",
+            "field": "Status",
             "headerFilter": True,
             "headerFilterPlaceholder": "search",
             "frozen": True

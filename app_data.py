@@ -223,6 +223,7 @@ def get_student_results_by_employer_cohort(employer, cohort_name=None):
                 select
                     s.family_name
                     , s.given_name
+                    , s.status
                     , m.level
                     , m.name
                     , m.short
@@ -245,6 +246,7 @@ def get_student_results_by_employer_cohort(employer, cohort_name=None):
                 group by
                 s.family_name
                 , s.given_name
+                , s.status
                 , m.level
                 , m.name
                 , m.short
