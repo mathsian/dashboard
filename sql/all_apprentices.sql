@@ -22,8 +22,8 @@ with enrolments as (
 select
     cast(student_id as integer) student_id
     , case
-        when STUD_Known_As = '' then STUD_Forename_1
         when STUD_Forename_1 like 'XXX%' then ''
+        when STUD_Known_As = '' then STUD_Forename_1
         else STUD_Known_As
       end given_name
     , STUD_Surname family_name
