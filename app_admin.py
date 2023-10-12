@@ -290,20 +290,4 @@ def update_and_add_components(code, components):
 
 
 if __name__ == "__main__":
-    # for c in get_cohorts_from_rems():
-        # app_data.add_cohort(c.get('cohort'), c.get('start_date'))
-    # app_data.update_learners(get_apprentices_from_rems())
-    # merge_from_rems()
-    # add_and_populate_instance("VIS", "VIS-22-03-LDN", "2022-03-14", [{"name": "Coursework", "weight": 100}], [201090,190892,201080])
-    # student_ids = app_data.get_students_by_instance('PRG-22-11-MCR')
-    # app_data.add_students_to_instance([s for s in student_ids if s], 'PRG-22-11-MCR', 'ian@ada.ac.uk')
-    # update_and_add_components('DIS-23-05-MCR', [
-    #  {'name': 'Task 1', 'weight': 10},
-    #  {'name': 'Task 2', 'weight': 30},
-    #  {'name': 'Task 3', 'weight': 60},
-    #  ])
-    # app_data.update_component_name('ECR-23-05-MCR', '4 KSB Reflection', '4 KSB Reflection', 10)
-    # tasks.instance_results('SDL-23-04-MCR')
-    # tasks.send_result.delay(221589, 'ECR-23-04-2-LDN')
-    # app_data.add_student_to_instance(180646, 'RME-23-04-LDN', 'ian@ada.ac.uk')
     pass

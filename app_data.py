@@ -286,6 +286,24 @@ def get_results_for_student(student_id):
             result = cur.fetchall()
     return result
 
+def get_passing_results_for_student(student_id):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                select
+                    level "Level"
+                    , pass_view.credits "Credits"
+                    , modules.name "Module"
+                    , total "Mark"
+                from pass_view
+                left join instances on pass_view.code = instances.code
+                left join modules on instances.module_id = modules.id
+                where instances.moderated and student_id = %(student_id)s
+                """, {"student_id": student_id})
+            result = cur.fetchall()
+    return result
 
 def get_detailed_results_for_student(student_id):
     with psycopg.connect(
@@ -351,7 +369,7 @@ def get_result_for_instance(student_id, instance_code):
                 , case
                     when grouping(c.name) = 1 then round(cast(sum(r.value * c.weight) as float)/sum(c.weight))
                     else r.value
-                end ::integer "Mark"
+                end ::Integer "Mark"
                 from instances i
                 left join components c on i.id = c.instance_id
                 left join results r on c.id = r.component_id
@@ -879,9 +897,9 @@ def delete_student_from_instance(student_id, code):
     return return_value
 
 
-
 if __name__ == "__main__":
     # print(get_user_list())
     # print(get_results_for_instance('SDL010'))
     # print([r['code'] for r in get_detailed_results_for_student()])
+    #print(get_passing_results_for_student())
     pass

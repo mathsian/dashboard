@@ -42,11 +42,11 @@ app = Celery(
 app.conf.beat_schedule = {
     "sync sf attendance": {
         "task": "tasks.sync_attendance",
-        "schedule": crontab(minute='*/15', hour='8-16', day_of_week='mon-fri')
+        "schedule": crontab(minute='*/15', hour='8-17', day_of_week='mon-fri')
     },
     "sync modules": {
         "task": "tasks.sync_modules",
-        "schedule": crontab(minute='0', hour='8,10,12,14,16', day_of_week='mon-fri')
+        "schedule": crontab(minute='*/20', hour='8-17', day_of_week='mon-fri')
     }
 }
 
@@ -150,7 +150,7 @@ def sixthform_academic_report(student_id):
 
 def build_results_table(student_id):
     # All results
-    results_dict = app_data.get_detailed_results_for_student(student_id)
+    results_dict = app_data.get_passing_results_for_student(student_id)
     results_df = pd.DataFrame.from_records(results_dict)
     results_df.sort_values(by=['Level', 'Module'], inplace=True)
     results_df.set_index('Module', inplace=True)
@@ -159,12 +159,19 @@ def build_results_table(student_id):
 
 @app.task
 def send_result(student_id, instance_code):
-    # Mark table for this instance
-    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component')
-    if components_df['Mark'].isnull().values.any():
-        return f"{student_id} {instance_code} not sent as missing marks"
     # Student details
     student_dict = app_data.get_student_by_id(student_id)
+    # don't email if learner not continuing
+    if student_dict['status'] != 'Continuing':
+        return f"{student_id} {instance_code} not sent as learner {student_dict['status']}"
+    # Mark table for this instance
+    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component')
+    # don't email if missing component marks
+    if components_df['Mark'].isnull().values.any():
+        return f"{student_id} {instance_code} not sent as missing marks"
+    # don't email if any component marks are zero
+    if sum((components_df['Mark'] == 0)) > 0:
+        return f"{student_id} {instance_code} not sent as zeros"
     # Instance details
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
     # Results table
@@ -172,17 +179,15 @@ def send_result(student_id, instance_code):
     # Email
     html = f"<p>Dear {student_dict.get('given_name')} {student_dict.get('family_name')},</p>"
     html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
-    # html += f"<h4>CORRECTION</h4>"
-    # html += f"<p>With apologies, your marks for {instance_dict.get('name')} have been corrected.</p>"
     html += f"<h4>{instance_dict.get('name')}</h4>"
     html += "<p>{{ marks_table }}</p>"
+    html += "<p>For detailed feedback see the classroom for this module.</p>"
     html += "<h4>Your modules</h4>"
     html += "<p>Your moderated results so far are as follows<p>"
     html += "<p>{{ results_table }}<p>"
     html += f"<p>This email is not monitored. If you have any queries about any of your results please raise a ticket with your apprenticeships helpdesk.</p>"
     subject = f"{instance_dict.get('name')} result"
-    receivers=[student_dict.get('college_email', 'ian@ada.ac.uk')]
-    # receivers=['ian@ada.ac.uk']
+    receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
     msg = gmail.send(
         receivers=receivers,
         subject=subject,
@@ -216,5 +221,4 @@ def instance_results(instance_code):
 
 
 if __name__ == "__main__":
-    # instance_results('TEP-22-10-LDN')
     pass
