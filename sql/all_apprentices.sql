@@ -18,10 +18,14 @@ with enrolments as (
                                                         order by sten_year desc)
     where STEM_Aim_Type = 1
       and STEN_Funding_Stream = 36
-)
+      and sten_reason_ended <> '40')
 select
     cast(student_id as integer) student_id
-    , iif(STUD_Known_As = '', STUD_Forename_1, STUD_Known_As) given_name
+    , case
+        when STUD_Known_As = '' then STUD_Forename_1
+        when STUD_Forename_1 like 'XXX%' then ''
+        else STUD_Known_As
+      end given_name
     , STUD_Surname family_name
     , concat(trim(code), '-', trim(instance)) cohort
     , isnull(CMPN_Company_Name, 'No employer') employer
@@ -33,7 +37,7 @@ select
                when completion_stat = 3 then 'Withdrawn'
                when completion_stat = 2 then 'Completed'
                when completion_stat = 6 then 'Break in learning'
-               else 'Unknown'
+               else 'Withdrawn'
         end                        status
 from enrolments
 left join remslive.dbo.STUDstudent on student_id = STUD_Student_ID
