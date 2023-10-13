@@ -367,9 +367,9 @@ def get_result_for_instance(student_id, instance_code):
                     else sum(c.weight)
                 end ::integer "Weighting"
                 , case
-                    when grouping(c.name) = 1 then round(cast(sum(r.value * c.weight) as float)/sum(c.weight))
+                    when grouping(c.name) = 1 then round(sum(c.weight::numeric * r.value) / sum(c.weight))
                     else r.value
-                end ::Integer "Mark"
+                end "Mark"
                 from instances i
                 left join components c on i.id = c.instance_id
                 left join results r on c.id = r.component_id
@@ -408,7 +408,7 @@ def get_results_for_instance(instance_code):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select students.id, sum(value * weight) vw, sum(weight) w, round(sum(value * weight) / sum(weight), 1) total
+            select students.id, sum(value * weight) vw, sum(weight) w, round(sum(weight::numeric * value) / sum(weight), 1) total
             from results
             left join components on components.id = results.component_id
             left join instances on instances.id = components.instance_id

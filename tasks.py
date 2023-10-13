@@ -158,7 +158,7 @@ def build_results_table(student_id):
     return results_df
 
 @app.task
-def send_result(student_id, instance_code):
+def send_result(student_id, instance_code, update=False):
     # Student details
     student_dict = app_data.get_student_by_id(student_id)
     # don't email if learner not continuing
@@ -178,7 +178,10 @@ def send_result(student_id, instance_code):
     results_df = build_results_table(student_id)
     # Email
     html = f"<p>Dear {student_dict.get('given_name')} {student_dict.get('family_name')},</p>"
-    html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
+    if update:
+        html += f"<p>Your marks for {instance_dict.get('name')} have been updated.</p>"
+    else:
+        html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
     html += f"<h4>{instance_dict.get('name')}</h4>"
     html += "<p>{{ marks_table }}</p>"
     html += "<p>For detailed feedback see the classroom for this module.</p>"
@@ -188,6 +191,7 @@ def send_result(student_id, instance_code):
     html += f"<p>This email is not monitored. If you have any queries about any of your results please raise a ticket with your apprenticeships helpdesk.</p>"
     subject = f"{instance_dict.get('name')} result"
     receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
+    # receivers = ['ian@ada.ac.uk']
     msg = gmail.send(
         receivers=receivers,
         subject=subject,
@@ -219,6 +223,7 @@ def instance_results(instance_code):
     for student_id in student_ids:
         send_result.delay(student_id, instance_code)
 
+from time import sleep
 
 if __name__ == "__main__":
     pass
