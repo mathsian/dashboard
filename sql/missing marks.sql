@@ -1,7 +1,7 @@
 SELECT 
       format(REGS_Session_Date, 'yyyy-MM-dd') date
     , format(REGH_Start_Time, 'HH:mm') period
-    , REGH_Class_Register register
+    , REGH_Register_Title register
     , RGHL_Lecturer_Code lecturer
     , trim(regt_student_id) 'Student ID'
     , trim(iif(stud_known_as is null or STUD_Known_As = '', STUD_Forename_1, stud_known_as)) 'Given Name'
