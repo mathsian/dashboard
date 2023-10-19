@@ -38,7 +38,7 @@ layout = dbc.Row(dbc.Col(html.Div(id={
 def get_missing_results(n_clicks):
     null_results = app_data.get_null_results()
     null_results_df = pd.DataFrame.from_records(null_results)
-    null_results_df['link'] = null_results_df.apply(lambda row: f"https://data.ada.ac.uk/apprenticeships/academic/edit?module={row['name'].replace(' ','+')}&instance={row['code']}", axis=1)
+    null_results_df['link'] = null_results_df.apply(lambda row: f"https://data.ada.ac.uk/apprenticeships/academic/edit?module={row['short'].replace(' ','+')}&instance={row['code']}", axis=1)
     null_results_records = null_results_df.to_dict(orient='records')
     null_results_th = html.Thead(html.Tr([html.Td("Module"), html.Td("Missing results")]))
     null_results_td = html.Tbody([html.Tr([html.Td(html.A(r.get("code"), href=r.get("link"))), html.Td(r.get("count"))]) for r in null_results_records])
