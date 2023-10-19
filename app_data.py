@@ -458,13 +458,13 @@ def get_null_results():
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select m.name, i.code, count(distinct r.student_id)
+            select m.name, m.short, i.code, count(distinct r.student_id)
             from instances i
             left join modules m on i.module_id = m.id
             left join components c on c.instance_id = i.id
             left join results r on r.component_id = c.id
             where r.value is null
-            group by m.name, i.code, i.start_date
+            group by m.name, m.short, i.code, i.start_date
             order by i.start_date;
             """)
             result = cur.fetchall()
