@@ -97,6 +97,10 @@ def update_student_report(store_data):
                     dbc.Col([
                         dbc.Table([
                             html.Tr([
+                                html.Td("Student ID"),
+                                html.Td(student_id)
+                            ]),
+                            html.Tr([
                                 html.Td("Cohort"),
                                 html.Td(student.get("cohort_name"))
                             ]),
