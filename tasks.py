@@ -11,7 +11,6 @@ import data
 import app_data
 import app_admin
 from configparser import ConfigParser
-import curriculum
 import admin
 
 config_object = ConfigParser()
@@ -35,8 +34,7 @@ couchdb_db = couchdb_config['db']
 
 app = Celery(
     'tasks',
-    result_backend=
-    f'couchdb://{couchdb_user}:{couchdb_password}@{couchdb_ip}:{couchdb_port}/{couchdb_db}',
+    result_backend=f'couchdb://{couchdb_user}:{couchdb_password}@{couchdb_ip}:{couchdb_port}/{couchdb_db}',
     broker=f'amqp://{rabbitmq_user}:{rabbitmq_password}@localhost:5672/')
 
 app.conf.beat_schedule = {
@@ -50,10 +48,12 @@ app.conf.beat_schedule = {
     }
 }
 
+
 @app.task
 def sync_attendance():
     admin.sync_rems_attendance("weekly", "ada")
     admin.sync_rems_attendance("monthly", "ada")
+
 
 @app.task(rate_limit='10/m')
 def send_email(subject, body, to_list=None, cc_list=None, bcc_list=None):
@@ -79,7 +79,10 @@ def send_report(student_id):
     report = report_dict.get("report")
     issued = report_dict.get("issued")
     subject = f"{student.get('given_name')}'s {issued} report"
-    body = f'Dear Parent/Carer,\n\nPlease find {student.get("given_name")}\'s latest academic report attached.\n\nBest Wishes,\n\nThe Sixth Form Team'
+    body = (f'''Dear Parent/Carer,
+    Please find {student.get("given_name")}\'s latest academic report attached.
+    Best Wishes,
+    The Sixth Form Team''')
     gmail.send(subject=subject,
                bcc=['ian@ada.ac.uk'],
                text=body,
@@ -87,12 +90,14 @@ def send_report(student_id):
 
 
 def sixthform_academic_report(student_id):
-    this_year_start = curriculum.this_year_start
+    term_dates = data.get_term_date_from_rems()
+    year_start = term_dates['year_start']
+    # term_start = term_dates['term_start']
     attendance_df = pd.DataFrame.from_records(
         data.get_data("attendance", "student_id", [student_id],
                       "ada")).query("subtype == 'monthly'").sort_values(
-                          by='date',
-                          ascending=True).query("date >= @this_year_start")
+        by='date',
+        ascending=True).query("date >= @year_start")
     # attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_totals = attendance_df.sum()
     attendance = round(100 * attendance_totals['actual'] /
@@ -105,9 +110,7 @@ def sixthform_academic_report(student_id):
         columns=[
             "subject_name", "assessment", "grade", "date", "comment", "report"
         ]).query("report != 2").sort_values(by='date')
-    academic_df["comment"] = academic_df["comment"].str.replace('%',
-                                                                '\%').replace(
-                                                                    '&', '\&')
+    academic_df["comment"] = academic_df["comment"].str.replace('%', '\%').replace('&', '\&')
     academic_df["comment"].fillna("", inplace=True)
     academic_multiindex = academic_df.set_index(
         ["subject_name", "assessment"])[["grade", "date", "comment", "report"]]
@@ -148,6 +151,7 @@ def sixthform_academic_report(student_id):
     os.chdir(wd)
     return {"student": student, "report": file_name + '.pdf', "issued": issued}
 
+
 def build_results_table(student_id):
     # All results
     results_dict = app_data.get_passing_results_for_student(student_id)
@@ -157,6 +161,7 @@ def build_results_table(student_id):
     results_df = results_df.dropna().astype('int64')
     return results_df
 
+
 @app.task
 def send_result(student_id, instance_code, update=False):
     # Student details
@@ -165,7 +170,8 @@ def send_result(student_id, instance_code, update=False):
     if student_dict['status'] != 'Continuing':
         return f"{student_id} {instance_code} not sent as learner {student_dict['status']}"
     # Mark table for this instance
-    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code), index='Component')
+    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code),
+                                                index='Component')
     # don't email if missing component marks
     if components_df['Mark'].isnull().values.any():
         return f"{student_id} {instance_code} not sent as missing marks"
@@ -188,7 +194,8 @@ def send_result(student_id, instance_code, update=False):
     html += "<h4>Your modules</h4>"
     html += "<p>Your moderated results so far are as follows<p>"
     html += "<p>{{ results_table }}<p>"
-    html += f"<p>This email is not monitored. If you have any queries about any of your results please raise a ticket with your apprenticeships helpdesk.</p>"
+    html += ("<p>This email is not monitored. If you have any queries about any of your results please raise a ticket "
+             "with your apprenticeships helpdesk.</p>")
     subject = f"{instance_dict.get('name')} result"
     receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
     # receivers = ['ian@ada.ac.uk']
@@ -200,13 +207,15 @@ def send_result(student_id, instance_code, update=False):
     )
     return msg.as_string()
 
+
 @app.task
 def sync_modules():
     for c in app_admin.get_cohorts_from_rems():
         app_data.add_cohort(c.get('cohort'), c.get('start_date'))
     app_data.update_learners(app_admin.get_apprentices_from_rems())
     app_admin.merge_from_rems()
- 
+
+
 def cohort_reports(cohort):
     enrolment_docs = data.get_data("enrolment",
                                    "cohort",
@@ -223,7 +232,6 @@ def instance_results(instance_code):
     for student_id in student_ids:
         send_result.delay(student_id, instance_code)
 
-from time import sleep
 
 if __name__ == "__main__":
     pass
