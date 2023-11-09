@@ -69,20 +69,8 @@ def update_student_report(store_data):
     accordion_items = []
     for student_id in store_data:
         student = app_data.get_student_by_id(student_id)
-        results = app_data.get_results_for_student(student_id)
-        actual_results = pd.DataFrame.from_records(results, columns=['level', 'credits', 'name', 'code', 'total']).dropna(subset=['total']).sort_values('total', ascending=False).drop_duplicates(['name'])
-        if student.get('top_up', False):
-            actual_counted_results = actual_results.query('level == 6')
-        else:
-            actual_counted_results = actual_results
-        if len(actual_counted_results) < 1:
-            average_result = "-"
-        else:
-            average_result = actual_counted_results['total'].mul(actual_counted_results['credits']).sum() / actual_counted_results['credits'].sum()
-            average_result = np.floor(average_result + 0.5)
 
-        credits = actual_results['credits'].sum()
-        results = actual_results.sort_values(['level', 'name']).to_dict(orient='records')
+        results, credits, average_result = app_data.get_results_report_for_student(student_id, student.get('top_up', False))
 
         accordion_item = dbc.AccordionItem(
             id={
@@ -128,7 +116,9 @@ def update_student_report(store_data):
                             html.Tr([
                                 html.Td(r.get("level", "-")),
                                 html.Td(r.get("name", "-")),
-                                html.Td(r.get("code", "-")),
+                                html.Td(
+                                    html.A(r.get("code"), href=f'/apprenticeships/academic/edit?module={r.get("short")}&instance={r.get("code")}')
+                                ),
                                 html.Td(r.get("total", "-"))
                             ]) for r in results
                         ],

@@ -16,19 +16,21 @@ cohort_dropdown = dbc.DropdownMenu(id="cohort-dropdown",
                                    nav=True,)
 team_dropdown = dbc.DropdownMenu(id="team-dropdown", nav=True)
 
-kudos_switch = html.Div(
+kudos_switch = dbc.Form(
 [
-    dbc.Label("Kudos from"),
-    dbc.RadioItems(
+    dbc.Label("Kudos this"),
+    dbc.Select(
         options=[
-            {"label": "Start of academic year", "value": "y"},
-            {"label": "Start of term", "value": "t"},
+            {"label": "academic year", "value": "y"},
+            {"label": "term", "value": "t"},
+            {"label": "half term", "value": "h"},
         ],
         value="t",
-        id="kudos-switch")
+        id="kudos-switch",
+    )
 ])
 
-fig = make_subplots(specs=[[{"type": "polar"}]], subplot_titles=['Kudos this term'])
+fig = make_subplots(specs=[[{"type": "polar"}]])
 fig.add_trace(
     go.Scatterpolar(theta=curriculum.values,
                     r=[0 for v in curriculum.values],
@@ -82,8 +84,8 @@ layout =[
     dcc.Store(id="sixthform-pastoral-store", storage_type='memory'),
     dbc.Row(dbc.Col(filter_nav)),
     dbc.Row(dbc.Col(dcc.Loading(gauge_overall))),
-    dbc.Row(dbc.Col(dcc.Loading(kudos_radar))),
     dbc.Row(kudos_switch),
+    dbc.Row(dbc.Col(dcc.Loading(kudos_radar))),
     ]
 
 
@@ -120,9 +122,9 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
     for c in curriculum.cohorts:
         s = urlencode(query={'cohort': c})
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    # If the team and cohort both haven't changed then no need to update data
-    if team == current_team and cohort == current_cohort:
-        return (cohort, cohort_items, team, team_items, dash.no_update)
+    # If the team and cohort both haven't changed then no need to update data unless the kudos date has changed
+    if team == current_team and cohort == current_cohort and dash.callback_context.triggered_id != 'kudos-switch':
+        return cohort, cohort_items, team, team_items, dash.no_update
     # Get data in scope
     term_date = data.get_term_date_from_rems()
 
@@ -132,11 +134,18 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
     # assessment_docs = data.get_data("assessment", "student_id", student_ids)
     # Kudos processing
     kudos_docs = data.get_data("kudos", "student_id", student_ids)
-    this_year_start = term_date['year_start']
-    term_start = term_date['term_start']
-    kudos_start = this_year_start if kudos_switch_value == 'y' else term_start
-    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs, columns=['_id', 'given_name', 'family_name']),
-                        pd.DataFrame.from_records(kudos_docs, columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @kudos_start"),
+
+    if kudos_switch_value == 'y':
+        kudos_start = term_date['year_start']
+    elif kudos_switch_value == 't':
+        kudos_start = term_date['term_start']
+    elif kudos_switch_value == 'h':
+        kudos_start = term_date['half_term_start']
+
+    kudos_df = pd.merge(pd.DataFrame.from_records(enrolment_docs,
+                                                  columns=['_id', 'given_name', 'family_name']),
+                        pd.DataFrame.from_records(kudos_docs,
+                                                  columns=['student_id', 'ada_value', 'date', 'from', 'points']).query("date >= @kudos_start"),
                         how="left",
                         left_on="_id",
                         right_on="student_id")
@@ -152,7 +161,7 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
     kudos_pivot_df = kudos_pivot_df.reset_index()
     kudos_pivot_docs = kudos_pivot_df.sort_values('total', ascending=False).to_dict(orient='records')
 
-    concern_docs = data.get_data("concern", "student_id", student_ids)
+    # concern_docs = data.get_data("concern", "student_id", student_ids)
     store_data = {
         "student_ids": student_ids,
         "enrolment_docs": enrolment_docs,
@@ -160,7 +169,7 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
         # "assessment_docs": assessment_docs,
         "kudos_docs": kudos_docs,
         "kudos_pivot_docs": kudos_pivot_docs,
-        "concern_docs": concern_docs,
+        # "concern_docs": concern_docs,
         "term_date": term_date
     }
     return (cohort, cohort_items, team, team_items, store_data)

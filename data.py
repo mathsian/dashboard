@@ -4,9 +4,19 @@ from cloudant.client import CouchDB
 import pandas as pd
 import calendar
 import os
+import jinja2
 
 APPRENTICE_SCHEMA = ['_id', 'type', 'given_name', 'family_name', 'email', 'status', 'company', 'cohort', 'intake']
 RESULT_SCHEMA = ['type', 'student_id', 'moduleCode', 'moduleName', 'module', 'level', 'credits', 'total', 'breakdown', 'week1FirstDay', 'week2FirstDay']
+
+# Get REMS connection settings
+config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
+config_object = ConfigParser()
+config_object.read(config_file)
+rems_settings = config_object["REMS"]
+rems_server = rems_settings["ip"]
+rems_uid = rems_settings["uid"]
+rems_pwd = rems_settings["pwd"]
 
 def create_db(name):
     # read the config
@@ -94,10 +104,13 @@ def get_data(doc_type, key_field, key_list, db_name=None):
                                     include_docs=True).all()
     return list(map(lambda r: r["doc"], result))
 
+
 def get_grouped_data(ddoc_id, view_name, startkey, endkey, db_name=None):
     with Connection(db_name) as db:
         result = db.get_view_result(ddoc_id, view_name, startkey=startkey, endkey=endkey, group=True).all()
     return result
+
+
 def get_student(student_id, db_name=None):
     with Connection(db_name) as db:
         result = db[student_id]
@@ -123,6 +136,7 @@ def delete_docs(doc_ids, db_name=None):
         for doc_id in doc_ids:
             doc = db[doc_id]
             doc.delete()
+
 
 def delete_all(doc_type, db_name=None):
     docs = get_data("all", "type", doc_type, db_name=db_name)
@@ -152,11 +166,13 @@ def get_groups(cohort, db_name=None):
                                     group=True)[[cohort, None]:[cohort, 'ZZZ']]
     return [(r['key'][1], r['value']) for r in result]
 
+
 def get_subjects(cohort, db_name=None):
     with Connection(db_name) as db:
         result = db.get_view_result('group', 'unique_subject_codes',
                                     group=True)[[cohort, None]:[cohort, 'ZZZ']]
     return [(r['key'][1], r['value']) for r in result]
+
 
 def get_assessments(cohort, subject, db_name=None):
     with Connection(db_name) as db:
@@ -164,10 +180,12 @@ def get_assessments(cohort, subject, db_name=None):
                                     group=True, descending=True)[[cohort, subject, '3000-01-01', 'ZZZ']:[cohort, subject, '2000-01-01', None]]
     return [r['key'][3] for r in result]
 
+
 def get_doc(id, db_name=None):
     with Connection(db_name) as db:
         result = db[id]
     return result
+
 
 def find_and_replace(selector, replacement, db_name=None):
     with Connection(db_name) as db:
@@ -176,6 +194,7 @@ def find_and_replace(selector, replacement, db_name=None):
             doc.update(replacement)
         result = save_docs(docs, db_name)
         return result
+
 
 def get_enrolment_by_cohort_team(cohort, team, db_name=None):
     if cohort != 'All' and team != 'All':
@@ -186,6 +205,7 @@ def get_enrolment_by_cohort_team(cohort, team, db_name=None):
     else:
         enrolment_docs = get_data("enrolment", "cohort", ["2022", "2123"])
     return enrolment_docs
+
 
 def safe_json(d):
     if d is None:
@@ -198,30 +218,27 @@ def safe_json(d):
         return all(isinstance(k, str) and safe_json(v) for k, v in d.items())
     return False
 
-def get_term_date_from_rems():
-    # Get connection settings
-    config_object = ConfigParser()
-    config_object.read(os.path.join(os.path.dirname(__file__), "config.ini"))
-    rems_settings = config_object["REMS"]
-    rems_server = rems_settings["ip"]
-    rems_uid = rems_settings["uid"]
-    rems_pwd = rems_settings["pwd"]
-    conn = pyodbc.connect(
+
+def get_rems_connection():
+    return pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
-    term_sql = """
-    -- get academic year, term and start of term from calendar
-    select top 1 Year, format(Year_Start, 'yyyy-MM-dd') Year_Start, Term, format(Term_Start, 'yyyy-MM-dd') Term_Start from
-    (select ccal_year Year, ccal_autumn_term_start Year_Start, CCAL_Autumn_Term_Start Autumn, CCAL_Spring_Term_Start Spring, CCAL_Summer_Term_Start Summer from remslive.dbo.CCALCalend) p
-    unpivot (
-    Term_Start for Term in (Autumn, Spring, Summer)
-    )
-    as unpvt
-    where Term_Start < getdate()
-    order by Term_Start desc;
-    """
-    term_data = conn.execute(term_sql).fetchone()
-    return {"year": term_data[0], "year_start": term_data[1], "term": term_data[2], "term_start": term_data[3]}
+
+
+def execute_sql_rems(file):
+    conn = get_rems_connection()
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
+    sql_template = sql_jinja_env.get_template(file)
+    sql = sql_template.render()
+    rems_df = pd.read_sql(sql, conn)
+    return rems_df.to_dict(orient='records')
+
+
+def get_term_date_from_rems():
+    term_data = execute_sql_rems('sql/get_term_dates.sql')
+    return term_data[0]
+
 
 if __name__ == "__main__":
     print(get_term_date_from_rems())

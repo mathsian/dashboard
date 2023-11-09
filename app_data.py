@@ -5,6 +5,8 @@ import jinja2
 from psycopg.rows import dict_row
 import pandas as pd
 import os
+import numpy as np
+import data
 
 # Get postgres connection settings
 config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -22,6 +24,7 @@ rems_server = rems_settings["ip"]
 rems_uid = rems_settings["uid"]
 rems_pwd = rems_settings["pwd"]
 
+
 def get_apprentice_attendance_by_employer_cohort(employer, cohort):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader('sql')
@@ -33,6 +36,7 @@ def get_apprentice_attendance_by_employer_cohort(employer, cohort):
     )
     attendance_df = pd.read_sql(sql, conn)
     return attendance_df.to_dict(orient='records')
+
 
 def get_cohort_list():
     with psycopg.connect(
@@ -267,24 +271,39 @@ def get_results_for_student(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select modules.level as level,
-                case when round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int > 39
-                then modules.credits
-                else 0 end as credits,
-                modules.name as name,
-                instances.code as code,
-                round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
-            from results
-            left join components on components.id = results.component_id
-            left join instances on instances.id = components.instance_id
-            left join students on students.id = results.student_id
-            left join modules on instances.module_id = modules.id
-            where students.id = %(student_id)s
-            group by modules.name, modules.level, modules.credits, instances.code
-            order by modules.level, modules.name, instances.code
+            select 
+             modules.name
+             , modules.level
+             , results_view.total
+             , results_view.credits
+             , results_view.short
+             , results_view.code
+            from results_view
+            left join modules on modules.short = results_view.short
+            where student_id = %(student_id)s and rank = 1
             """, {"student_id": student_id})
             result = cur.fetchall()
     return result
+
+
+def get_results_report_for_student(student_id, top_up=False):
+    results = pd.DataFrame.from_records(get_results_for_student(student_id),
+                    columns=['name', 'level', 'total', 'credits', 'short', 'code']).fillna(0)
+    if top_up:
+        counted_results = results.query('level == 6')
+    else:
+        counted_results = results
+
+    if len(counted_results) < 1 or counted_results['credits'].sum() < 1:
+        average_result = "-"
+    else:
+        average_result = counted_results['total'].mul(counted_results['credits']).sum() / counted_results['credits'].sum()
+        average_result = np.floor(float(average_result) + 0.5)
+
+    credits = results['credits'].sum()
+    results = results.sort_values(['level', 'name']).to_dict(orient='records')
+    return results, credits, average_result
+
 
 def get_passing_results_for_student(student_id):
     with psycopg.connect(
@@ -304,6 +323,7 @@ def get_passing_results_for_student(student_id):
                 """, {"student_id": student_id})
             result = cur.fetchall()
     return result
+
 
 def get_detailed_results_for_student(student_id):
     with psycopg.connect(
@@ -898,8 +918,4 @@ def delete_student_from_instance(student_id, code):
 
 
 if __name__ == "__main__":
-    # print(get_user_list())
-    # print(get_results_for_instance('SDL010'))
-    # print([r['code'] for r in get_detailed_results_for_student()])
-    #print(get_passing_results_for_student())
     pass
