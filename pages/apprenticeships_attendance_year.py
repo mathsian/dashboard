@@ -114,7 +114,7 @@ def update_attendance_dashboard(threshold, store_data):
     months = list(monthly_df['date'])
     monthly_figure = go.Figure(
         data=[
-            go.Bar(x=monthly_df['date'].astype('datetime64'),
+            go.Bar(x=monthly_df['date'].astype('datetime64[ns]'),
                    y=monthly_df['attendance'],
                    text=monthly_df['attendance'],
                    textposition='auto',
@@ -123,7 +123,7 @@ def update_attendance_dashboard(threshold, store_data):
                    xperiodalignment='middle',
                    marker_color='steelblue',
                    name="Monthly"),
-            go.Scatter(x=monthly_df['date'].astype('datetime64'),
+            go.Scatter(x=monthly_df['date'].astype('datetime64[ns]'),
                        y=monthly_df['cumulative'],
                        text=monthly_df['cumulative'],
                        textposition='top center',
@@ -157,7 +157,7 @@ def update_attendance_dashboard(threshold, store_data):
         100 * low_grouped['lowc', 'sum'] / low_grouped['lowc', 'count'], 1)
     low_figure = go.Figure(
         data=[
-            go.Bar(x=low_grouped['date'].astype('datetime64'),
+            go.Bar(x=low_grouped['date'].astype('datetime64[ns]'),
                    y=low_grouped['percent'],
                    text=low_grouped['percent'],
                    textposition='auto',
@@ -166,7 +166,7 @@ def update_attendance_dashboard(threshold, store_data):
                    xperiod='M1',
                    xperiodalignment='middle',
                    name="Monthly"),
-            go.Scatter(x=low_grouped['date'].astype('datetime64'),
+            go.Scatter(x=low_grouped['date'].astype('datetime64[ns]'),
                        y=low_grouped['percentc'],
                        text=low_grouped['percentc'],
                        textposition='top center',
