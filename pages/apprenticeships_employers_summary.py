@@ -112,15 +112,16 @@ def update_cohort_dropdown(store_data, employer):
                 }, "label")
         ])
 def update_table(cohort, employer):
-    results = app_data.get_results_for_cohort_employer(cohort, employer)
+    results = app_data.get_student_results_by_employer_cohort(employer, cohort)
     if not results:
         return "No results for these learners."
     results_df = pd.DataFrame.from_records(results)
-    results_df['Class'] = pd.Categorical(
-        results_df['total'].fillna(-1).apply(lambda t: get_class(t)),
+    results_df['class'] = pd.Categorical(
+        results_df['mark'].fillna(-1).apply(lambda m: get_class(m)),
         ['TBA', 'Fail', 'Pass', 'Merit', 'Distinction'])
+    results_df.rename({'level': 'Level', 'name': 'Module'}, axis='columns', inplace=True)
     grouped_df = results_df.groupby(
-        ['Level', 'Module'], observed=True)['Class'].value_counts().unstack(-1)
+        ['Level', 'Module'], observed=True)['class'].value_counts().unstack(-1)
     return dbc.Table.from_dataframe(grouped_df.reset_index())
 
 

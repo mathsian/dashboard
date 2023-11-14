@@ -140,6 +140,7 @@ def update_subject_table(store_data, changed, row_data):
         table_data = pivoted_components_df.sort_values(["family_name", "given_name"]).to_dict(orient='records')
     return table_data, columns, heading
 
+
 def update_result(changed):
     column = changed.get("column")
     row = changed.get("row")
@@ -155,8 +156,9 @@ def update_result(changed):
     new_capped = row.get(f'{component_name}:capped')
     new_comment = row.get(f'{component_name}:comment')
     lecturer = request.headers.get("X-Email")
-    success = app_data.set_result(result_id, new_value, new_capped, new_comment, lecturer)
+    success = app_data.update_result_by_id(result_id, new_value, new_capped, new_comment, lecturer)
     return success
+
 
 def build_columns(pivoted_components_df, editable):
     columns_start = [
