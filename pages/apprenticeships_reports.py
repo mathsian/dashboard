@@ -10,7 +10,6 @@ from urllib.parse import parse_qs, urlencode
 from app import app
 import app_data
 
-
 employer_dropdown = dbc.DropdownMenu(
     id={
         "type": "dropdown",
@@ -35,12 +34,11 @@ filter_nav = dbc.Form([
     dbc.Row([
         dbc.Col([
             dbc.Label("Employer"), dbc.NavItem(employer_dropdown)
-            ]),
+        ]),
         dbc.Col([
             dbc.Label("Cohort"), dbc.NavItem(cohort_dropdown)
         ])
     ]),
-
 
 ])
 
@@ -174,12 +172,12 @@ def update_employers(search, pathname, employer):
     for c in employers:
         s = urlencode(query={'employer': c})
         employer_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    return (employer, employer_items)
+    return employer, employer_items
 
 
 @app.callback([
     Output(
-{
+        {
             "type": "dropdown",
             "section": "apprenticeships",
             "page": "reports",
@@ -187,7 +185,7 @@ def update_employers(search, pathname, employer):
         }, "label"
     ),
     Output(
-{
+        {
             "type": "dropdown",
             "section": "apprenticeships",
             "page": "reports",
@@ -195,48 +193,48 @@ def update_employers(search, pathname, employer):
         }, "children"
     ),
     Output(
-{
-        "type": "storage",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "results"
-    }, 'data'
+        {
+            "type": "storage",
+            "section": "apprenticeships",
+            "page": "reports",
+            "name": "results"
+        }, 'data'
     ),
     Output(
-{
-        "type": "storage",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "attendance"
-    }, 'data'
-    )
-],
-[
-    Input(
-{
-            "type": "dropdown",
+        {
+            "type": "storage",
             "section": "apprenticeships",
             "page": "reports",
-            "name": "employer"
-        }, "label"
+            "name": "attendance"
+        }, 'data'
     )
 ],
-[
-State(
-{
-            "type": "dropdown",
-            "section": "apprenticeships",
-            "page": "reports",
-            "name": "cohort"
-        }, "label"
-    ),
-    State(
-        "location", "search"
-    ),
-    State(
-        "location", "pathname"
-    )
-])
+    [
+        Input(
+            {
+                "type": "dropdown",
+                "section": "apprenticeships",
+                "page": "reports",
+                "name": "employer"
+            }, "label"
+        )
+    ],
+    [
+        State(
+            {
+                "type": "dropdown",
+                "section": "apprenticeships",
+                "page": "reports",
+                "name": "cohort"
+            }, "label"
+        ),
+        State(
+            "location", "search"
+        ),
+        State(
+            "location", "pathname"
+        )
+    ])
 def update_cohorts(employer, cohort, search, pathname):
     search_dict = parse_qs(search.removeprefix('?'))
     # Get list of cohorts
@@ -255,28 +253,28 @@ def update_cohorts(employer, cohort, search, pathname):
         cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
     results = app_data.get_student_results_by_employer_cohort(employer, cohort)
     attendance = app_data.get_apprentice_attendance_by_employer_cohort(employer, cohort)
-    return (cohort, cohort_items, results, attendance)
+    return cohort, cohort_items, results, attendance
 
 
 @app.callback(
     Output(
-{
-        "type": "gauge",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "alltime"
-    }, 'value'
+        {
+            "type": "gauge",
+            "section": "apprenticeships",
+            "page": "reports",
+            "name": "alltime"
+        }, 'value'
     ),
-[
-    Input(
-{
-        "type": "storage",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "attendance"
-    }, 'data'
-    )
-])
+    [
+        Input(
+            {
+                "type": "storage",
+                "section": "apprenticeships",
+                "page": "reports",
+                "name": "attendance"
+            }, 'data'
+        )
+    ])
 def update_attendance_gauges(attendance):
     if not attendance:
         return 0
@@ -284,26 +282,29 @@ def update_attendance_gauges(attendance):
     alltime_value = attendance_df["All time attendance (%)"].mean()
     return alltime_value
 
+
 @app.callback(
     Output(
-{
-        "type": "gauge",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "results"
-    }, 'value'
+        {
+            "type": "gauge",
+            "section": "apprenticeships",
+            "page": "reports",
+            "name": "results"
+        }, 'value'
     ),
-[
-    Input(
-{
-        "type": "storage",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "results"
-    }, 'data'
-    )
-])
+    [
+        Input(
+            {
+                "type": "storage",
+                "section": "apprenticeships",
+                "page": "reports",
+                "name": "results"
+            }, 'data'
+        )
+    ])
 def update_results_gauge(results):
+    if not results:
+        return 0
     results_df = pd.DataFrame(results).query('status == "Continuing"')
     results_value = results_df["mark"].mean()
     return results_value
