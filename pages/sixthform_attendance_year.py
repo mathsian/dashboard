@@ -104,7 +104,7 @@ def update_attendance_dashboard(threshold, store_data):
     rems_df["lowc"] = (rems_df["cumulative"] < threshold).astype('int')
     # For monthly graph
     monthly_df = rems_df.query('date != "Year" & student_id == "All"')
-    monthly_df['date'] = monthly_df['date'].astype('datetime64')
+    monthly_df['date'] = monthly_df['date'].astype('datetime64[ns]')
     monthly_figure = go.Figure(
         data=[
             go.Bar(x=monthly_df['date'],
