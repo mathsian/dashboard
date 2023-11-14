@@ -161,23 +161,6 @@ def get_instances_from_cohort_name(cohort_name):
     return result
 
 
-def get_results_for_cohort_name(cohort_name):
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-            select * from instances
-            left join components on instances.id = components.instance_id
-            left join results on components.id = results.component_id
-            left join students on results.student_id = students.id
-            left join cohorts on cohorts.id = students.cohort_id
-            where cohorts.name = %(cohort_name)s;
-            """, {"cohort_name": cohort_name})
-            result = cur.fetchall()
-    return result
-
-
 def get_results_for_instance_code(instance_code):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -197,66 +180,34 @@ def get_results_for_instance_code(instance_code):
     return result
 
 
-def get_student_results_by_cohort_instance(cohort_name, instance_code):
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-            select given_name, family_name, students.id student_id,
-            component_name, value, capped, weight
-            from results
-            left join components on components.id = results.component_id
-            left join instances on instances.id = components.instance_id
-            left join students on students.id = results.student_id
-            left join cohorts on cohorts.id = students.cohort_id
-            where cohorts.name = %(cohort_name)s and instances.code = %(instance_code)s
-            """, {
-                    "cohort_name": cohort_name,
-                    "instance_code": instance_code
-                })
-            result = cur.fetchall()
-    return result
-
-
 def get_student_results_by_employer_cohort(employer, cohort_name=None):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             sql = """
                 select
-                    s.family_name
-                    , s.given_name
+                    s.family_name family_name
+                    , s.given_name given_name
                     , s.status
                     , m.level
                     , m.name
-                    , m.short
+                    , rv.short
                     , i.start_date
-                    , i.code
-                    , round(cast(sum(r.value * c.weight) as float)/sum(c.weight)) mark
-                from cohorts h
-                left join students s on h.id = s.cohort_id
-                left join results r on s.id = r.student_id
-                left join components c on r.component_id = c.id
-                left join instances i on c.instance_id = i.id
+                    , rv.code
+                    , rv.total mark
+                    , rv.credits 
+                from results_view rv
+                left join students s on rv.student_id = s.id
+                left join cohorts h on h.id = s.cohort_id
+                left join instances i on rv.code = i.code
                 left join modules m on i.module_id = m.id
                 where s.employer = %(employer)s
+                and rv.rank = 1
                 """
             if cohort_name and cohort_name != "All":
                 sql += """
                 and h.name = %(cohort_name)s
                 """
-            sql += """
-                group by
-                s.family_name
-                , s.given_name
-                , s.status
-                , m.level
-                , m.name
-                , m.short
-                , i.start_date
-                , i.code;
-               """
             cur.execute(sql, {
                 "cohort_name": cohort_name,
                 "employer": employer
@@ -325,52 +276,6 @@ def get_passing_results_for_student(student_id):
     return result
 
 
-def get_detailed_results_for_student(student_id):
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-            with results as (
-                select code, level, credits, modules.name "name", round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int total
-                from results
-                left join components on components.id = results.component_id
-                left join instances on instances.id = components.instance_id
-                left join students on students.id = results.student_id
-                left join modules on instances.module_id = modules.id
-                where students.id = %(student_id)s
-                group by modules.name, level, credits, code, moderated
-                having count(*) = count(value)
-                )
-            select level "Level", case when max(total) > 39 then credits else 0 end "Credits", name "Module", max(total) "Mark" from results group by level, credits, name;
-                """, {"student_id": student_id})
-            result = cur.fetchall()
-    return result
-
-
-def get_results_for_cohort_employer(cohort, employer):
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-                select level as "Level", m.name as "Module", code as "Instance", s.id as "student_id", round(cast(sum(value * weight) as numeric) / cast(sum(weight) as numeric),0)::int as "total"
-                from results
-                left join components c on results.component_id = c.id
-                left join instances i on c.instance_id = i.id
-                left join modules m on i.module_id = m.id
-                left join students s on results.student_id = s.id
-                left join cohorts c2 on s.cohort_id = c2.id
-                where c2.name = %(cohort)s and s.employer = %(employer)s
-                group by level, m.name, code, s.id;
-           """, {
-                    'cohort': cohort,
-                    'employer': employer
-                })
-            result = cur.fetchall()
-    return result
-
-
 def get_result_for_instance(student_id, instance_code):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -428,13 +333,11 @@ def get_results_for_instance(instance_code):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select students.id, sum(value * weight) vw, sum(weight) w, round(sum(weight::numeric * value) / sum(weight), 1) total
-            from results
-            left join components on components.id = results.component_id
-            left join instances on instances.id = components.instance_id
-            left join students on students.id = results.student_id
-            where instances.code = %(instance_code)s
-            group by students.id;
+            select 
+                student_id
+                , total
+            from results_view
+            where code = %(instance_code)s;
             """, {"instance_code": instance_code})
             result = cur.fetchall()
     return result
@@ -472,7 +375,7 @@ def get_student_list_by_instance_code(code):
     return result
 
 
-def get_null_results():
+def get_missing_results():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -483,7 +386,7 @@ def get_null_results():
             left join modules m on i.module_id = m.id
             left join components c on c.instance_id = i.id
             left join results r on r.component_id = c.id
-            where r.value is null
+            where r.value is null or r.value = 0 
             group by m.name, m.short, i.code, i.start_date
             order by i.start_date;
             """)
@@ -566,31 +469,6 @@ def get_student_list_by_employer_cohort(employer, cohort):
     return result
 
 
-def get_results_by_employer_cohort_module(employer, cohort, module):
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-            select employer, h.name cohort_name, m.name module_name, i.code instance_code, given_name, family_name,
-                round(sum(value * weight) / sum(weight), 1) total
-            from results r
-            left join components c on r.component_id = c.id
-            left join instances i on c.instance_id = i.id
-            left join modules m on i.module_id = m.id
-            left join students s on r.student_id = s.id
-            left join cohorts h on s.cohort_id = h.id
-            where employer = %(employer)s and h.name = %(cohort)s and m.name = %(module)s
-            group by employer, h.name cohort_name, m.name module_name, i.code instance_code, given_name, family_name,
-            """, {
-                    "employer": employer,
-                    "cohort": cohort,
-                    "module": module
-                })
-            result = cur.fetchall()
-    return result
-
-
 def get_upcoming_students_instances():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -637,8 +515,7 @@ def get_upcoming_class_lists():
     return result
 
 
-
-def set_result(result_id, new_value, new_capped, new_comment, lecturer):
+def update_result_by_id(result_id, new_value, new_capped, new_comment, lecturer):
     return_value = False
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -683,28 +560,6 @@ def set_result_by_component_name_instance_code(student_id, new_value,
                 })
             if cur.rowcount > 1:
                 conn.rollback()
-            return_value = cur.rowcount
-    return return_value
-
-
-def set_results(results, lecturer):
-    return_value = False
-    with psycopg.connect(
-            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            for result in results:
-                cur.execute(
-                    """
-                update results set value = %(new_value)s, capped = %(new_capped)s, missing = false,
-                comment = %(new_comment)s, lecturer = %(lecturer)s, updated_at = CURRENT_TIMESTAMP
-                where results.id = %(result_id)s;
-                """, {
-                        "new_value": result["new_value"],
-                        "new_capped": result["new_capped"],
-                        "new_comment": result["new_comment"],
-                        "lecturer": lecturer,
-                        "result_id": result["result_id"]
-                    })
             return_value = cur.rowcount
     return return_value
 
