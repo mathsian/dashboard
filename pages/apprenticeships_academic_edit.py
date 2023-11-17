@@ -119,7 +119,7 @@ def update_subject_table(store_data, changed, row_data):
     components_df['value'] = pd.to_numeric(components_df['value'], errors='coerce', downcast='integer').round(2)
     components_df.eval("weighted_value = value * weight", inplace=True)
     results_series = components_df.groupby("student_id").sum().eval("total = weighted_value / weight")["total"]
-    results_series = results_series.apply(app_data.round_normal).astype("Int64")
+    results_series = results_series.apply(app_data.round_normal)
     # Number duplicate components so we can unstack the dataframe later
     components_df["name"] = components_df["name"] + components_df.groupby(["student_id", "name"]).cumcount().astype(str).replace('0', '')
     components_df = components_df.set_index(["student_id", "given_name", "family_name", "college_email", "name"])[["result_id", "value", "capped", "comment"]]
