@@ -817,7 +817,7 @@ def delete_student_from_instance(student_id, code):
 
 
 def round_normal(x):
-    if not x or np.isnan(x):
+    if x is None or np.isnan(x):
         result = '-'
     else:
         result = np.int(np.floor(np.add(x, 0.5)))
