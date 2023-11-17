@@ -22,7 +22,7 @@ with ap_enrolments as (select
                                 left join remslive.dbo.STUDstudent on STEM.STEM_Student_ID = STUDstudent.STUD_Student_ID
                        left join lars.dbo.Core_LARS_Standard on STEM_Apprenticeship_Standard = Core_LARS_Standard.StandardCode
                        left join remslive.dbo.styrstudentyr on sten_year = styr_year and sten_student_id = styr_student_id
-                       where STEN_Year = (select max(STEN_Year) from remslive.dbo.sten)
+                       where STEN_Year = iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate()))
                          and STEN_Funding_Stream = 36
                          and (STEN_Completion_Stat <> '3' or STEN_Reason_ended <> 40)
                          and STEM_Aim_Type = 1)
@@ -30,7 +30,7 @@ select
     iif(grouping(Start_Date) = 1, 'All start dates', Start_Date) Start
     , iif(grouping(StandardName) = 1, 'All standards', StandardName) Standard
     , iif(grouping(Provision) = 1, 'All provisions', Provision) Provision
-    , iif(grouping(Age) = 1, 'All ages', Age) Age
+    , iif(grouping(Age) = 1, 'All ages', Age) "Age at end of August"
     , iif(grouping(Status) = 1, 'All status', Status) Status
     , count(*) Count
 from ap_enrolments

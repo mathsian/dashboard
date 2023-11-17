@@ -7,9 +7,10 @@ from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
 from app import app
 from dash import html, dcc
+from icecream import ic
 
 layout = dbc.Container([
-    dcc.Store(id="store-apprenticeships-enrolments"),
+    dcc.Store(id="store-apprenticeships-enrolments", storage_type='memory'),
     dbc.Row([
         dbc.Col(
             dbc.Select(
@@ -75,7 +76,8 @@ def update_enrolments_store(n_clicks):
     template_vars = {}
     sql = sql_template.render(template_vars)
     df = pd.read_sql(sql, conn)
-    return df.to_dict(orient='records')
+    store_data = df.to_dict(orient='records')
+    return store_data
 
 
 @app.callback([
@@ -99,7 +101,9 @@ def update_enrolments_store(n_clicks):
     Input("store-apprenticeships-enrolments", "data"),
 ])
 def update_start_dates(store_data):
+    ic(store_data)
     df = pd.DataFrame.from_records(store_data)
+
     start_dates = df.sort_values('Start')['Start'].unique()
     options = [{"label": s, "value": s} for s in start_dates]
     selected = 'All start dates'
@@ -220,6 +224,6 @@ def update_provisions(standard, start_date, store_data):
 ])
 def update_enrolments(provision, standard, start_date, store_data):
     df = pd.DataFrame.from_records(store_data).query("Start == @start_date and Standard == @standard and Provision == @provision")
-    df.set_index(["Start", "Standard", "Provision", "Age", "Status"], inplace=True)
+    df.set_index(["Start", "Standard", "Provision", "Age at end of August", "Status"], inplace=True)
     table = dbc.Table.from_dataframe(df.loc[(start_date, standard, provision)].reset_index())
     return table
