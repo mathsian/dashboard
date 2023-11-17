@@ -217,7 +217,7 @@ layout = html.Div([
 ], [Input("sixthform-selected-store", "data")])
 def update_student_report(store_data):
     if not store_data:
-        return "Select a student to view their report", "", blank_figure, [], [], []
+        return "Select a student to view their report", "", blank_figure, [], []
     student_id = store_data[-1]
     enrolment_doc = data.get_student(student_id)
     heading = f'{enrolment_doc.get("_id")} {enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'

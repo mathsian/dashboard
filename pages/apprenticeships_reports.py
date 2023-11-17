@@ -20,24 +20,11 @@ employer_dropdown = dbc.DropdownMenu(
     nav=True,
 )
 
-cohort_dropdown = dbc.DropdownMenu(
-    id={
-        "type": "dropdown",
-        "section": "apprenticeships",
-        "page": "reports",
-        "name": "cohort"
-    },
-    nav=True,
-)
-
 filter_nav = dbc.Form([
     dbc.Row([
         dbc.Col([
             dbc.Label("Employer"), dbc.NavItem(employer_dropdown)
         ]),
-        dbc.Col([
-            dbc.Label("Cohort"), dbc.NavItem(cohort_dropdown)
-        ])
     ]),
 
 ])
@@ -49,7 +36,7 @@ gauge_alltime = daq.Gauge(
         "page": "reports",
         "name": "alltime"
     },
-    label="All time attendance (continuing learners)",
+    label="All time attendance",
     labelPosition="bottom",
     scale={
         "start": 0,
@@ -65,28 +52,6 @@ gauge_alltime = daq.Gauge(
     style={'margin-bottom': -60},
 )
 
-# gauge_ninety = daq.Gauge(
-#     id={
-#         "type": "gauge",
-#         "section": "apprenticeships",
-#         "page": "reports",
-#         "name": "ninety"
-#     },
-#     label="90 day",
-#     labelPosition="top",
-#     scale={
-#         "start": 0,
-#         "interval": 5,
-#         "labelInterval": 4,
-#     },
-#     showCurrentValue=True,
-#     units="%",
-#     value=0,
-#     min=0,
-#     max=100,
-#     size=170,
-# )
-
 gauge_results = daq.Gauge(
     id={
         "type": "gauge",
@@ -94,7 +59,7 @@ gauge_results = daq.Gauge(
         "page": "reports",
         "name": "results"
     },
-    label="Average mark (continuing learners)",
+    label="Average mark",
     labelPosition="bottom",
     scale={
         "start": 0,
@@ -110,6 +75,12 @@ gauge_results = daq.Gauge(
 )
 
 layout = [
+    dcc.Store(id={
+        "type": "storage",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "learners"
+    }, storage_type='memory'),
     dcc.Store(id={
         "type": "storage",
         "section": "apprenticeships",
@@ -178,19 +149,11 @@ def update_employers(search, pathname, employer):
 @app.callback([
     Output(
         {
-            "type": "dropdown",
+            "type": "storage",
             "section": "apprenticeships",
             "page": "reports",
-            "name": "cohort"
-        }, "label"
-    ),
-    Output(
-        {
-            "type": "dropdown",
-            "section": "apprenticeships",
-            "page": "reports",
-            "name": "cohort"
-        }, "children"
+            "name": "learners"
+        }, 'data'
     ),
     Output(
         {
@@ -209,7 +172,7 @@ def update_employers(search, pathname, employer):
         }, 'data'
     )
 ],
-    [
+
         Input(
             {
                 "type": "dropdown",
@@ -218,42 +181,13 @@ def update_employers(search, pathname, employer):
                 "name": "employer"
             }, "label"
         )
-    ],
-    [
-        State(
-            {
-                "type": "dropdown",
-                "section": "apprenticeships",
-                "page": "reports",
-                "name": "cohort"
-            }, "label"
-        ),
-        State(
-            "location", "search"
-        ),
-        State(
-            "location", "pathname"
-        )
-    ])
-def update_cohorts(employer, cohort, search, pathname):
-    search_dict = parse_qs(search.removeprefix('?'))
-    # Get list of cohorts
-    cohorts = ['All'] + app_data.get_cohorts_by_employer(employer)
-    cohort_query = search_dict.get('cohort', False)
-    # If current cohort is valid for employer, default to that
-    # Else first cohort
-    cohort = cohort if cohort in cohorts else cohorts[0]
-    # If cohort in query is valid switch to that
-    if cohort_query:
-        if cohort_query[0] in cohorts:
-            cohort = cohort_query[0]
-    cohort_items = []
-    for c in cohorts:
-        s = urlencode(query={'employer': employer, 'cohort': c})
-        cohort_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    results = app_data.get_student_results_by_employer_cohort(employer, cohort)
-    attendance = app_data.get_apprentice_attendance_by_employer_cohort(employer, cohort)
-    return cohort, cohort_items, results, attendance
+
+)
+def update_data(employer):
+    learners = app_data.get_students_by_employer(employer)
+    results = app_data.get_student_results_by_employer(employer)
+    attendance = app_data.get_apprentice_attendance_by_employer(employer)
+    return learners, results, attendance
 
 
 @app.callback(
@@ -305,6 +239,6 @@ def update_attendance_gauges(attendance):
 def update_results_gauge(results):
     if not results:
         return 0
-    results_df = pd.DataFrame(results).query('status == "Continuing"')
+    results_df = pd.DataFrame(results)
     results_value = results_df["mark"].mean()
     return results_value
