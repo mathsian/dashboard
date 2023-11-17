@@ -11,13 +11,13 @@ from app import app
 import app_data
 from icecream import ic
 
-results_table = dash_tabulator.DashTabulator(
+learners_table = dash_tabulator.DashTabulator(
     id={
         "section": "apprenticeships",
         "page": "reports",
         "tab": "results",
         "type": "table",
-        "name": "results"
+        "name": "learners"
     },
     theme='bootstrap/tabulator_bootstrap4',
     options={
@@ -28,7 +28,7 @@ results_table = dash_tabulator.DashTabulator(
     }
 )
 
-layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
+layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(learners_table)])])])
 
 
 @app.callback(
@@ -39,7 +39,7 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
                 "page": "reports",
                 "tab": "results",
                 "type": "table",
-                "name": "results"
+                "name": "learners"
             }, "columns"),
         Output(
             {
@@ -47,7 +47,7 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
                 "page": "reports",
                 "tab": "results",
                 "type": "table",
-                "name": "results"
+                "name": "learners"
             }, "data"),
     ], [
         Input(
@@ -64,16 +64,24 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
                 "page": "reports",
                 "name": "results"
             }, 'data'),
+        Input(
+            {
+                "type": "storage",
+                "section": "apprenticeships",
+                "page": "reports",
+                "name": "attendance"
+            }, 'data'),
     ])
-def update_table(learners, results):
-    if not results:
-        return "No results for these learners."
+def update_table(learners, results, attendance):
+    if not learners:
+        return "No learners for this employer"
 
     learner_columns = ['student_id', 'cohort', 'start_date', 'given_name', 'family_name', 'status']
 
     learners_df = pd.DataFrame.from_records(learners, columns=learner_columns, index='student_id')
 
-    learner_cohorts = learners_df[['start_date', 'cohort']].sort_values('start_date', ascending=False)['cohort'].unique()
+    learner_cohorts = learners_df[['start_date', 'cohort']].sort_values('start_date', ascending=False)[
+        'cohort'].unique()
     results_df = pd.DataFrame.from_records(results)
 
     # Learners with no results will have NaN under short
@@ -81,7 +89,7 @@ def update_table(learners, results):
 
     results_df = unpivot_results(results_df)
 
-    # Now we can drop the No results yet column if it exists
+    # Now we can drop the No results yet column
     results_df.drop('No results yet', level='short', axis='columns', inplace=True, errors='ignore')
 
     group_columns = [
@@ -101,6 +109,10 @@ def update_table(learners, results):
 
     # merge with biographic
     learner_results_df = pd.merge(learners_df, results_df, left_index=True, right_index=True)
+
+    # merge with attendance
+    attendance_df = pd.DataFrame.from_records(attendance).set_index('Student ID').applymap(app_data.round_normal)
+    learner_results_attendance_df = pd.merge(learner_results_df, attendance_df, left_index=True, right_index=True)
 
     columns = [
                   {
@@ -151,14 +163,81 @@ def update_table(learners, results):
                       "clipboard": True,
                       "frozen": True
                   },
-              ] + group_columns
+              ] + group_columns + [{
+        "title": "All time sessions",
+        "field": "All time sessions",
+        "visible": False,
+        "clipboard": True,
+    },
+                  {
+                      "title": "All time present",
+                      "field": "All time present",
+                      "visible": False,
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "All time late",
+                      "field": "All time late",
+                      "visible": False,
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "All time attendance (%)",
+                      "field": "All time attendance (%)",
+                      "headerFilter": True,
+                      "headerFilterFunc": "<",
+                      "headerFilterPlaceholder": "Less than",
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "All time punctuality (%)",
+                      "field": "All time punctuality (%)",
+                      "headerFilter": True,
+                      "headerFilterFunc": "<",
+                      "headerFilterPlaceholder": "Less than",
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "90 day sessions",
+                      "field": "90 day sessions",
+                      "visible": False,
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "90 day present",
+                      "field": "90 day present",
+                      "visible": False,
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "90 day late",
+                      "field": "90 day late",
+                      "visible": False,
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "90 day attendance (%)",
+                      "field": "90 day attendance (%)",
+                      "headerFilter": True,
+                      "headerFilterFunc": "<",
+                      "headerFilterPlaceholder": "Less than",
+                      "clipboard": True,
+                  },
+                  {
+                      "title": "90 day punctuality (%)",
+                      "field": "90 day punctuality (%)",
+                      "headerFilter": True,
+                      "headerFilterFunc": "<",
+                      "headerFilterPlaceholder": "Less than",
+                      "clipboard": True,
+                  },
+              ]
 
-    data = learner_results_df.reset_index().fillna('-').to_dict(orient='records')
+    data = learner_results_attendance_df.reset_index(names='student_id').fillna('-').to_dict(orient='records')
     return columns, data
 
 
 def unpivot_results(results_df):
-
     results_drop = ['code', 'credits']
     results_index = ['student_id', 'start_date', 'level', 'name', 'short']
 

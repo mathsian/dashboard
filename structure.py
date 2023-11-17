@@ -18,7 +18,7 @@ from pages import (
     apprenticeships_cohorts, apprenticeships_cohorts_report,
     apprenticeships_employers, apprenticeships_employers_report, apprenticeships_employers_summary,
     apprenticeships_reports, apprenticeships_reports_results,
-    apprenticeships_report_attendance,
+    apprenticeships_report_attendance, apprenticeships_reports_summary, apprenticeships_reports_learners,
     # stats_enrolment, stats_enrolment_view,
     admin_records, admin_records_kudos, admin_records_concern)
 
@@ -35,6 +35,7 @@ class IncompleteError(Exception):
 
 class Container(object):
     """Base class for sections, pages and tabs"""
+
     def __init__(self, name, path):
         self.name = name
         self.children = {}
@@ -55,6 +56,7 @@ Section = Container
 class Page(Container):
     """A page of the dashboard.
     Owns a list of tabs and layout for sidebar content"""
+
     def __init__(self, name, path, layout):
         super().__init__(name, path)
         self.layout = layout
@@ -63,6 +65,7 @@ class Page(Container):
 class Tab(Container):
     """The lowest division of content.
     Content is displayed in the main content area"""
+
     def __init__(self, name, path, layout):
         super().__init__(name, path)
         self.layout = layout
@@ -150,21 +153,23 @@ content = {
             Tab("Details", "details", apprenticeships_academic_details.layout)
         ],
         Page("Attendance", "attendance", apprenticeships_attendance.layout):
-        [Tab("Year", "year", apprenticeships_attendance_year.layout),
-         Tab("Missing", "missing", apprenticeships_attendance_missing.layout)],
+            [Tab("Year", "year", apprenticeships_attendance_year.layout),
+             Tab("Missing", "missing", apprenticeships_attendance_missing.layout)],
         Page("Cohorts", "cohorts", apprenticeships_cohorts.layout):
-        [Tab("Report", "report", apprenticeships_cohorts_report.layout)],
+            [Tab("Report", "report", apprenticeships_cohorts_report.layout)],
         Page("Employers", "employers", apprenticeships_employers.layout):
-        [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
-         Tab("Report", "report", apprenticeships_employers_report.layout)],
+            [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
+             Tab("Report", "report", apprenticeships_employers_report.layout)],
         Page("Reports", "reports", apprenticeships_reports.layout):
-        [Tab("Results", "results", apprenticeships_reports_results.layout),
-         Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)]
+            [Tab("Summary", "summary", apprenticeships_reports_summary.layout),
+             Tab("Learners", "learners", apprenticeships_reports_learners.layout),
+             Tab("Results", "results", apprenticeships_reports_results.layout),
+             Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)]
     },
-#     Section("Stats", "stats"): {
-#         Page("Enrolment", "enrolment", stats_enrolment.layout):
-#         [Tab("View", "view", stats_enrolment_view.layout)]
-#     },
+    #     Section("Stats", "stats"): {
+    #         Page("Enrolment", "enrolment", stats_enrolment.layout):
+    #         [Tab("View", "view", stats_enrolment_view.layout)]
+    #     },
     Section("Admin", "admin"): {
         Page("My records", "records", admin_records.layout): [
             Tab("Kudos", "kudos", admin_records_kudos.layout),

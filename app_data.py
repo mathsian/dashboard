@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import numpy as np
 import data
+from icecream import ic
 
 # Get postgres connection settings
 config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -31,6 +32,19 @@ def get_apprentice_attendance_by_employer_cohort(employer, cohort):
     )
     sql_template = sql_jinja_env.get_template('apprentice attendance by employer and cohort.sql')
     sql = sql_template.render(employer=employer, cohort=cohort)
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    attendance_df = pd.read_sql(sql, conn)
+    return attendance_df.to_dict(orient='records')
+
+
+def get_apprentice_attendance_by_employer(employer):
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader('sql')
+    )
+    sql_template = sql_jinja_env.get_template('apprentice attendance by employer.sql')
+    sql = sql_template.render(employer=employer)
     conn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
     )
@@ -108,7 +122,7 @@ def get_students_by_cohort_name(cohort_name):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort_name from students
+            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort from students
             left join cohorts on cohorts.id = students.cohort_id where cohorts.name = %(cohort_name)s
             order by family_name, given_name;
             """, {"cohort_name": cohort_name})
@@ -122,7 +136,7 @@ def get_students_by_employer(employer):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort_name from students
+            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort, cohorts.start_date from students
             left join cohorts on cohorts.id = students.cohort_id where students.employer = %(employer)s
             order by family_name, given_name;
             """, {"employer": employer})
@@ -180,13 +194,43 @@ def get_results_for_instance_code(instance_code):
     return result
 
 
+def get_student_results_by_employer(employer):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            sql = """
+                select
+                    s.id student_id
+                    , m.level
+                    , m.name
+                    , rv.short
+                    , i.start_date
+                    , rv.code
+                    , rv.total mark
+                    , rv.credits 
+                from students s
+                left join results_view rv on rv.student_id = s.id
+                left join instances i on rv.code = i.code
+                left join modules m on i.module_id = m.id
+                where s.employer = %(employer)s
+                and (rv.rank = 1 or rv.rank is null)
+                """
+            cur.execute(sql, {
+                "employer": employer
+            })
+            result = cur.fetchall()
+    return result
+
+
 def get_student_results_by_employer_cohort(employer, cohort_name=None):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             sql = """
                 select
-                    s.family_name family_name
+                    s.id student_id
+                    , h.name cohort
+                    , s.family_name family_name
                     , s.given_name given_name
                     , s.status
                     , m.level
@@ -196,13 +240,13 @@ def get_student_results_by_employer_cohort(employer, cohort_name=None):
                     , rv.code
                     , rv.total mark
                     , rv.credits 
-                from results_view rv
-                left join students s on rv.student_id = s.id
+                from students s
+                left join results_view rv on rv.student_id = s.id
                 left join cohorts h on h.id = s.cohort_id
                 left join instances i on rv.code = i.code
                 left join modules m on i.module_id = m.id
                 where s.employer = %(employer)s
-                and rv.rank = 1
+                and rv.rank = 1 or rv.rank is null
                 """
             if cohort_name and cohort_name != "All":
                 sql += """
@@ -249,7 +293,7 @@ def get_results_report_for_student(student_id, top_up=False):
         average_result = "-"
     else:
         average_result = counted_results['total'].mul(counted_results['credits']).sum() / counted_results['credits'].sum()
-        average_result = np.floor(float(average_result) + 0.5)
+        average_result = round_normal(float(average_result))
 
     credits = results['credits'].sum()
     results = results.sort_values(['level', 'name']).to_dict(orient='records')
@@ -770,6 +814,14 @@ def delete_student_from_instance(student_id, code):
                 })
             return_value = cur.rowcount
     return return_value
+
+
+def round_normal(x):
+    if not x or np.isnan(x):
+        result = '-'
+    else:
+        result = np.int(np.floor(np.add(x, 0.5)))
+    return result
 
 
 if __name__ == "__main__":
