@@ -90,7 +90,7 @@ def update_student_report(store_data):
                             ]),
                             html.Tr([
                                 html.Td("Cohort"),
-                                html.Td(student.get("cohort"))
+                                html.Td(student.get("cohort_name"))
                             ]),
                             html.Tr([
                                 html.Td("Employer"),
