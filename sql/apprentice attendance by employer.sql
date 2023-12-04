@@ -64,8 +64,8 @@ all_time_attendance as (
         , sum(possible) sessions
         , sum(actual) present
         , sum(late) late
-        , round(100 * cast(sum(Actual) as float) / cast(sum(Possible) as float), 1) attendance
-        , 100 - round(100 * cast(sum(late) as float) / cast(sum(Actual) as float), 1) punctuality
+        , round(100 * cast(sum(Actual) as float) / cast(nullif(sum(Possible), 0) as float), 1) attendance
+        , 100 - round(100 * cast(sum(late) as float) / cast(nullif(sum(Actual), 0) as float), 1) punctuality
     from attendance_marks
     group by student_id
 ),
@@ -75,8 +75,8 @@ ninety_days_attendance as (
         , sum(possible) sessions
         , sum(actual) present
         , sum(late) late
-        , round(100 * cast(sum(Actual) as float) / cast(sum(Possible) as float), 1) attendance
-        , 100 - round(100 * cast(sum(late) as float) / cast(sum(Actual) as float), 1) punctuality
+        , round(100 * cast(sum(Actual) as float) / cast(nullif(sum(Possible), 0) as float), 1) attendance
+        , 100 - round(100 * cast(sum(late) as float) / cast(nullif(sum(Actual), 0) as float), 1) punctuality
     from attendance_marks
     where datediff(dd, session_date, getdate()) <= 90
     group by student_id
