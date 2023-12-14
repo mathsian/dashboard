@@ -49,13 +49,14 @@
       London N15 4AG}}
 \end{flushright}
 
-\section*{PROVISIONAL TRANSCRIPT}
+\section*{TRANSCRIPT}
 
 \begin{tabular}{l l}
 \uppercase{Student name} & \textsf{\VAR{student_name}}\\
 \uppercase{Student ID} & \textsf{\VAR{student_id}}\\
 \uppercase{Programme} & \textsf{\VAR{programme}}\\
-\uppercase{Issued} & \textsf{\VAR{issued}}
+\uppercase{Start date} & \textsf{\VAR{start_date}}\\
+\uppercase{Status} & \textsf{\VAR{status}}\\
 \end{tabular}
 
 \begin{center}
@@ -63,11 +64,17 @@
 \uppercase{Level} & \uppercase{Module name} & \uppercase{Credits} & \uppercase{Total} & \uppercase{Class}\\
 \hline
 %% for module in modules
-\textsf{\VAR{module.level}} & \textsf{\VAR{module.name}} & \textsf{\VAR{module.credits}} & \textsf{\VAR{module.total}} & \textsf{\VAR{module.class}}\\
+\textsf{\VAR{module.Level}} & \textsf{\VAR{module.Module}} & \textsf{\VAR{module.Credits}} & \textsf{\VAR{module.Mark}} & \textsf{\VAR{module.Class}} 
+\\
 %% endfor
 \hline
-&& \textbf{\textsf{\VAR{overall_credits}}} & \textbf{\textsf{\VAR{overall}}} & \textbf{\textsf{\VAR{overall_class}}}
+&& \textbf{\textsf{\VAR{overall_credits}}} & \textbf{\textsf{\VAR{overall}}} & 
 \end{tabular}
 \end{center}
-
+\begin{tabular}{l l}
+\uppercase{Issued} & \textsf{\VAR{issued}}\\
+\uppercase{Signed} & \raisebox{-0.5\height}{\includegraphics[]{fk}}\\
+& \textsf{Farhad Keissarian}\\
+& \textsf{Head of Degree Programmes}\\
+\end{tabular}
 \end{document}
