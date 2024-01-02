@@ -37,6 +37,13 @@ single_report_attendance = dbc.AccordionItem([
     },
               figure=blank_figure,
               config={"displayModeBar": False}),
+    html.Div(id={
+        "section": "sixthform",
+        "type": "table",
+        "page": "student",
+        "tab": "report",
+        "name": "attendance"
+    })
 ],
                                              title="Attendance")
 single_report_academic = dbc.AccordionItem([
@@ -193,6 +200,14 @@ layout = html.Div([
     Output(
         {
             "section": "sixthform",
+            "type": "table",
+            "page": "student",
+            "tab": "report",
+            "name": "attendance"
+        }, "children"),
+    Output(
+        {
+            "section": "sixthform",
             "type": "text",
             "page": "student",
             "tab": "report",
@@ -217,7 +232,7 @@ layout = html.Div([
 ], [Input("sixthform-selected-store", "data")])
 def update_student_report(store_data):
     if not store_data:
-        return "Select a student to view their report", "", blank_figure, [], []
+        return "Select a student to view their report", "", blank_figure, [], [], []
     student_id = store_data[-1]
     enrolment_doc = data.get_student(student_id)
     heading = f'{enrolment_doc.get("_id")} {enrolment_doc.get("given_name")} {enrolment_doc.get("family_name")}'
@@ -251,5 +266,9 @@ def update_student_report(store_data):
         go.Bar(x=attendance_df["date"],
                y=attendance_df["percent"],
                name="Weekly attendance"))
+    notes_docs = data.get_data("note", "student_id", student_id)
+    notes_df = pd.DataFrame.from_records(notes_docs, columns=['date', 'category', 'comment'])
+    notes_df = notes_df.rename({'date': 'Date', 'category': 'Category', 'comment': 'Comment'}, axis='columns').sort_values('Date', ascending=False)
+    notes_table = dbc.Table.from_dataframe(notes_df)
     # return heading, attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
-    return heading, attendance_year, attendance_figure, assessment_children, kudos_docs
+    return heading, attendance_year, attendance_figure, notes_table, assessment_children, kudos_docs
