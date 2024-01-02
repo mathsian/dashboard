@@ -11,6 +11,7 @@ from pages import (
     sixthform_pastoral_weekly, sixthform_pastoral_details,
     sixthform_academic_view, sixthform_academic_edit, sixthform_student,
     sixthform_student_report, sixthform_student_kudos,
+    sixthform_student_notes, sixthform_pastoral_notes,
     sixthform_student_concern, apprenticeships_academic,
     apprenticeships_info, apprenticeships_info_upcoming, apprenticeships_info_missing, apprenticeships_info_enrolments,
     apprenticeships_academic_edit, apprenticeships_academic_view, apprenticeships_academic_details,
@@ -20,7 +21,7 @@ from pages import (
     apprenticeships_reports, apprenticeships_reports_results,
     apprenticeships_report_attendance, apprenticeships_reports_summary, apprenticeships_reports_learners,
     # stats_enrolment, stats_enrolment_view,
-    admin_records, admin_records_kudos, admin_records_concern)
+    admin_records, admin_records_kudos, admin_records_concern, admin_records_notes)
 
 
 class PathExistsError(Exception):
@@ -126,6 +127,7 @@ content = {
                 sixthform_pastoral_attendance.layout),
             Tab("Weekly", "weekly", sixthform_pastoral_weekly.layout),
             Tab("Punctuality", "punctuality", sixthform_pastoral_punctuality.layout),
+            Tab("Notes", "notes", sixthform_pastoral_notes.layout),
             Tab("Kudos", "kudos", sixthform_pastoral_kudos.layout),
             # Tab("Concern summary", "concern", sixthform_pastoral_concern.layout),
             # Tab("Concern details", "details", sixthform_pastoral_details.layout),
@@ -138,6 +140,7 @@ content = {
         Page("Student", "student", sixthform_student.layout): [
             Tab("Report", "report", sixthform_student_report.layout),
             Tab("Kudos", "kudos", sixthform_student_kudos.layout),
+            Tab("Notes", "notes", sixthform_student_notes.layout),
             # Tab("Concern", "concern", sixthform_student_concern.layout)
         ]
     },
@@ -173,6 +176,7 @@ content = {
     Section("Admin", "admin"): {
         Page("My records", "records", admin_records.layout): [
             Tab("Kudos", "kudos", admin_records_kudos.layout),
+            Tab("Notes", "notes", admin_records_notes.layout),
             # Tab("Concern", "concern", admin_records_concern.layout)
         ]
     }
