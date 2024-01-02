@@ -161,7 +161,7 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
     kudos_pivot_df = kudos_pivot_df.reset_index()
     kudos_pivot_docs = kudos_pivot_df.sort_values('total', ascending=False).to_dict(orient='records')
 
-    # concern_docs = data.get_data("concern", "student_id", student_ids)
+    note_docs = data.get_data("note", "student_id", student_ids)
     store_data = {
         "student_ids": student_ids,
         "enrolment_docs": enrolment_docs,
@@ -169,7 +169,7 @@ def update_teams(pathname, search, kudos_switch_value, team, cohort, store_data)
         # "assessment_docs": assessment_docs,
         "kudos_docs": kudos_docs,
         "kudos_pivot_docs": kudos_pivot_docs,
-        # "concern_docs": concern_docs,
+        "note_docs": note_docs,
         "term_date": term_date
     }
     return (cohort, cohort_items, team, team_items, store_data)

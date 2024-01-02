@@ -9,6 +9,8 @@ from dash import callback_context
 from flask import request
 import pandas as pd
 from dash_extensions.javascript import Namespace
+from icecream import ic
+
 ns = Namespace("myNameSpace", "tabulator")
 
 kudos_table = dash_tabulator.DashTabulator(
@@ -147,6 +149,8 @@ def update_kudos_table(changed, dataChanged):
     kudos_df = pd.DataFrame(kudos_docs).sort_values('date', ascending=False)
     student_ids = list(kudos_df["student_id"].unique())
     enrolment_docs = data.get_data("enrolment", "_id", student_ids)
+    if not enrolment_docs:
+        return []
     enrolment_df = pd.DataFrame(enrolment_docs)
     merged_df = kudos_df.merge(enrolment_df,
                                left_on="student_id",
