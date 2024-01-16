@@ -45,7 +45,6 @@ notes_table = dash_tabulator.DashTabulator(
             "title": "Date",
             "field": "date",
             "width": "15%",
-            "sorter": "number",
             "headerHozAlign": "right",
             "hozAlign": "right",
             "headerFilter": True,
@@ -107,5 +106,5 @@ def update_pastoral_notes(store_data):
         pd.DataFrame.from_records(enrolment_docs).set_index("_id"),
         pd.DataFrame.from_records(note_docs).set_index("student_id"),
         left_index=True,
-        right_index=True)
+        right_index=True).sort_values(['date', 'family_name'], ascending=[False, True])
     return note_df.to_dict(orient="records")
