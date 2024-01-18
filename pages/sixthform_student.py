@@ -78,8 +78,10 @@ student_table = dash_tabulator.DashTabulator(
 layout = [
     dcc.Store(id="sixthform-student-store", storage_type='memory'),
     dcc.Store(id="sixthform-selected-store", storage_type='memory'),
-    dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col(dcc.Loading(student_table)))
+    dbc.Card([
+        dbc.CardHeader(filter_nav),
+        dbc.CardBody(student_table)
+    ]),
 ]
 
 

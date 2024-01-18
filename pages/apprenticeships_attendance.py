@@ -19,15 +19,15 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
-update_button =  dbc.Button(children="Update",
-                   id={
-                       "type": "button",
-                       "section": "apprenticeships",
-                       "page": "attendance",
-                       "name": "update"
-                   },
-                   outline=True,
-                   color='primary')
+update_button = dbc.Button(children="Update",
+                           id={
+                               "type": "button",
+                               "section": "apprenticeships",
+                               "page": "attendance",
+                               "name": "update"
+                           },
+                           outline=True,
+                           color='primary')
 gauge_last = daq.Gauge(
     id={
         "type": "gauge",
@@ -35,7 +35,7 @@ gauge_last = daq.Gauge(
         "page": "attendance",
         "name": "last"
     },
-    label="This month",
+    label=" ",
     labelPosition="top",
     scale={
         "start": 0,
@@ -48,7 +48,7 @@ gauge_last = daq.Gauge(
     min=0,
     max=100,
     size=170,
-    style={'margin-bottom': -60},
+    style={'margin': '-10px 0px -70px 0px'},
 )
 gauge_cumulative = daq.Gauge(
     id={
@@ -57,8 +57,6 @@ gauge_cumulative = daq.Gauge(
         "page": "attendance",
         "name": "cumulative"
     },
-    label="This year",
-    labelPosition="top",
     scale={
         "start": 0,
         "interval": 5,
@@ -70,13 +68,23 @@ gauge_cumulative = daq.Gauge(
     min=0,
     max=100,
     size=170,
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 layout = [
     dcc.Store(id='apprenticeships-attendance-store', storage_type='memory'),
-    dbc.Row(dbc.Col(update_button)),
-    dbc.Row(dbc.Col(gauge_last)),
-    dbc.Row(dbc.Col(gauge_cumulative))
+    html.Center([
+        dbc.Card([
+            dbc.CardHeader('This month'),
+            dbc.CardBody(gauge_last)
+        ]),
+        dbc.Card([
+            dbc.CardHeader('This year'),
+            dbc.CardBody(gauge_cumulative)
+        ]),
+        html.Br(),
+        update_button,
+    ])
 ]
 
 

@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+from dash import html
 
 update_button =  dbc.Button(children="Update",
                    id={
@@ -10,7 +11,8 @@ update_button =  dbc.Button(children="Update",
                    outline=True,
                    color='primary')
 
-layout = [
-    dbc.Row(dbc.Col(update_button)),
-]
+layout = dbc.Card([
+    dbc.CardHeader(),
+    dbc.CardBody(html.Center(update_button)),
+])
 

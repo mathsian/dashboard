@@ -241,5 +241,9 @@ def get_term_date_from_rems():
     return term_data[0]
 
 
+def snake_to_title(string: str):
+    return ' '.join(string.split('_')).title()
+
+
 if __name__ == "__main__":
     print(get_term_date_from_rems())

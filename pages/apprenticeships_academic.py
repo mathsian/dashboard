@@ -45,8 +45,10 @@ instance_nav = dbc.Nav(id={
 )
 layout = [
     dcc.Store("apprenticeships-academic-store", storage_type='memory'),
-    dbc.Row(dbc.Col(page_nav)),
-    dbc.Row(dbc.Col(instance_nav))
+    dbc.Card([
+        dbc.CardHeader(page_nav),
+        dbc.CardBody(instance_nav)
+    ]),
     ]
 
 

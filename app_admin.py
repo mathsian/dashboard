@@ -274,6 +274,7 @@ def merge_from_rems():
                 else:
                     print(app_data.delete_student_from_instance(student_id, code), f" deleted {student_id} from {code}")
 
+
 def add_and_populate_instance(short, code, start_date, components, student_ids):
     app_data.add_instance(short, code, start_date)
     for component in components:

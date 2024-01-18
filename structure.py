@@ -20,6 +20,7 @@ from pages import (
     apprenticeships_employers, apprenticeships_employers_report, apprenticeships_employers_summary,
     apprenticeships_reports, apprenticeships_reports_results,
     apprenticeships_report_attendance, apprenticeships_reports_summary, apprenticeships_reports_learners,
+    apprenticeships_reports_cohorts,
     # stats_enrolment, stats_enrolment_view,
     admin_records, admin_records_kudos, admin_records_concern, admin_records_notes)
 
@@ -165,6 +166,7 @@ content = {
              Tab("Report", "report", apprenticeships_employers_report.layout)],
         Page("Reports", "reports", apprenticeships_reports.layout):
             [Tab("Summary", "summary", apprenticeships_reports_summary.layout),
+             Tab("Cohorts", "cohorts", apprenticeships_reports_cohorts.layout),
              Tab("Learners", "learners", apprenticeships_reports_learners.layout),
              Tab("Results", "results", apprenticeships_reports_results.layout),
              Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)]

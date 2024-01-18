@@ -72,7 +72,6 @@ threshold_slider = dcc.Slider(
 layout = dbc.Row(dbc.Col([graph_monthly, graph_threshold, threshold_slider]), align='start', justify='center')
 
 
-
 @app.callback([
    Output(
         {

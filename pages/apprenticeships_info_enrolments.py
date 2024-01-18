@@ -101,7 +101,6 @@ def update_enrolments_store(n_clicks):
     Input("store-apprenticeships-enrolments", "data"),
 ])
 def update_start_dates(store_data):
-    ic(store_data)
     df = pd.DataFrame.from_records(store_data)
 
     start_dates = df.sort_values('Start')['Start'].unique()

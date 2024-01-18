@@ -1,4 +1,4 @@
-from dash import dcc
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 from dash.dependencies import Input, Output, State, ALL
@@ -26,7 +26,6 @@ gauge_last = daq.Gauge(
         "page": "attendance",
         "name": "last"
     },
-    label="This month",
     labelPosition="top",
     scale={
         "start": 0,
@@ -39,7 +38,7 @@ gauge_last = daq.Gauge(
     min=0,
     max=100,
     size=170,
-    style={'margin-bottom': -60},
+    style={'margin': '-10px 0px -70px 0px'},
 )
 gauge_cumulative = daq.Gauge(
     id={
@@ -48,7 +47,6 @@ gauge_cumulative = daq.Gauge(
         "page": "attendance",
         "name": "cumulative"
     },
-    label="This Year",
     labelPosition="top",
     scale={
         "start": 0,
@@ -61,13 +59,23 @@ gauge_cumulative = daq.Gauge(
     min=0,
     max=100,
     size=170,
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 layout = [
     dcc.Store(id='sixthform-attendance-store', storage_type='memory'),
-    dbc.Row(dbc.Col(update_button)),
-    dbc.Row(dbc.Col(gauge_last)),
-    dbc.Row(dbc.Col(gauge_cumulative))
+    html.Center([
+        dbc.Card([
+            dbc.CardHeader('This month'),
+            dbc.CardBody(gauge_last)
+        ]),
+        dbc.Card([
+            dbc.CardHeader('This year'),
+            dbc.CardBody(gauge_cumulative)
+        ]),
+        html.Br(),
+        update_button,
+    ])
 ]
 
 

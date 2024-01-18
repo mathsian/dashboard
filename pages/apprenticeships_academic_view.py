@@ -35,6 +35,7 @@ result_graph = dcc.Graph(id={
 },
                              config={
                                  "displayModeBar": False,
+                                 "staticPlot": True,
                              },
                              figure={
                                  "layout": {
@@ -81,23 +82,8 @@ def update_subject_graph(store_data):
     results_dicts = app_data.get_results_for_instance(instance_code)
     if not results_dicts:
         return empty_layout, "There are no results in this instance yet"
-    result_df = pd.DataFrame.from_records(results_dicts)
-    labels = ["Missing", "Fail", "Pass", "Merit", "Distinction", "Error"]
-    # Cut doesn't like NaN so set to something in the missing bin
-    result_df['total'].fillna(-99, inplace=True)
-    result_df["class"] = pd.cut(result_df["total"], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")], labels=labels, right=False)
-    bar_trace = go.Histogram(
-        x=result_df["class"],
-        hovertemplate="%{y:.0f}% %{x}<extra></extra>",
-        histfunc='count',
-        histnorm='percent'
-    )
-    fig = go.Figure()
-    fig.update_xaxes(
-        categoryorder='array',
-        categoryarray=labels,
-    )
-    fig.add_trace(bar_trace)
+    results_df = pd.DataFrame.from_records(results_dicts)
+    fig = app_data.graph_grade_profile(results_df)
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
     header = f'{instance_dict.get("name")} - {instance_code} - {instance_dict.get("start_date")}'
     return fig, header

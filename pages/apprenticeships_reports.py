@@ -20,14 +20,7 @@ employer_dropdown = dbc.DropdownMenu(
     nav=True,
 )
 
-filter_nav = dbc.Form([
-    dbc.Row([
-        dbc.Col([
-            dbc.Label("Employer"), dbc.NavItem(employer_dropdown)
-        ]),
-    ]),
-
-])
+filter_nav = dbc.NavItem(employer_dropdown)
 
 gauge_alltime = daq.Gauge(
     id={
@@ -48,8 +41,8 @@ gauge_alltime = daq.Gauge(
     value=0,
     min=0,
     max=100,
-    size=170,
-    style={'margin-bottom': -60},
+    size=160,
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 gauge_results = daq.Gauge(
@@ -71,7 +64,8 @@ gauge_results = daq.Gauge(
     value=0,
     min=0,
     max=100,
-    size=170,
+    size=160,
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 layout = [
@@ -93,12 +87,17 @@ layout = [
         "page": "reports",
         "name": "attendance"
     }, storage_type='memory'),
-    dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col([
-        gauge_alltime,
-        gauge_results
-    ]))
-]
+    dbc.Card([
+       dbc.CardHeader(html.Center(filter_nav)),
+       dbc.CardBody([
+           dbc.Row(
+               dbc.Col([
+                gauge_alltime,
+                gauge_results])
+           )
+       ])
+    ])
+    ]
 
 
 @app.callback([
