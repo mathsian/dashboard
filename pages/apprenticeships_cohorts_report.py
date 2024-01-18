@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlencode
 from app import app
 import app_data
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 
 layout = dbc.Row(
     dbc.Col(
@@ -25,7 +26,7 @@ layout = dbc.Row(
                 "tab": "report",
                 "name": "reports"
             }),
-         dbc.Accordion(
+         dmc.Accordion(
   id={
                 "section": "apprenticeships",
                 "type": "accordion",
@@ -72,15 +73,16 @@ def update_student_report(store_data):
 
         results, credits, average_result = app_data.get_results_report_for_student(student_id, student.get('top_up', False))
 
-        accordion_item = dbc.AccordionItem(
-            id={
+        accordion_item = dmc.AccordionItem(children=[
+            dmc.AccordionControl(f'{student.get("given_name")} {student.get("family_name")}'),
+            dmc.AccordionPanel(id={
                 "type": "accordion_item",
                 "section": "apprenticeships",
                 "page": "cohorts",
                 "tab": "report",
                 "name": f'{student_id}'
             },
-            children=[
+                children=[
                 dbc.Row([
                     dbc.Col([
                         dbc.Table([
@@ -128,8 +130,9 @@ def update_student_report(store_data):
                                   striped=True)
                     ])
                 ])
-            ],
-            title=f'{student.get("given_name")} {student.get("family_name")}',
+            ])
+        ],
+            value=f'{student.get("given_name")} {student.get("family_name")}'
         )
         accordion_items.append(accordion_item)
 
