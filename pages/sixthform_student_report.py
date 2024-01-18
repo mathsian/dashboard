@@ -58,53 +58,16 @@ single_report_academic = dbc.AccordionItem([
 ],
                                            title="Academic")
 single_report_kudos = dbc.AccordionItem([
-    html.Div(
-        dash_table.DataTable(
-            id={
+    html.Div(id={
                 "section": "sixthform",
                 "type": "table",
                 "page": "student",
                 "tab": "report",
                 "name": "kudos"
             },
-            columns=[
-                {
-                    "name": "Value",
-                    "id": "ada_value"
-                },
-                {
-                    "name": "Points",
-                    "id": "points"
-                },
-                {
-                    "name": "For",
-                    "id": "description"
-                },
-                {
-                    "name": "From",
-                    "id": "from"
-                },
-                {
-                    "name": "Date",
-                    "id": "date"
-                },
-            ],
-            sort_by=[{"column_id": "date", "direction": "desc"}],
-            style_header={
-                "textAlign": "left",
-        'overflow': 'hidden',
-        'textOverflow': 'ellipsis',
-        'maxWidth': 0
-                },
-            sort_action='native',
-            style_data={
-                "textAlign": "left",
-                "height": "auto",
-                "whiteSpace": "normal",
-            },
-        ))
-],
-                                        title="Kudos")
+        )
+], title='Kudos')
+
 
 # single_report_concerns = dbc.AccordionItem([
 #     html.Div(
@@ -220,7 +183,7 @@ layout = html.Div([
             "page": "student",
             "tab": "report",
             "name": "kudos"
-        }, "data"),
+        }, "children"),
 #     Output(
 #         {
 #             "section": "sixthform",
@@ -253,6 +216,9 @@ def update_student_report(store_data):
                     assessment_children.append(
                         html.Blockquote(result.get("comment", "")))
     kudos_docs = data.get_data("kudos", "student_id", student_id)
+    kudos_df = pd.DataFrame(kudos_docs, columns=['date', 'ada_value', 'points', 'description', 'from'])
+    kudos_df.columns = [' '.join(c.split('_')).title() for c in kudos_df.columns]
+    kudos_table = dbc.Table.from_dataframe(kudos_df.sort_values(['Date', 'Ada Value'], ascending=[False, True]))
     # concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
     attendance_df = pd.DataFrame.from_records(attendance_docs).query(
@@ -271,4 +237,4 @@ def update_student_report(store_data):
     notes_df = notes_df.rename({'date': 'Date', 'category': 'Category', 'comment': 'Comment'}, axis='columns').sort_values('Date', ascending=False)
     notes_table = dbc.Table.from_dataframe(notes_df)
     # return heading, attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
-    return heading, attendance_year, attendance_figure, notes_table, assessment_children, kudos_docs
+    return heading, attendance_year, attendance_figure, notes_table, assessment_children, kudos_table

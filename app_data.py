@@ -8,6 +8,8 @@ import os
 import numpy as np
 import data
 from icecream import ic
+from plotly import graph_objects as go
+import plotly.express as px
 
 # Get postgres connection settings
 config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -24,6 +26,30 @@ rems_settings = config_object["REMS"]
 rems_server = rems_settings["ip"]
 rems_uid = rems_settings["uid"]
 rems_pwd = rems_settings["pwd"]
+
+
+def get_cohort(cohort):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+            select 
+                cohorts.name
+                , cohorts.start_date
+                , programmes.short
+                , programmes.degree
+                , programmes.title
+                , programmes.pathway
+                , cohorts.top_up
+            from cohorts
+            left join programmes on cohorts.programme_id = programmes.id
+            where cohorts.name = %(cohort)s
+            """, {"cohort": cohort})
+            result = cur.fetchall()
+    if not result:
+        return False
+    else:
+        return result[0]
 
 
 def get_apprentice_attendance_by_employer_cohort(employer, cohort):
@@ -768,14 +794,15 @@ def update_learners(learners):
             for learner in learners:
                 cur.execute(
                     """
-insert into students (id, given_name, family_name, status, employer, cohort_id, inserted_at, updated_at)
-                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), current_timestamp, current_timestamp)
+insert into students (id, given_name, family_name, status, employer, cohort_id, start_date, inserted_at, updated_at)
+                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), %(start_date)s, current_timestamp, current_timestamp)
                 on conflict (id) do update
                 set given_name = excluded.given_name,
                     family_name = excluded.family_name,
                     status = excluded.status,
                     employer = excluded.employer,
                     cohort_id = excluded.cohort_id,
+                    start_date = excluded.start_date,
                     updated_at = excluded.updated_at;
                 """, learner)
                 return_value += cur.rowcount
@@ -822,6 +849,85 @@ def round_normal(x):
     else:
         result = np.int(np.floor(np.add(x, 0.5)))
     return result
+
+
+def parse_cohort(cohort):
+    location = 'MCR' if cohort.startswith('M-') else 'LDN'
+    cohort_dict = get_cohort(cohort)
+    year = cohort_dict.get('start_date').year
+    if cohort_dict.get('top_up', False):
+        cohort_dict.update({'short': cohort_dict.get('short') + ' 1Y'})
+    intake = 'Autumn' if cohort_dict.get('start_date').month > 7 else 'Spring'
+    cohort_dict.update({'location': location,
+                        'year': year,
+                        'intake': intake,
+                        'year_intake': f'{year} {intake}'})
+    return cohort_dict
+
+
+def graph_grade_profile(results_df, mark_column_name='total'):
+    if len(results_df) == 0:
+        return {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                },
+                "height": 320
+            }
+        }
+    labels = ["Incomplete", "Fail", "Pass", "Merit", "Distinction", "Error"]
+    axis_labels = ["Incomplete", "Fail", "Pass", "Merit", "Distinction"]
+    # Cut doesn't like NaN so set to something in the missing bin
+    results_df[mark_column_name].fillna(-99, inplace=True)
+    results_df["class"] = pd.cut(results_df[mark_column_name], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")],
+                                 labels=labels, right=False)
+    results_df["class"] = pd.Categorical(results_df["class"], axis_labels)
+    bar_trace = go.Histogram(
+        x=results_df["class"],
+        # hovertemplate="%{y:.0f}% %{x}<extra></extra>",
+        texttemplate="%{y:.0f}%",
+        histfunc='count',
+        marker_color='steelblue',
+        histnorm='percent'
+    )
+    fig = go.Figure()
+    fig.update_xaxes(
+        categoryorder='array',
+        categoryarray=axis_labels,
+        range=(-1, 5)
+    )
+    fig.add_trace(bar_trace)
+    return fig
+
+
+def graph_learner_volumes(learners_df):
+    if len(learners_df) == 0:
+        return {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                },
+                "height": 320
+            }
+        }
+
+    cohort_expansion_df = learners_df[['cohort']].apply(lambda row: pd.Series(parse_cohort(row['cohort'])), axis=1)[['year_intake']]
+    learners_df = cohort_expansion_df.join(learners_df)
+    year_intakes = learners_df.sort_values('start_date')['year_intake'].unique()
+    learners_df['year_intake'] = pd.Categorical(learners_df['year_intake'], categories=year_intakes)
+    learners_df['status'] = pd.Categorical(learners_df['status'], categories=['Continuing', 'Withdrawn', 'Break in learning', 'Completed'])
+
+    counts_df = learners_df[['year_intake', 'status']].groupby(['year_intake', 'status'], as_index=False).size()
+    counts_df.columns = map(data.snake_to_title, counts_df.columns)
+    fig = px.bar(counts_df.reset_index(), x='Year Intake', y='Size', color='Status', text_auto=True, color_discrete_sequence=px.colors.qualitative.Safe)
+
+    return fig
 
 
 if __name__ == "__main__":

@@ -41,8 +41,10 @@ assessment_nav = dbc.Nav(
 )
 layout = [
     dcc.Store("sixthform-academic-store", storage_type='memory'),
-    dbc.Row(dbc.Col(page_nav)),
-    dbc.Row(dbc.Col(assessment_nav))
+    dbc.Card([
+        dbc.CardHeader(page_nav),
+        dbc.CardBody(assessment_nav)
+    ]),
 ]
 
 

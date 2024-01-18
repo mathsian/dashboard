@@ -11,6 +11,9 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
 from urllib.parse import parse_qs, urlencode
+
+from dash_ag_grid import AgGrid
+
 from app import app
 import app_data
 import plotly.graph_objects as go
@@ -31,53 +34,42 @@ cohort_dropdown = dbc.DropdownMenu(
 
 filter_nav = dbc.Nav([dbc.NavItem(cohort_dropdown)], fill=True)
 
-# The student list is on a separate card alongside the tabs
-# so that it isn't updated when the tab changes
-student_table = dash_tabulator.DashTabulator(
+student_table = AgGrid(
     id={
         "type": "table",
         "section": "apprenticeships",
         "page": "cohorts",
         "name": "list"
     },
-    options={
-        "resizableColumns": False,
-        "selectable": True,
-        "maxHeight": "70vh",
-        "dataLoaded": ns("dataLoaded"),
-        "rowSelected": ns("rowSelected")
-    },
-    theme='bootstrap/tabulator_bootstrap4',
-    columns=[
-        {
-            "title": "Selected",
-            "formatter": "tickCross",
-            "formatterParams": {
-                "crossElement": False
-            },
-            "titleFormatter": "rowSelection",
-            "horizAlign": "center",
-            "headerSort": False,
-            "widthGrow": 1,
-        },
-        {
-            "title": "Student ID",
-            "field": "student_id",
-            "visible": False,
-        },
+    className='ag-theme-alpine',
+    columnDefs=[
         {
             "field": "given_name",
-            "widthGrow": 4,
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
+            "headerName": "Given",
+            "filter": True,
+            "suppressMenu": True,
+            "floatingFilter": True,
+            "checkboxSelection": True,
+            "headerCheckboxSelection": True,
+            "headerCheckboxSelectionFilteredOnly": True,
+            "headerCheckboxSelectionCurrentPageOnly": True,
         },
         {
             "field": "family_name",
-            "widthGrow": 6,
-            "headerFilter": True,
-            "headerFilterPlaceholder": "Search",
+            "headerName": "Family",
+            "filter": True,
+            "suppressMenu": True,
+            "floatingFilter": True,
         },
     ],
+    getRowId="params.data.student_id",
+    columnSize='responsiveSizeToFit',
+    dashGridOptions={
+        'pagination': True,
+        'paginationAutoPageSize': True,
+        'rowSelection': 'multiple',
+        'rowMultiSelectWithClick': True,
+    }
 )
 
 layout = [
@@ -88,8 +80,10 @@ layout = [
         "name": "selected"
     },
               storage_type='memory'),
-    dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col(student_table))
+    dbc.Card([
+        dbc.CardHeader(filter_nav),
+        dbc.CardBody(student_table)
+    ])
 ]
 
 
@@ -114,7 +108,7 @@ layout = [
             "section": "apprenticeships",
             "page": "cohorts",
             "name": "list"
-        }, "data")
+        }, "rowData")
 ], [
     Input("location", "search"),
 ], [
@@ -164,14 +158,14 @@ def update_cohorts(search, pathname, cohort):
                     "section": "apprenticeships",
                     "page": "cohorts",
                     "name": "list"
-                }, "multiRowsClicked"),
+                }, "selectedRows"),
             Input("location", "hash")
         ])
-def update_selected_students(multiRowsClicked, url_hash):
+def update_selected_students(selectedRows, url_hash):
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     if input_id == 'location':
         selected_ids = url_hash.removeprefix('#').split(',')
     else:
-        multiRowsClicked = multiRowsClicked or []
-        selected_ids = [row.get('student_id') for row in multiRowsClicked]
+        selectedRows = selectedRows or []
+        selected_ids = [row.get('student_id') for row in selectedRows]
     return selected_ids

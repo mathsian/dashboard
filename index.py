@@ -23,7 +23,8 @@ cardheader = dbc.CardHeader(
 cardbody = dbc.CardBody(id="content")
 card = dbc.Card(children=[cardheader, cardbody])
 
-sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
+# sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
+sidebar = html.Div(id='sidebar_content')
 
 app.layout = html.Div([
     dcc.Store(id="global-history", storage_type='local'),
@@ -32,8 +33,9 @@ app.layout = html.Div([
     dcc.Location(id="location", refresh=False),
     navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
-             dbc.Col(card, width=9)], class_name='g-0')
-])
+             dbc.Col(card, width=9)])
+], className='dbc')
+
 
 def parse(pathname):
     '''Parse the url.

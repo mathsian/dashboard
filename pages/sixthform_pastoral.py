@@ -49,6 +49,7 @@ kudos_radar = dcc.Graph(id={
 },
                         config={"displayModeBar": False},
                         figure=fig,
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 gauge_overall = daq.Gauge(
@@ -70,7 +71,7 @@ gauge_overall = daq.Gauge(
     value=0,
     min=0,
     max=100,
-    style={'margin-bottom': -50}
+    style={'margin': '-10px 0px -70px 0px'},
 )
 
 filter_nav = dbc.Nav([
@@ -82,10 +83,16 @@ filter_nav = dbc.Nav([
 
 layout =[
     dcc.Store(id="sixthform-pastoral-store", storage_type='memory'),
-    dbc.Row(dbc.Col(filter_nav)),
-    dbc.Row(dbc.Col(dcc.Loading(gauge_overall))),
-    dbc.Row(kudos_switch),
-    dbc.Row(dbc.Col(dcc.Loading(kudos_radar))),
+    html.Center([
+        dbc.Card([
+            dbc.CardHeader(filter_nav),
+            dbc.CardBody(gauge_overall)
+        ]),
+        dbc.Card([
+            dbc.CardHeader(kudos_switch),
+            dbc.CardBody(dcc.Loading(kudos_radar))
+        ])
+    ]),
     ]
 
 
