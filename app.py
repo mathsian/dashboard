@@ -23,3 +23,4 @@ app.title = "data@ada"
 #                      dev_tools_props_check=True,
 #                      dev_tools_serve_dev_bundles=True,
 #                      dev_tools_hot_reload=True,)
+
