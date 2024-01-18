@@ -1,0 +1,18 @@
+@font-face {
+    font-family: Sinclair;
+    src: url(fssinclair-medium-webfont.ttf)
+}
+
+@font-face {
+    font-family: Titillium;
+    src: url(TitilliumWeb-Regular.ttf)
+}
+
+html {
+    font-family: Titillium, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: Sinclair, sans-serif;
+    font-variant: all-small-caps;
+}
