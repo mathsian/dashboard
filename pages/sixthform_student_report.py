@@ -16,58 +16,75 @@ import data
 import plotly.graph_objects as go
 import curriculum
 from dash_extensions.javascript import Namespace
+import dash_mantine_components as dmc
 
 blank_figure = {'layout': {'xaxis': {'visible': False}, 'yaxis': {'visible': False}}}
 ns = Namespace("myNameSpace", "tabulator")
-single_report_attendance = dbc.AccordionItem([
-    html.H5(children=[html.Span(
-        id={
-            "section": "sixthform",
-            "type": "text",
-            "page": "student",
-            "tab": "report",
-            "name": "attendance"
-        }), "% attendance"]),
-    dcc.Graph(id={
-        "section": "sixthform",
-        "type": "graph",
-        "page": "student",
-        "tab": "report",
-        "name": "attendance"
-    },
-              figure=blank_figure,
-              config={"displayModeBar": False}),
-    html.Div(id={
-        "section": "sixthform",
-        "type": "table",
-        "page": "student",
-        "tab": "report",
-        "name": "attendance"
-    })
-],
-                                             title="Attendance")
-single_report_academic = dbc.AccordionItem([
-    html.Div(
-        id={
-            "section": "sixthform",
-            "type": "text",
-            "page": "student",
-            "tab": "report",
-            "name": "academic"
-        }),
-],
-                                           title="Academic")
-single_report_kudos = dbc.AccordionItem([
-    html.Div(id={
+single_report_attendance = dmc.AccordionItem(
+    children=[
+        dmc.AccordionControl('Attendance'),
+        dmc.AccordionPanel([
+            html.H5(children=[html.Span(
+                id={
+                    "section": "sixthform",
+                    "type": "text",
+                    "page": "student",
+                    "tab": "report",
+                    "name": "attendance"
+                }), "% attendance"]),
+            dcc.Graph(id={
+                "section": "sixthform",
+                "type": "graph",
+                "page": "student",
+                "tab": "report",
+                "name": "attendance"
+            },
+                figure=blank_figure,
+                config={"displayModeBar": False}),
+            html.Div(id={
+                "section": "sixthform",
+                "type": "table",
+                "page": "student",
+                "tab": "report",
+                "name": "attendance"
+            })
+        ])
+    ],
+    value='attendance',
+)
+
+single_report_academic = dmc.AccordionItem(
+    children=[
+        dmc.AccordionControl('Academic'),
+        dmc.AccordionPanel(
+            html.Div(
+                id={
+                    "section": "sixthform",
+                    "type": "text",
+                    "page": "student",
+                    "tab": "report",
+                    "name": "academic"
+                }),
+        )
+
+    ],
+    value='Academic'
+)
+
+single_report_kudos = dmc.AccordionItem(
+    children=[
+        dmc.AccordionControl('Kudos'),
+        dmc.AccordionPanel(
+            html.Div(id={
                 "section": "sixthform",
                 "type": "table",
                 "page": "student",
                 "tab": "report",
                 "name": "kudos"
             },
+            )
         )
-], title='Kudos')
-
+    ], value='kudos')
 
 # single_report_concerns = dbc.AccordionItem([
 #     html.Div(
@@ -118,10 +135,10 @@ single_report_kudos = dbc.AccordionItem([
 # ],
 #                                            title="Concerns")
 
-single_report = dbc.Accordion([
+single_report = dmc.Accordion([
     single_report_attendance, single_report_academic, single_report_kudos,
-#    single_report_concerns
-], start_collapsed=True)
+    #    single_report_concerns
+])
 
 layout = html.Div([
     html.H3(
@@ -144,7 +161,7 @@ layout = html.Div([
             "tab": "report",
             "name": "heading"
         }, "children"),
-   Output(
+    Output(
         {
             "section": "sixthform",
             "type": "text",
@@ -184,14 +201,14 @@ layout = html.Div([
             "tab": "report",
             "name": "kudos"
         }, "children"),
-#     Output(
-#         {
-#             "section": "sixthform",
-#             "type": "table",
-#             "page": "student",
-#             "tab": "report",
-#             "name": "concern"
-#         }, "data"),
+    #     Output(
+    #         {
+    #             "section": "sixthform",
+    #             "type": "table",
+    #             "page": "student",
+    #             "tab": "report",
+    #             "name": "concern"
+    #         }, "data"),
 ], [Input("sixthform-selected-store", "data")])
 def update_student_report(store_data):
     if not store_data:
@@ -234,7 +251,8 @@ def update_student_report(store_data):
                name="Weekly attendance"))
     notes_docs = data.get_data("note", "student_id", student_id)
     notes_df = pd.DataFrame.from_records(notes_docs, columns=['date', 'category', 'comment'])
-    notes_df = notes_df.rename({'date': 'Date', 'category': 'Category', 'comment': 'Comment'}, axis='columns').sort_values('Date', ascending=False)
+    notes_df = notes_df.rename({'date': 'Date', 'category': 'Category', 'comment': 'Comment'},
+                               axis='columns').sort_values('Date', ascending=False)
     notes_table = dbc.Table.from_dataframe(notes_df)
     # return heading, attendance_year, attendance_figure, assessment_children, kudos_docs, concern_docs
     return heading, attendance_year, attendance_figure, notes_table, assessment_children, kudos_table

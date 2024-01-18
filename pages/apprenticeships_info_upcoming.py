@@ -3,14 +3,17 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
+from icecream import ic
+
 from app import app
 import app_data
 from dash_extensions.javascript import Namespace
 from dash.exceptions import PreventUpdate
+import dash_mantine_components as dmc
 
 ns = Namespace("myNameSpace", "tabulator")
 
-layout = dbc.Accordion(
+layout = dmc.Accordion(
     id={
         "type": "accordion",
         "section": "apprenticeships",
@@ -42,11 +45,12 @@ def update_upcoming_table(n_clicks):
     accordion_items = []
     upcoming_codes = upcoming_df.groupby(['code', 'start_date'], as_index=False).size().sort_values(['start_date', 'code'], ascending=[False, True]).set_index('code').index
     upcoming_df.set_index('code', inplace=True)
+    ic(upcoming_codes)
     for code in upcoming_codes:
         accordion_title = code
         # accordion_content = dbc.Table.from_dataframe(upcoming_df.loc[[code], :])
         accordion_content = create_class_table(upcoming_df.loc[[code], :])
-        accordion_items.append(dbc.AccordionItem(children=accordion_content, title=accordion_title))
+        accordion_items.append(dmc.AccordionItem(children=[dmc.AccordionControl(accordion_title), dmc.AccordionPanel(accordion_content)], value=accordion_title))
     return accordion_items
 
 
