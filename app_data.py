@@ -65,6 +65,19 @@ def get_apprentice_attendance_by_employer_cohort(employer, cohort):
     return attendance_df.to_dict(orient='records')
 
 
+def get_apprentice_attendance(student_id):
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader('sql')
+    )
+    sql_template = sql_jinja_env.get_template('apprentice attendance.sql')
+    sql = sql_template.render(student_id=student_id)
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    attendance_df = pd.read_sql(sql, conn)
+    return attendance_df.to_dict(orient='records')
+
+
 def get_apprentice_attendance_by_employer(employer):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader('sql')
@@ -419,7 +432,8 @@ def get_student_by_id(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, cohorts.start_date, cohorts.top_up, programmes.degree, programmes.title, programmes.pathway
+            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, cohorts.start_date
+            , cohorts.top_up or students.top_up top_up, programmes.degree, programmes.title, programmes.pathway
             from students
             left join cohorts on cohort_id = cohorts.id
             left join programmes on programmes.id = cohorts.programme_id

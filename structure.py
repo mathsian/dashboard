@@ -161,9 +161,9 @@ content = {
              Tab("Missing", "missing", apprenticeships_attendance_missing.layout)],
         Page("Cohorts", "cohorts", apprenticeships_cohorts.layout):
             [Tab("Report", "report", apprenticeships_cohorts_report.layout)],
-        Page("Employers", "employers", apprenticeships_employers.layout):
-            [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
-             Tab("Report", "report", apprenticeships_employers_report.layout)],
+        # Page("Employers", "employers", apprenticeships_employers.layout):
+        #     [Tab("Summary", "summary", apprenticeships_employers_summary.layout),
+        #      Tab("Report", "report", apprenticeships_employers_report.layout)],
         Page("Reports", "reports", apprenticeships_reports.layout):
             [Tab("Summary", "summary", apprenticeships_reports_summary.layout),
              Tab("Cohorts", "cohorts", apprenticeships_reports_cohorts.layout),

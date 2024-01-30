@@ -4,10 +4,10 @@ with enrolments as (
     select STEM_Student_ID                                                                   student_id
          , STEM_Provision_Code                                                               code
          , STEM_Provision_Instance                                                           instance
-         , STEM_Start_Date                                                                   start
          , sten_year                                                                         year
          , STEN_Reason_ended                                                                 reason
          , STEN_Completion_Stat                                                              completion_stat
+         , convert(varchar, min(STEM_Start_Date) over (partition by STEM_Student_ID), 23)    start_date
          , row_number() over (partition by STEM_Student_ID order by STEM_Start_Date desc) as rank
     from remslive.dbo.STEM
              left join remslive.dbo.sten on sten_isn = (select top 1 STEN_ISN
@@ -21,16 +21,17 @@ with enrolments as (
       and sten_reason_ended <> '40')
 select
     cast(student_id as integer) student_id
-    , case
+    , trim(case
         when STUD_Forename_1 like 'XXX%' then ''
         when STUD_Known_As = '' then STUD_Forename_1
         else STUD_Known_As
-      end given_name
-    , STUD_Surname family_name
+      end) given_name
+    , trim(STUD_Surname) family_name
     , concat(trim(code), '-', trim(instance)) cohort
     , isnull(CMPN_Company_Name, 'No employer') employer
+    , start_date
     , case
-               when completion_stat = 1 and year < '2021'
+               when completion_stat = 1 and year < iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate()))
                    then 'Withdrawn'
                when completion_stat = 1 then 'Continuing'
                when completion_stat = 3 and reason = 40 then 'Transferred'
