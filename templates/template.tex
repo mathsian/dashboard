@@ -21,6 +21,7 @@
 \usepackage[explicit]{titlesec}
 \titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
 \titleformat{\subsection}[hang]{\rmfamily\uppercase}{\thesubsection.}{0em}{ #1}
+\titleformat{\subsubsection}[hang]{\sffamily}{\thesubsubsection.}{0em}{ #1}
 % drawing packages
 \usepackage{tikz}
 \usetikzlibrary{shapes}
@@ -115,15 +116,42 @@ Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
 \section*{Academic}
 %% for subject, assessment in academic.items()
 \subsection*{\rmfamily \VAR{subject}}
+
+% old table style
+%% if 0 > 1
 \noindent\begin{tabularx}{\linewidth}{l l X}
 %% for assessment_name, assessment_details in assessment.items()
-           \VAR{assessment_name}& \VAR{assessment_details['grade']} \\
-           %% if assessment_details['date'] > '2021-08-30'
-           \multicolumn{3}{p{\hsize}}{\em \VAR{assessment_details['comment']}}\\
-           %% endif
+            \VAR{assessment_name} & \VAR{assessment_details['grade']} \\
+            %% if assessment_details['subtitle']
+            \multicolumn{3}{p{\hsize}}{\VAR{assessment_details['subtitle']}}\\
+            %% endif
+            %% if assessment_details['date'] > '2021-08-30'
+            \multicolumn{3}{p{\hsize}}{\em \VAR{assessment_details['comment']}}\\
+            %% endif
 %% endfor
-  \end{tabularx}
+\end{tabularx}
+%% endif
+
+% non-table style
+%% if 2 > 1
+%% for assessment_name, assessment_details in assessment.items()
+
+\subsubsection*{\VAR{assessment_name}: \VAR{assessment_details['grade']}}
+
+%% if assessment_details['comment']|length > 0 and assessment_details['report'] == 0
+\begin{quotation}
+{\em \VAR{assessment_details['comment']}}
+\end{quotation}
+%% endif
+
 %% endfor
+%% endif
+
+%% endfor
+
+% Kudos start
+%% if 2 > 1
+
 % Kudos
 \section*{\VAR{kudos_total} Kudos}
 \noindent Kudos points are awarded to students who demonstrate the college
@@ -139,8 +167,15 @@ values of curiosity, creativity, collaboration, rigour and resilience
 %% endfor
     \end{tabularx}
 %% else
-\noindent No kudos points have been recorded
+\noindent No kudos points have been recorded this term
 %% endif
+
+%% endif
+% Kudos end
+
+% Concerns start
+%% if 0 > 1
+
 % Concern
 \section*{\VAR{concern_total} Concerns}
 \noindent Concerns may be raised by staff about a student's conduct, their
@@ -156,6 +191,8 @@ academic performance or their attendance
   %% else
 \noindent No concerns have been recorded
   %% endif
+
+
 % \section*{Coming up}
 % \begin{tabularx}{\linewidth}{l l l X}
 %   9th July & & & Last day of Summer term \\
@@ -173,4 +210,7 @@ academic performance or their attendance
            %% endfor
          \end{tabularx}
 %% endif
+% Concerns end
+%% endif
+
 \end{document}

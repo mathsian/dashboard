@@ -1,5 +1,6 @@
 \errorcontextlines 10000
 \documentclass[a4paper,12pt,portrait]{article}
+\usepackage{graphicx}
 % for text wrapping in table
 \usepackage{tabularx}
 % for footer
@@ -16,6 +17,7 @@
 \usepackage[margin=1.5cm]{geometry}
 
 % custom colours
+\usepackage{xcolor}
 \definecolor{adaYellow}{RGB}{245,225,52}
 \definecolor{adaPurple}{RGB}{149,96,159}
 \definecolor{adaGreen}{RGB}{161,200,84}
@@ -28,11 +30,6 @@
 \definecolor{adaLightGrey}{RGB}{211,212,211}
 \definecolor{adaWhite}{RGB}{255,255,255}
 
-\definecolor{clr1}{RGB}{149,96,159}
-\definecolor{clr2}{RGB}{161,200,84}
-\definecolor{clr3}{RGB}{236,98,113}
-\definecolor{clr4}{RGB}{108,184,231}
-\definecolor{clr5}{RGB}{246,131,82}
 
 % customise sections
 % need explicit to access parameter number to get the section on the left
@@ -59,7 +56,7 @@
 \uppercase{Student name} & \textsf{\VAR{student_name}}\\
 \uppercase{Student ID} & \textsf{\VAR{student_id}}\\
 ULN & \textsf{\VAR{student_uln}}\\
-ISSUED & \textsf{14/10/21}
+ISSUED & \textsf{\VAR{issued}}
 \end{tabular}\\
 
 \vspace{1em}
@@ -67,10 +64,7 @@ ISSUED & \textsf{14/10/21}
 LEARNING AIM & TITLE & GLH & COMPLETED & GRADE\\
 \hline
 %% for subject in subjects
-\textsf{\VAR{subject.ref}} & \textsf{\VAR{subject.title}} & \textsf{\VAR{subject.glh}} & \textsf{\VAR{subject.date}} & \textsf{\VAR{subject.grade}}\\
-%% for unit in subject.units
-\small \textsf{\textit{Unit \VAR{unit.number}}}  & \small \textsf{\textit{\VAR{unit.name}}} & \textit{\textsf{\VAR{unit.glh}}} & & \small \textsf{\textit{\VAR{unit.grade}}} \\
-%% endfor
+\textsf{\VAR{subject.LEARNING_AIM_REF}} & \textsf{\VAR{subject.LEARNING_AIM_TITLE}} & \textsf{\VAR{subject.STEN_Annual_GLH}} & \textsf{\VAR{subject.sten_actual_end_date}} & \textsf{\VAR{subject.STEN_Grade}}\\
 %% endfor
 \end{tabularx}
 

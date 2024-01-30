@@ -34,7 +34,7 @@ app.layout = html.Div([
     navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
              dbc.Col(card, width=9)])
-], className='dbc')
+], className='dbc dbc-ag-grid')
 
 
 def parse(pathname):

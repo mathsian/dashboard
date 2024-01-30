@@ -1,64 +1,94 @@
-import sys
-
-from os.path import abspath
+import re
+from os import path
 import jinja2
 import pandas as pd
-
-sys.path.append('..')
 import data
-import curriculum
+from pylatexenc.latexencode import unicode_to_latex
+from datetime import datetime
+from icecream import ic
+
+template_directory = path.join(path.dirname(__file__), '../templates')
+latex_directory = path.join(path.dirname(__file__), '../latex')
+
+latex_jinja_env = jinja2.Environment(variable_start_string='\VAR{',
+                                     variable_end_string='}',
+                                     line_statement_prefix='%%',
+                                     trim_blocks=True,
+                                     autoescape=False,
+                                     loader=jinja2.FileSystemLoader(template_directory))
+template = latex_jinja_env.get_template('template.tex')
+
+
+def tex_escape(text):
+    conv = {
+            '&': r'\&',
+            '%': r'\%',
+            '$': r'\$',
+            '#': r'\#',
+            '_': r'\_',
+            '{': r'\{',
+            '}': r'\}',
+            '~':
+            r'\textasciitilde{}',
+            '^':
+            r'\^{}',
+            '\\':
+            r'\textbackslash{}',
+            '<':
+            r'\textless{}',
+            '>':
+            r'\textgreater{}',
+            }
+    regex = re.compile('|'.join(re.escape(str(key)) for key in sorted(conv.keys(), key = lambda item: - len(item))))
+    return regex.sub(lambda match: conv[match.group()], text)
 
 
 def generate_report(student_id):
-    this_year_start = curriculum.this_year_start
+    term_dates = data.get_term_date_from_rems()
+    year_start = term_dates['year_start']
+    term_start = term_dates['term_start']
     student = data.get_student(student_id, "ada")
-    academic_multiindex = pd.DataFrame.from_records(
-        data.get_data("assessment", "student_id", [student_id], "ada"),
-        columns=["subject_name", "assessment", "grade", "date",
-                 "comment", "report"]).query('report == 1').set_index(["subject_name", "assessment"
-                                        ])[["grade", "date", "comment"]]
-    # Escape manually for now
+    group_data = data.get_data("group", "student_id", [student_id], "ada")
+    group_list = [g.get("subject_name") for g in group_data]
+    academic_data = data.get_data("assessment", "student_id", [student_id], "ada")
+    academic_df = pd.DataFrame.from_records(academic_data, columns=["subject_name", "assessment", "subtitle", "grade", "date", "comment", "report"]).query('report <= 1 and subject_name in @group_list')
+    academic_multiindex = academic_df.set_index(["subject_name", "assessment"])[["grade", "date", "comment", "subtitle", "report"]].sort_values(by=["subject_name", "date"], ascending=[True, False])
     academic_multiindex['comment'].fillna("", inplace=True)
-    academic_multiindex.eval(
-        "comment = comment.str.replace('%', '\%').replace('&', '\&')",
-        inplace=True)
+    academic_multiindex['subtitle'].fillna("", inplace=True)
+    academic_multiindex['comment'] = academic_multiindex['comment'].str.replace('\n', '\n\n').apply(unicode_to_latex)
     academic = {
-        subject: academic_multiindex.xs(subject).to_dict('index')
-        for subject in academic_multiindex.index.levels[0]
-    }
+            subject: academic_multiindex.xs(subject).to_dict('index')
+            for subject in academic_multiindex.index.levels[0]
+            }
     kudos_df = pd.DataFrame(
-        data.get_data("kudos", "student_id", [student_id], "ada"),
-        columns=["ada_value", "points", "date", "from",
-                 "description"]).sort_values(
-                     "date", ascending=False).query("date >= @this_year_start")
-    kudos_df.eval(
-        "description = description.str.replace('%', '\%').replace('&', '\&')",
-        inplace=True)
+            data.get_data("kudos", "student_id", [student_id], "ada"),
+            columns=["ada_value", "points", "date", "from",
+                "description"]).sort_values(
+                        "date", ascending=False).query("date >= @term_start")
+    kudos_df['description'] = kudos_df['description'].apply(tex_escape)
     kudos_df["date"] = kudos_df["date"].apply(data.format_date)
     kudos_df['points'] = pd.to_numeric(kudos_df['points'], downcast='integer')
     kudos_total = kudos_df['points'].sum()
     kudos = kudos_df.to_dict(orient='records')
     concern_df = pd.DataFrame(
-        data.get_data("concern", "student_id", [student_id], "ada"),
-        columns=["category", "date", "description", "from"]).sort_values(
-            "date", ascending=False).query("date >= @this_year_start")
+            data.get_data("concern", "student_id", [student_id], "ada"),
+            columns=["category", "date", "description", "from"]).sort_values(
+                    "date", ascending=False).query("date >= @term_start")
     concern_df["date"] = concern_df["date"].apply(data.format_date)
-    concern_df.eval(
-        "description = description.str.replace('%', '\%').replace('&', '\&')",
-        inplace=True)
+    concern_df['description'] = concern_df['description'].apply(tex_escape)
     concern_total = len(concern_df)
     concerns = concern_df.to_dict(orient='records')
     attendance_df = pd.DataFrame.from_records(
-        data.get_data("attendance", "student_id", [student_id],
-                      "ada")).query("subtype == 'monthly'").sort_values(
-                          by='date',
-                          ascending=True).query("date >= @this_year_start")
+            data.get_data("attendance", "student_id", [student_id],
+                "ada")).query("subtype == 'monthly'").sort_values(
+                        by='date',
+                        ascending=True).query("date >= @year_start")
     # attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_totals = attendance_df.sum()
     attendance = round(100 * attendance_totals['actual'] /
-                       attendance_totals['possible'])
+            attendance_totals['possible'])
     punctuality = round(100 - 100 * attendance_totals['late'] /
-                        attendance_totals['actual'])
+            attendance_totals['actual'])
     # ucas = data.get_data("ucas", "student_id", [student_id], "ada")
     messages = []
     # if ucas:
@@ -84,48 +114,42 @@ def generate_report(student_id):
     # punctuality_zip = " ".join(f"({d}, {p})" for d, p in zip(
     #     attendance_df["date"].tolist(), attendance_df['late'].tolist()))
 
-    latex_jinja_env = jinja2.Environment(variable_start_string='\VAR{',
-                                         variable_end_string='}',
-                                         line_statement_prefix='%%',
-                                         trim_blocks=True,
-                                         autoescape=False,
-                                         loader=jinja2.FileSystemLoader(
-                                             abspath('../templates')))
+    date_string = datetime.now().strftime("%B %Y")
 
-    template = latex_jinja_env.get_template('template.tex')
+    ic(date_string)
+
     student_name = f"{student.get('given_name')} {student.get('family_name')}"
-    with open(f"../latex/{student.get('_id')} {student_name}.tex", 'w') as f:
+    with open(path.join(latex_directory, f"{student.get('_id')} {student_name}.tex"), 'w') as f:
         template_data = {
-            "name": student_name,
-            "date": "June 2022",
-            "team": student.get("team"),
-            # "attendance_dates": attendance_dates,
-            # "attendance_zip": attendance_zip,
-            # "punctuality_zip": punctuality_zip,
-            "attendance": attendance,
-            "punctuality": punctuality,
-            "academic": academic,
-            "kudos": kudos,
-            "kudos_total": kudos_total,
-            "concerns": concerns,
-            "concern_total": concern_total,
-            "messages": messages
-        }
+                "name": student_name,
+                "date": date_string,
+                "team": student.get("team"),
+                # "attendance_dates": attendance_dates,
+                # "attendance_zip": attendance_zip,
+                # "punctuality_zip": punctuality_zip,
+                "attendance": attendance,
+                "punctuality": punctuality,
+                "academic": academic,
+                "kudos": kudos,
+                "kudos_total": kudos_total,
+                "concerns": concerns,
+                "concern_total": concern_total,
+                "messages": messages
+                }
         f.write(template.render(template_data))
-        print("tex done")
+        ic("tex done")
 
 
 def cohort_reports(cohort):
     enrolment_docs = data.get_data("enrolment",
-                                   "cohort",
-                                   cohort,
-                                   db_name="ada")
+            "cohort",
+            cohort,
+            db_name="ada")
     for student in enrolment_docs:
-        print(f"Generating report for {student.get('given_name')}")
-        print(f"Student ID {student.get('_id')}")
+        ic(f"Generating report for {student.get('given_name')}")
+        ic(f"Student ID {student.get('_id')}")
         generate_report(student.get('_id'))
 
 
 if __name__ == "__main__":
-    #generate_report("190817")
-    cohort_reports("2123")
+    pass
