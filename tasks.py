@@ -40,8 +40,8 @@ couchdb_db = couchdb_config['db']
 
 app = Celery(
     'tasks',
-    backend='redis://',
-    broker='redis://')
+    result_backend=f'couchdb://{couchdb_user}:{couchdb_password}@{couchdb_ip}:{couchdb_port}/{couchdb_db}',
+    broker=f'amqp://{rabbitmq_user}:{rabbitmq_password}@localhost:5672/')
 
 app.conf.beat_schedule = {
     "sync sf attendance": {
