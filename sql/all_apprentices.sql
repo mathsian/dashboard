@@ -30,15 +30,18 @@ select
     , concat(trim(code), '-', trim(instance)) cohort
     , isnull(CMPN_Company_Name, 'No employer') employer
     , start_date
+    , trim(STYR_Personal_Tutor) skills_coach
     , case
                when completion_stat = 1 and year < iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate()))
-                   then 'Withdrawn'
+                   then 'Withdrawn (stale)'
                when completion_stat = 1 then 'Continuing'
                when completion_stat = 3 and reason = 40 then 'Transferred'
                when completion_stat = 3 then 'Withdrawn'
                when completion_stat = 2 then 'Completed'
+               when completion_stat = 6 and year < iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate()))
+                    then 'Withdrawn (overdue)'
                when completion_stat = 6 then 'Break in learning'
-               else 'Withdrawn'
+               else 'Unknown'
         end                        status
 from enrolments
 left join remslive.dbo.STUDstudent on student_id = STUD_Student_ID
@@ -46,4 +49,5 @@ left join remslive.dbo.STESLearnerEmpStatus on stes_isn = (select top 1 stes_isn
 where student_id = STES_Student_ID
 order by STES_Year desc, STES_DateEmpStatApp desc)
 left join remslive.dbo.CMPN_Company_main on STESLearnerEmpStatus.STES_EmpId = CMPN_Company_main.CMPN_Company_Code
+left join remslive.dbo.STYRstudentYR on STYR_Year = iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate())) and STYR_Student_ID = student_id
 where rank = 1;

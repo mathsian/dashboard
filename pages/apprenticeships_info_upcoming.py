@@ -18,8 +18,9 @@ layout = dmc.Accordion(
         "type": "accordion",
         "section": "apprenticeships",
         "page": "info",
-        "tab": "upcoming",
-    }
+        "tab": "upcoming"
+    },
+    children=""
 )
 
 

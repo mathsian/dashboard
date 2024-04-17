@@ -9,23 +9,32 @@ from app import app
 import app_data
 
 
-employer_dropdown = dbc.DropdownMenu(
+tsc_dropdown = dbc.DropdownMenu(
     id={
         "type": "dropdown",
         "section": "apprenticeships",
-        "page": "reports",
-        "name": "employer"
+        "page": "tscs",
+        "name": "tsc"
     },
     nav=True,
 )
 
-filter_nav = dbc.NavItem(employer_dropdown)
+filter_nav = dbc.NavItem(tsc_dropdown)
+
+learner_status = html.Div(
+    id={
+        "type": "div",
+        "section": "apprenticeships",
+        "page": "tscs",
+        "name": "learner_status"
+    }
+)
 
 gauge_alltime = daq.Gauge(
     id={
         "type": "gauge",
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "name": "alltime"
     },
     label="All time attendance",
@@ -48,7 +57,7 @@ gauge_results = daq.Gauge(
     id={
         "type": "gauge",
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "name": "results"
     },
     label="Average mark",
@@ -71,19 +80,19 @@ layout = [
     dcc.Store(id={
         "type": "storage",
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "name": "learners"
     }, storage_type='memory'),
     dcc.Store(id={
         "type": "storage",
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "name": "results"
     }, storage_type='memory'),
     dcc.Store(id={
         "type": "storage",
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "name": "attendance"
     }, storage_type='memory'),
     dbc.Card([
@@ -91,8 +100,8 @@ layout = [
        dbc.CardBody([
            dbc.Row(
                dbc.Col([
-                gauge_alltime,
-                gauge_results])
+                learner_status,
+               ])
            )
        ])
     ])
@@ -104,15 +113,15 @@ layout = [
         {
             "type": "dropdown",
             "section": "apprenticeships",
-            "page": "reports",
-            "name": "employer"
+            "page": "tscs",
+            "name": "tsc"
         }, "label"),
     Output(
         {
             "type": "dropdown",
             "section": "apprenticeships",
-            "page": "reports",
-            "name": "employer"
+            "page": "tscs",
+            "name": "tsc"
         }, "children"),
 ], [
     Input("location", "search"),
@@ -122,26 +131,26 @@ layout = [
         {
             "type": "dropdown",
             "section": "apprenticeships",
-            "page": "reports",
-            "name": "employer"
+            "page": "tscs",
+            "name": "tsc"
         }, "label")
 ])
-def update_employers(search, pathname, employer):
+def update_employers(search, pathname, tsc):
     search_dict = parse_qs(search.removeprefix('?'))
-    # Get list of employers
-    employers = app_data.get_employer_list()
-    employer_query = search_dict.get('employer', False)
-    # Default to first employer
-    employer = employer or employers[0]
-    # If employer in query is valid switch to that
-    if employer_query:
-        if employer_query[0] in employers:
-            employer = employer_query[0]
-    employer_items = []
-    for c in employers:
-        s = urlencode(query={'employer': c})
-        employer_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
-    return employer, employer_items
+    # Get list of tscs
+    tscs = app_data.get_tsc_list()
+    tsc_query = search_dict.get('tsc', False)
+    # Default to first tsc
+    tsc = tsc or tscs[0]
+    # If tsc in query is valid switch to that
+    if tsc_query:
+        if tsc_query[0] in tscs:
+            tsc = tsc_query[0]
+    tsc_items = []
+    for c in tscs:
+        s = urlencode(query={'tsc': c})
+        tsc_items.append(dbc.DropdownMenuItem(c, href=f'{pathname}?{s}'))
+    return tsc, tsc_items
 
 
 @app.callback([
@@ -149,7 +158,7 @@ def update_employers(search, pathname, employer):
         {
             "type": "storage",
             "section": "apprenticeships",
-            "page": "reports",
+            "page": "tscs",
             "name": "learners"
         }, 'data'
     ),
@@ -157,7 +166,7 @@ def update_employers(search, pathname, employer):
         {
             "type": "storage",
             "section": "apprenticeships",
-            "page": "reports",
+            "page": "tscs",
             "name": "results"
         }, 'data'
     ),
@@ -165,7 +174,7 @@ def update_employers(search, pathname, employer):
         {
             "type": "storage",
             "section": "apprenticeships",
-            "page": "reports",
+            "page": "tscs",
             "name": "attendance"
         }, 'data'
     )
@@ -175,16 +184,16 @@ def update_employers(search, pathname, employer):
             {
                 "type": "dropdown",
                 "section": "apprenticeships",
-                "page": "reports",
-                "name": "employer"
+                "page": "tscs",
+                "name": "tsc"
             }, "label"
         )
 
 )
-def update_data(employer):
-    learners = app_data.get_students_by_employer(employer)
-    results = app_data.get_student_results_by_employer(employer)
-    attendance = app_data.get_apprentice_attendance_by_employer(employer)
+def update_data(tsc):
+    learners = app_data.get_students_by_tsc(tsc)
+    results = app_data.get_student_results_by_tsc(tsc)
+    attendance = app_data.get_apprentice_attendance_by_tsc(tsc)
     return learners, results, attendance
 
 
@@ -193,7 +202,7 @@ def update_data(employer):
         {
             "type": "gauge",
             "section": "apprenticeships",
-            "page": "reports",
+            "page": "tscs",
             "name": "alltime"
         }, 'value'
     ),
@@ -202,7 +211,7 @@ def update_data(employer):
             {
                 "type": "storage",
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "name": "attendance"
             }, 'data'
         )
@@ -216,29 +225,26 @@ def update_attendance_gauges(attendance):
 
 
 @app.callback(
-    Output(
-        {
-            "type": "gauge",
-            "section": "apprenticeships",
-            "page": "reports",
-            "name": "results"
-        }, 'value'
-    ),
-    [
-        Input(
-            {
+    Output({
+        "type": "div",
+        "section": "apprenticeships",
+        "page": "tscs",
+        "name": "learner_status"
+    }, 'children'),
+    Input({
                 "type": "storage",
                 "section": "apprenticeships",
-                "page": "reports",
-                "name": "results"
+                "page": "tscs",
+                "name": "learners"
             }, 'data'
-        )
-    ])
-def update_results_gauge(results):
-    if not results:
-        return 0
-    results_df = pd.DataFrame(results)
-    results_value = results_df["mark"].mean()
-    return results_value
+
+    )
+)
+def update_learner_status(learners):
+    if not learners:
+        return ""
+    learners_df = pd.DataFrame.from_records(learners)
+    learner_status = learners_df.groupby('status', observed=False, as_index=False).size().rename(columns={'status': 'Status', 'size': 'Learners'})
+    return dbc.Table.from_dataframe(learner_status)
 
 
