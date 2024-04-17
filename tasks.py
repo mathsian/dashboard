@@ -17,6 +17,11 @@ config_object = ConfigParser()
 config_file = 'config.ini'
 config_object.read(config_file)
 
+pg_settings = config_object["POSTGRES"]
+pg_uid = pg_settings["username"]
+pg_pwd = pg_settings["password"]
+pg_db = pg_settings["database"]
+
 mail_config = config_object['SMTP']
 gmail.username = mail_config['username']
 gmail.password = mail_config['password']
@@ -24,6 +29,7 @@ gmail.password = mail_config['password']
 rabbitmq_config = config_object['RABBITMQ']
 rabbitmq_user = rabbitmq_config['username']
 rabbitmq_password = rabbitmq_config['password']
+rabbitmq_nodename = rabbitmq_config['nodename']
 
 couchdb_config = config_object['COUCHDB']
 couchdb_user = couchdb_config['user']
@@ -34,8 +40,8 @@ couchdb_db = couchdb_config['db']
 
 app = Celery(
     'tasks',
-    result_backend=f'couchdb://{couchdb_user}:{couchdb_password}@{couchdb_ip}:{couchdb_port}/{couchdb_db}',
-    broker=f'amqp://{rabbitmq_user}:{rabbitmq_password}@localhost:5672/')
+    backend='redis://',
+    broker='redis://')
 
 app.conf.beat_schedule = {
     "sync sf attendance": {
@@ -52,7 +58,7 @@ app.conf.beat_schedule = {
 @app.task
 def sync_attendance():
     admin.sync_rems_attendance("weekly", "ada")
-    admin.sync_rems_attendance("monthly", "ada")
+    return admin.sync_rems_attendance("monthly", "ada")
 
 
 @app.task(rate_limit='10/m')
@@ -83,10 +89,11 @@ def send_report(student_id):
     Please find {student.get("given_name")}\'s latest academic report attached.
     Best Wishes,
     The Sixth Form Team''')
-    gmail.send(subject=subject,
+    msg = gmail.send(subject=subject,
                bcc=['ian@ada.ac.uk'],
                text=body,
                attachments={report: Path('latex/' + report)})
+    return msg.as_string()
 
 
 def sixthform_academic_report(student_id):
@@ -197,8 +204,8 @@ def send_result(student_id, instance_code, update=False):
     html += ("<p>This email is not monitored. If you have any queries about any of your results please raise a ticket "
              "with your apprenticeships helpdesk.</p>")
     subject = f"{instance_dict.get('name')} result"
-    receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
-    # receivers = ['ian@ada.ac.uk']
+    # receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
+    receivers = ['ian@ada.ac.uk']
     msg = gmail.send(
         receivers=receivers,
         subject=subject,
@@ -232,6 +239,3 @@ def instance_results(instance_code):
     for student_id in student_ids:
         send_result.delay(student_id, instance_code)
 
-
-if __name__ == "__main__":
-    pass
