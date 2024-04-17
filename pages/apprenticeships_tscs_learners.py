@@ -14,7 +14,7 @@ from icecream import ic
 learners_table = dash_tabulator.DashTabulator(
     id={
         "section": "apprenticeships",
-        "page": "reports",
+        "page": "tscs",
         "tab": "results",
         "type": "table",
         "name": "learners"
@@ -36,7 +36,7 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(learners_table)])])])
         Output(
             {
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "tab": "results",
                 "type": "table",
                 "name": "learners"
@@ -44,7 +44,7 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(learners_table)])])])
         Output(
             {
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "tab": "results",
                 "type": "table",
                 "name": "learners"
@@ -54,27 +54,27 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(learners_table)])])])
             {
                 "type": "storage",
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "name": "learners"
             }, 'data'),
         Input(
             {
                 "type": "storage",
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "name": "results"
             }, 'data'),
         Input(
             {
                 "type": "storage",
                 "section": "apprenticeships",
-                "page": "reports",
+                "page": "tscs",
                 "name": "attendance"
             }, 'data'),
     ])
 def update_table(learners, results, attendance):
     if not learners:
-        return "No learners for this employer"
+        return "No learners for this skills coach"
 
     learner_columns = ['student_id', 'college_email', 'cohort', 'start_date', 'given_name', 'family_name', 'status']
 

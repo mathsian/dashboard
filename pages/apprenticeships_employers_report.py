@@ -33,7 +33,8 @@ layout = dbc.Row(
                 "page": "employers",
                 "tab": "report",
                 "name": "reports"
-            }
+            },
+             children=""
          )]
         ))
 

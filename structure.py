@@ -21,6 +21,7 @@ from pages import (
     apprenticeships_reports, apprenticeships_reports_results,
     apprenticeships_report_attendance, apprenticeships_reports_summary, apprenticeships_reports_learners,
     apprenticeships_reports_cohorts,
+    apprenticeships_tscs, apprenticeships_tscs_learners,
     # stats_enrolment, stats_enrolment_view,
     admin_records, admin_records_kudos, admin_records_concern, admin_records_notes)
 
@@ -169,7 +170,9 @@ content = {
              Tab("Cohorts", "cohorts", apprenticeships_reports_cohorts.layout),
              Tab("Learners", "learners", apprenticeships_reports_learners.layout),
              Tab("Results", "results", apprenticeships_reports_results.layout),
-             Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)]
+             Tab("Attendance", "attendance", apprenticeships_report_attendance.layout)],
+        Page("Skills coaches", "tscs", apprenticeships_tscs.layout):
+            [Tab("Learners", "learners", apprenticeships_tscs_learners.layout)]
     },
     #     Section("Stats", "stats"): {
     #         Page("Enrolment", "enrolment", stats_enrolment.layout):
