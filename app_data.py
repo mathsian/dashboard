@@ -91,6 +91,19 @@ def get_apprentice_attendance_by_employer(employer):
     return attendance_df.to_dict(orient='records')
 
 
+def get_apprentice_attendance_by_tsc(tsc):
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader('sql')
+    )
+    sql_template = sql_jinja_env.get_template('apprentice attendance by tsc.sql')
+    sql = sql_template.render(tsc=tsc)
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    attendance_df = pd.read_sql(sql, conn)
+    return attendance_df.to_dict(orient='records')
+
+
 def get_cohort_list():
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}', options='-c search_path=public') as conn:
@@ -126,6 +139,18 @@ def get_employer_list():
         with conn.cursor() as cur:
             cur.execute("""
             select distinct employer from students order by employer;
+            """)
+            # default is list of tuples
+            result = [c[0] for c in cur.fetchall()]
+    return result
+
+
+def get_tsc_list():
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}', options='-c search_path=public') as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            select distinct skills_coach from students order by skills_coach;
             """)
             # default is list of tuples
             result = [c[0] for c in cur.fetchall()]
@@ -175,10 +200,24 @@ def get_students_by_employer(employer):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select students.id student_id, given_name, family_name, employer, status, cohorts.name cohort, cohorts.start_date from students
+            select students.id student_id, given_name, family_name, college_email, employer, status, cohorts.name cohort, cohorts.start_date from students
             left join cohorts on cohorts.id = students.cohort_id where students.employer = %(employer)s
             order by family_name, given_name;
             """, {"employer": employer})
+            result = cur.fetchall()
+    return result
+
+
+def get_students_by_tsc(tsc):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+            select students.id student_id, given_name, family_name, college_email, employer, status, cohorts.name cohort, cohorts.start_date from students
+            left join cohorts on cohorts.id = students.cohort_id where students.skills_coach = %(tsc)s
+            order by family_name, given_name;
+            """, {"tsc": tsc})
             result = cur.fetchall()
     return result
 
@@ -256,6 +295,34 @@ def get_student_results_by_employer(employer):
                 """
             cur.execute(sql, {
                 "employer": employer
+            })
+            result = cur.fetchall()
+    return result
+
+
+def get_student_results_by_tsc(tsc):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            sql = """
+                select
+                    s.id student_id
+                    , m.level
+                    , m.name
+                    , rv.short
+                    , i.start_date
+                    , rv.code
+                    , rv.total mark
+                    , rv.credits 
+                from students s
+                left join results_view rv on rv.student_id = s.id
+                left join instances i on rv.code = i.code
+                left join modules m on i.module_id = m.id
+                where s.skills_coach = %(tsc)s
+                and (rv.rank = 1 or rv.rank is null)
+                """
+            cur.execute(sql, {
+                "tsc": tsc
             })
             result = cur.fetchall()
     return result
@@ -808,8 +875,8 @@ def update_learners(learners):
             for learner in learners:
                 cur.execute(
                     """
-insert into students (id, given_name, family_name, status, employer, cohort_id, start_date, inserted_at, updated_at)
-                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), %(start_date)s, current_timestamp, current_timestamp)
+insert into students (id, given_name, family_name, status, employer, cohort_id, start_date, skills_coach, inserted_at, updated_at)
+                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), %(start_date)s, %(skills_coach)s, current_timestamp, current_timestamp)
                 on conflict (id) do update
                 set given_name = excluded.given_name,
                     family_name = excluded.family_name,
@@ -817,6 +884,7 @@ insert into students (id, given_name, family_name, status, employer, cohort_id, 
                     employer = excluded.employer,
                     cohort_id = excluded.cohort_id,
                     start_date = excluded.start_date,
+                    skills_coach = excluded.skills_coach,
                     updated_at = excluded.updated_at;
                 """, learner)
                 return_value += cur.rowcount
@@ -861,7 +929,7 @@ def round_normal(x):
     if x is None or np.isnan(x):
         result = '-'
     else:
-        result = np.int(np.floor(np.add(x, 0.5)))
+        result = int(np.floor(np.add(x, 0.5)))
     return result
 
 
@@ -946,3 +1014,5 @@ def graph_learner_volumes(learners_df):
 
 if __name__ == "__main__":
     pass
+
+
