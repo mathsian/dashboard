@@ -112,37 +112,48 @@ def update_student_report(store_data):
                      ]),
             html.Br(),
             html.Tr([html.Td("90 day attendance"),
-                     html.Td("-" if attendance_dict.get('90 day attendance (%)') is None else f"{attendance_dict.get('90 day attendance (%)'):.1f}", style={'text-align': 'right'})
+                     html.Td("-" if attendance_dict.get(
+                         '90 day attendance (%)') is None else f"{attendance_dict.get('90 day attendance (%)'):.1f}",
+                             style={'text-align': 'right'})
                      ]),
             html.Tr([html.Td("90 day punctuality"),
-                     html.Td("-" if attendance_dict.get('90 day punctuality (%)') is None else f"{attendance_dict.get('90 day punctuality (%)'):.1f}", style={'text-align': 'right'})
+                     html.Td("-" if attendance_dict.get(
+                         '90 day punctuality (%)') is None else f"{attendance_dict.get('90 day punctuality (%)'):.1f}",
+                             style={'text-align': 'right'})
                      ]),
             html.Tr([html.Td("All time attendance"),
-                     html.Td("-" if attendance_dict.get('All time attendance (%)') is None else f"{attendance_dict.get('All time attendance (%)'):.1f}", style={'text-align': 'right'})
+                     html.Td("-" if attendance_dict.get(
+                         'All time attendance (%)') is None else f"{attendance_dict.get('All time attendance (%)'):.1f}",
+                             style={'text-align': 'right'})
                      ]),
             html.Tr([html.Td("All time punctuality"),
-                     html.Td("-" if attendance_dict.get('All time punctuality (%)') is None else f"{attendance_dict.get('All time punctuality (%)'):.1f}", style={'text-align': 'right'})
+                     html.Td("-" if attendance_dict.get(
+                         'All time punctuality (%)') is None else f"{attendance_dict.get('All time punctuality (%)'):.1f}",
+                             style={'text-align': 'right'})
                      ]),
         ], borderless=True, style={'max-width': '320px'})
 
-        results_table = dbc.Table([
+        results_table = html.Table([
             html.Tr([
                 html.Td(r.get("level", "-"), style={'text-align': 'right'}),
-                html.Td(r.get("name", "-")),
+                html.Td(r.get("name", "-"), style={'padding-left': '1em'}),
                 html.Td(
-                    html.A(r.get("code"),
-                           href=f'/apprenticeships/academic/edit?module={r.get("short")}&instance={r.get("code")}')
+                    dcc.Link(children=r.get("code"),
+                             href=f'/apprenticeships/academic/edit?module={r.get("short")}&instance={r.get("code")}'),
+                    style={'padding-left': '1em'}
                 ),
-                html.Td(r.get("total", "-"), style={'text-align': 'right'}),
+                html.Td(r.get("total", "-"), style={'text-align': 'right', 'padding-left': '1em'}),
                 html.Td(f"({r.get('credits', '-')})", style={'text-align': 'right'}),
 
             ]) for r in results
-        ], style={'max-width': '480px'})
+        ]
+        )
 
-        accordion_children = [dbc.Row([
-            dbc.Col([info_table, summary_table], width=4),
-            dbc.Col([results_table], width=8)
-        ], justify='between')]
+        accordion_children = [
+            dbc.Row([
+                dbc.Col([info_table, summary_table], width=4),
+                dbc.Col([results_table], width=8)
+            ], justify='between')]
 
         accordion_item = dmc.AccordionItem(children=[
             dmc.AccordionControl(html.B(f'{student.get("given_name")} {student.get("family_name")}')),
