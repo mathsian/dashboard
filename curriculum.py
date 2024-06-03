@@ -27,7 +27,7 @@ register_marks = {
 }
 
 this_year_start = "2022-08-01"
-kudos_start = "2022-10-31"
+kudos_start = "2023-01-01"
 
 concern_categories = ["Conduct", "Academic", "Attendance"]
 concern_categories_dropdown = {
@@ -64,7 +64,7 @@ kudos_points_dropdown = {
     ],
     "default": 1,
 }
-cohorts = ["2123", "2224"]
+cohorts = ["2224", "2325"]
 cohorts_dropdown = {
     "options": [{"label": f"Cohort {s}", "value": s} for s in cohorts],
     "default": cohorts[-1],

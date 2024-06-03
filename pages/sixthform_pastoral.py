@@ -27,6 +27,8 @@ kudos_switch = dbc.Form(
         ],
         value="t",
         id="kudos-switch",
+        persistence=True,
+        persistence_type='memory'
     )
 ])
 

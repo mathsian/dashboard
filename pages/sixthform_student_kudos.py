@@ -47,6 +47,8 @@ value_input = html.Div([
         },
         options=curriculum.values_dropdown["options"],
         value=curriculum.values_dropdown["default"],
+        persistence=True,
+        persistence_type='memory'
     )
 ])
 
