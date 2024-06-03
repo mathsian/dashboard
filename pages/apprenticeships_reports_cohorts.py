@@ -133,9 +133,20 @@ layout = dbc.Row([dbc.Col([
         }, 'label')
     ]
 )
-
-
 def update_cohorts_tab(learners, results, attendance, employer):
+    if not learners:
+        empty_figure = {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                }
+            }
+        }
+        return f'No {employer} apprentices in active cohorts', empty_figure, [], []
+
     learners_df = pd.DataFrame.from_records(learners, index='student_id')
 
     volumes_fig = app_data.graph_learner_volumes(learners_df)

@@ -67,7 +67,7 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(results_table)])])])
     ])
 def update_table(learners, results):
     if not results:
-        return "No results for these learners."
+        return [], []
 
     learner_columns = ['student_id', 'cohort', 'start_date', 'given_name', 'family_name', 'status']
 

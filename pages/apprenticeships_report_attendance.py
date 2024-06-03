@@ -6,6 +6,8 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 import pandas as pd
+from icecream import ic
+
 from app import app
 import app_data
 
@@ -67,6 +69,9 @@ layout = dbc.Container([dbc.Row([dbc.Col([
             }, 'data'),
     ])
 def update_table(learners, attendance):
+    if not learners:
+        return [], []
+
     attendance = attendance if isinstance(attendance, list) else [attendance]
 
     learners_df = pd.DataFrame.from_records(learners).set_index('student_id')

@@ -91,6 +91,19 @@ def get_apprentice_attendance_by_employer(employer):
     return attendance_df.to_dict(orient='records')
 
 
+def get_apprentice_attendance_by_student_list(student_id_list):
+    sql_jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader('sql')
+    )
+    sql_template = sql_jinja_env.get_template('apprentice attendance by student list.sql')
+    sql = sql_template.render(student_id_list=student_id_list)
+    conn = pyodbc.connect(
+        f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={rems_server};DATABASE=Reports;UID={rems_uid};PWD={rems_pwd}'
+    )
+    attendance_df = pd.read_sql(sql, conn)
+    return attendance_df.to_dict(orient='records')
+
+
 def get_apprentice_attendance_by_tsc(tsc):
     sql_jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader('sql')
@@ -194,18 +207,42 @@ def get_students_by_cohort_name(cohort_name):
     return result
 
 
-def get_students_by_employer(employer):
+def get_students_by_employer(employer, selected_cohorts=False):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-            select students.id student_id, given_name, family_name, college_email, employer, status, cohorts.name cohort, cohorts.start_date from students
-            left join cohorts on cohorts.id = students.cohort_id where students.employer = %(employer)s
-            order by family_name, given_name;
-            """, {"employer": employer})
+            if selected_cohorts:
+                cur.execute(
+                    """
+                select students.id student_id, given_name, family_name, college_email, employer, status, cohorts.name cohort, cohorts.start_date from students
+                left join cohorts on cohorts.id = students.cohort_id where students.employer = %(employer)s and cohorts.name = ANY(%(selected_cohorts)s)
+                order by family_name, given_name;
+                """, {"employer": employer, "selected_cohorts": selected_cohorts})
+            else:
+                cur.execute(
+                    """
+                select students.id student_id, given_name, family_name, college_email, employer, status, cohorts.name cohort, cohorts.start_date from students
+                left join cohorts on cohorts.id = students.cohort_id where students.employer = %(employer)s
+                order by family_name, given_name;
+                """, {"employer": employer})
             result = cur.fetchall()
     return result
+
+
+def get_active_cohorts():
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select c.name from students s left join cohorts c on s.cohort_id = c.id
+                where s.status not in ('Completed', 'Withdrawn')
+                group by c.name
+                having count(*) > 0
+                """
+            )
+            result = cur.fetchall()
+    return [r[0] for r in result if r]
 
 
 def get_students_by_tsc(tsc):
@@ -272,30 +309,54 @@ def get_results_for_instance_code(instance_code):
     return result
 
 
-def get_student_results_by_employer(employer):
+def get_student_results_by_employer(employer, selected_cohorts=False):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            sql = """
-                select
-                    s.id student_id
-                    , m.level
-                    , m.name
-                    , rv.short
-                    , i.start_date
-                    , rv.code
-                    , rv.total mark
-                    , rv.credits 
-                from students s
-                left join results_view rv on rv.student_id = s.id
-                left join instances i on rv.code = i.code
-                left join modules m on i.module_id = m.id
-                where s.employer = %(employer)s
-                and (rv.rank = 1 or rv.rank is null)
-                """
-            cur.execute(sql, {
-                "employer": employer
-            })
+            if selected_cohorts:
+                sql = """
+                                    select
+                                        s.id student_id
+                                        , m.level
+                                        , m.name
+                                        , rv.short
+                                        , i.start_date
+                                        , rv.code
+                                        , rv.total mark
+                                        , rv.credits 
+                                    from students s
+                                    left join results_view rv on rv.student_id = s.id
+                                    left join instances i on rv.code = i.code
+                                    left join modules m on i.module_id = m.id
+                                    left join cohorts c on s.cohort_id = c.id
+                                    where s.employer = %(employer)s
+                                    and (rv.rank = 1 or rv.rank is null)
+                                    and c.name = ANY(%(selected_cohorts)s)
+                                    """
+                cur.execute(sql, {
+                    "employer": employer, "selected_cohorts": selected_cohorts
+                })
+            else:
+                sql = """
+                    select
+                        s.id student_id
+                        , m.level
+                        , m.name
+                        , rv.short
+                        , i.start_date
+                        , rv.code
+                        , rv.total mark
+                        , rv.credits 
+                    from students s
+                    left join results_view rv on rv.student_id = s.id
+                    left join instances i on rv.code = i.code
+                    left join modules m on i.module_id = m.id
+                    where s.employer = %(employer)s
+                    and (rv.rank = 1 or rv.rank is null)
+                    """
+                cur.execute(sql, {
+                    "employer": employer
+                })
             result = cur.fetchall()
     return result
 
@@ -963,7 +1024,7 @@ def graph_grade_profile(results_df, mark_column_name='total'):
     labels = ["Incomplete", "Fail", "Pass", "Merit", "Distinction", "Error"]
     axis_labels = ["Incomplete", "Fail", "Pass", "Merit", "Distinction"]
     # Cut doesn't like NaN so set to something in the missing bin
-    results_df[mark_column_name].fillna(-99, inplace=True)
+    results_df[mark_column_name] = results_df[mark_column_name].fillna(-99)
     results_df["class"] = pd.cut(results_df[mark_column_name], [-float("inf"), 0, 39.5, 59.5, 69.5, 101, float("inf")],
                                  labels=labels, right=False)
     results_df["class"] = pd.Categorical(results_df["class"], axis_labels)

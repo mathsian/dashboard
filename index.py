@@ -2,6 +2,7 @@ from flask import request
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 
 from app import app, server
@@ -26,7 +27,7 @@ card = dbc.Card(children=[cardheader, cardbody])
 # sidebar = dbc.Card(dbc.CardBody(id="sidebar_content"), body=True)
 sidebar = html.Div(id='sidebar_content')
 
-app.layout = html.Div([
+app.layout = dmc.MantineProvider(children=html.Div([
     dcc.Store(id="global-history", storage_type='local'),
     dcc.Store(id="sixthform-history"),
     dcc.Store(id="apprenticeships-history"),
@@ -34,7 +35,7 @@ app.layout = html.Div([
     navbar,
     dbc.Row([dbc.Col(sidebar, width=3),
              dbc.Col(card, width=9)])
-], className='dbc dbc-ag-grid')
+], className='dbc dbc-ag-grid'))
 
 
 def parse(pathname):

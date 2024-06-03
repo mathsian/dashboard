@@ -73,8 +73,9 @@ layout = dbc.Container([dbc.Row([dbc.Col([dcc.Loading(learners_table)])])])
             }, 'data'),
     ])
 def update_table(learners, results, attendance):
+
     if not learners:
-        return "No learners for this employer"
+        return [], []
 
     learner_columns = ['student_id', 'college_email', 'cohort', 'start_date', 'given_name', 'family_name', 'status']
 

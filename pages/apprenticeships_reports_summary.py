@@ -7,12 +7,11 @@ from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
-
+import time
 import data
 from app import app
 import app_data
 from icecream import ic
-
 
 layout = dcc.Loading(dbc.Container([
     dbc.Row([dbc.Col([
@@ -132,11 +131,22 @@ layout = dcc.Loading(dbc.Container([
     ]
 )
 def update_summary(learners, results, attendance, employer):
+    if not learners:
+        empty_figure = {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                }
+            }
+        }
+        return f'No {employer} apprentices in active cohorts', '', '', empty_figure
     learners_df = pd.DataFrame.from_records(learners, index='student_id')
     learners_df['cohort'] = pd.Categorical(learners_df['cohort'],
                                            categories=learners_df.sort_values('start_date', ascending=False)[
                                                'cohort'].unique(), ordered=True)
-
     results_df = pd.merge(learners_df, pd.DataFrame.from_records(results, index='student_id'), left_index=True,
                           right_index=True, how='left')
     grade_profile_fig = app_data.graph_grade_profile(results_df, 'mark')
@@ -150,10 +160,10 @@ def update_summary(learners, results, attendance, employer):
          'All time punctuality (%)',
          '90 day attendance (%)',
          '90 day punctuality (%)']].mean().apply(app_data.round_normal).to_frame().transpose()
-    employer_attendance_table = dbc.Table.from_dataframe(employer_average_attendance)
 
     employer_status = learners_df['status'].value_counts().to_frame().transpose()
-    employer_status_table = dbc.Table.from_dataframe(employer_status)
 
+    employer_attendance_table = dbc.Table.from_dataframe(employer_average_attendance)
+    employer_status_table = dbc.Table.from_dataframe(employer_status)
 
     return employer, employer_attendance_table, employer_status_table, grade_profile_fig

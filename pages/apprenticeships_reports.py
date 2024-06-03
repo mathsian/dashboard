@@ -5,9 +5,11 @@ from dash.dependencies import Input, Output, State, ALL
 import dash_daq as daq
 import pandas as pd
 from urllib.parse import parse_qs, urlencode
+import time
+from icecream import ic
+
 from app import app
 import app_data
-
 
 employer_dropdown = dbc.DropdownMenu(
     id={
@@ -19,7 +21,33 @@ employer_dropdown = dbc.DropdownMenu(
     nav=True,
 )
 
-filter_nav = dbc.NavItem(employer_dropdown)
+active_cohort_checkbox = dbc.Checkbox(
+    id={
+        "type": "checkbox",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "active"
+    },
+    label='Active cohorts only',
+    value=1,
+    persistence=True,
+    persistence_type='memory'
+)
+
+active_cohort_tooltip = dbc.Tooltip(
+    "An active cohort is one which has at least one continuing learner.",
+    target={
+        "type": "checkbox",
+        "section": "apprenticeships",
+        "page": "reports",
+        "name": "active"
+    }
+)
+
+filter_nav = dbc.Nav(
+    children=[dbc.Row([dbc.Col(dbc.Label("Employer")), dbc.Col(dbc.NavItem(employer_dropdown))], align='end'),
+              dbc.Row([dbc.NavItem(active_cohort_checkbox)]),
+              active_cohort_tooltip], vertical=False)
 
 gauge_alltime = daq.Gauge(
     id={
@@ -87,16 +115,16 @@ layout = [
         "name": "attendance"
     }, storage_type='memory'),
     dbc.Card([
-       dbc.CardHeader(html.Center(filter_nav)),
-       dbc.CardBody([
-           dbc.Row(
-               dbc.Col([
-                gauge_alltime,
-                gauge_results])
-           )
-       ])
+        dbc.CardHeader(html.Center(filter_nav)),
+        dbc.CardBody([
+            dbc.Row(
+                dbc.Col([
+                    gauge_alltime,
+                    gauge_results])
+            )
+        ])
     ])
-    ]
+]
 
 
 @app.callback([
@@ -171,20 +199,42 @@ def update_employers(search, pathname, employer):
     )
 ],
 
-        Input(
-            {
-                "type": "dropdown",
-                "section": "apprenticeships",
-                "page": "reports",
-                "name": "employer"
-            }, "label"
-        )
+    Input(
+        {
+            "type": "dropdown",
+            "section": "apprenticeships",
+            "page": "reports",
+            "name": "employer"
+        }, "label"
+    ),
+    Input(
+        {
+            "type": "checkbox",
+            "section": "apprenticeships",
+            "page": "reports",
+            "name": "active"
+        }, 'value'
+    )
 
 )
-def update_data(employer):
-    learners = app_data.get_students_by_employer(employer)
-    results = app_data.get_student_results_by_employer(employer)
-    attendance = app_data.get_apprentice_attendance_by_employer(employer)
+def update_data(employer, active_cohorts_only):
+
+    if active_cohorts_only:
+        selected_cohorts = app_data.get_active_cohorts()
+    else:
+        selected_cohorts = False
+
+    learners = app_data.get_students_by_employer(employer, selected_cohorts)
+
+    if learners:
+        results = app_data.get_student_results_by_employer(employer, selected_cohorts)
+
+        learner_list = ', '.join([f"('{l.get('student_id')}')" for l in learners])
+
+        attendance = app_data.get_apprentice_attendance_by_student_list(learner_list)
+    else:
+        results = []
+        attendance = []
     return learners, results, attendance
 
 
@@ -240,5 +290,3 @@ def update_results_gauge(results):
     results_df = pd.DataFrame(results)
     results_value = results_df["mark"].mean()
     return results_value
-
-
