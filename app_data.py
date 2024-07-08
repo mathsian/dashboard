@@ -474,7 +474,7 @@ def get_passing_results_for_student(student_id):
             cur.execute(
                 """
                 select
-                    level "Level"
+                    pass_view.level "Level"
                     , pass_view.credits "Credits"
                     , modules.name "Module"
                     , total "Mark"

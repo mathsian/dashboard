@@ -1,0 +1,53 @@
+\errorcontextlines 10000
+\documentclass[a4paper,12pt,portrait]{article}
+\usepackage{graphicx}
+% for text wrapping in table
+\usepackage{tabularx}
+% for footer
+\usepackage[]{fancyhdr}
+% never hyphenate in this document
+\usepackage[none]{hyphenat}
+% set up fonts
+\usepackage{fontspec}
+\setsansfont{Titillium-Regular}
+\setmainfont{Titillium-Regular}
+\setromanfont{FSSinclair-Medium}
+
+% smaller margins
+\usepackage[margin=1.5cm]{geometry}
+
+% custom colours
+\usepackage{xcolor}
+\definecolor{adaYellow}{RGB}{245,225,52}
+\definecolor{adaPurple}{RGB}{149,96,159}
+\definecolor{adaGreen}{RGB}{161,200,84}
+\definecolor{adaCoral}{RGB}{236,98,113}
+\definecolor{adaBlue}{RGB}{108,184,231}
+\definecolor{adaOrange}{RGB}{246,131,82}
+
+\definecolor{adaBlack}{RGB}{9,20,8}
+\definecolor{adaGrey}{RGB}{134,136,140}
+\definecolor{adaLightGrey}{RGB}{211,212,211}
+\definecolor{adaWhite}{RGB}{255,255,255}
+
+% customise sections
+% need explicit to access parameter number to get the section on the left
+\usepackage[explicit]{titlesec}
+\titleformat{\section}[hang]{\rmfamily\uppercase}{\thesection.}{0em}{ #1\hrulefill}
+\titleformat{\subsection}[hang]{\rmfamily\uppercase}{\thesubsection.}{0em}{ #1}
+
+\title{Deloitte x Ada}
+\begin{document}
+    \maketitle
+    
+    In scope are all apprentices who are part of an active cohort.
+    An active cohort is one with at least one continuing apprentice.
+    \section{Achievement rates}
+    The Qualification Achievement Rate (QAR) for a given academic year is the proportion of aims due
+    to complete that year which were completed successfully.
+    It is a combination of the retention rate and the pass rate.
+    Graph of achievement rates over time.
+
+\end{document}
+
+
