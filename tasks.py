@@ -234,8 +234,7 @@ def cohort_reports(cohort):
         sixthform_academic_report(student.get('_id'))
 
 
-def instance_results(instance_code):
+def instance_results(instance_code, update=False):
     student_ids = app_data.get_students_by_instance(instance_code)
     for student_id in student_ids:
-        send_result.delay(student_id, instance_code)
-
+        send_result.delay(student_id, instance_code, update)
