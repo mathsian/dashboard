@@ -204,8 +204,8 @@ def send_result(student_id, instance_code, update=False):
     html += ("<p>This email is not monitored. If you have any queries about any of your results please raise a ticket "
              "with your apprenticeships helpdesk.</p>")
     subject = f"{instance_dict.get('name')} result"
-    # receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
-    receivers = ['ian@ada.ac.uk']
+    receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
+    # receivers = ['ian@ada.ac.uk']
     msg = gmail.send(
         receivers=receivers,
         subject=subject,
