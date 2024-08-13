@@ -8,6 +8,8 @@ with enrolments as (
          , STEN_Reason_ended                                                                 reason
          , STEN_Completion_Stat                                                              completion_stat
          , convert(varchar, min(STEM_Start_Date) over (partition by STEM_Student_ID), 23)    start_date
+         , convert(varchar, case when sten_completion_stat in (1, 6) then stem_expctd_end_date
+             else STEN_Actual_End_Date end, 23)                                              end_date
          , row_number() over (partition by STEM_Student_ID order by STEM_Start_Date desc) as rank
     from remslive.dbo.STEM
              left join remslive.dbo.sten on sten_isn = (select top 1 STEN_ISN
@@ -30,6 +32,7 @@ select
     , concat(trim(code), '-', trim(instance)) cohort
     , isnull(CMPN_Company_Name, 'No employer') employer
     , start_date
+    , end_date
     , trim(STYR_Personal_Tutor) skills_coach
     , case
                when completion_stat = 1 and year < iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate()))

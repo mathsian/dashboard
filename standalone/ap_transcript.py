@@ -63,6 +63,7 @@ def populate_template(student_id, levels=(4, 5, 6)):
                          "modules": results_df.to_dict(orient='records'),
                          "top_up": top_up,
                          "start_date": student_dict.get("start_date"),
+                         "end_date": student_dict.get("end_date"),
                          "overall": overall,
                          "overall_class": overall_class,
                          "overall_credits": overall_credits

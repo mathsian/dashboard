@@ -560,8 +560,8 @@ def get_student_by_id(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, cohorts.start_date
-            , cohorts.top_up or students.top_up top_up, programmes.degree, programmes.title, programmes.pathway
+            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, students.start_date, students.end_date,
+                cohorts.top_up or students.top_up top_up, programmes.degree, programmes.title, programmes.pathway
             from students
             left join cohorts on cohort_id = cohorts.id
             left join programmes on programmes.id = cohorts.programme_id
@@ -936,8 +936,10 @@ def update_learners(learners):
             for learner in learners:
                 cur.execute(
                     """
-insert into students (id, given_name, family_name, status, employer, cohort_id, start_date, skills_coach, inserted_at, updated_at)
-                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, (select id from cohorts where name = %(cohort)s), %(start_date)s, %(skills_coach)s, current_timestamp, current_timestamp)
+insert into students (id, given_name, family_name, status, employer, cohort_id, start_date, end_date, skills_coach, inserted_at, updated_at)
+                values (%(student_id)s, %(given_name)s, %(family_name)s, %(status)s, %(employer)s, 
+                (select id from cohorts where name = %(cohort)s), 
+                %(start_date)s, %(end_date)s, %(skills_coach)s, current_timestamp, current_timestamp)
                 on conflict (id) do update
                 set given_name = excluded.given_name,
                     family_name = excluded.family_name,
@@ -945,6 +947,7 @@ insert into students (id, given_name, family_name, status, employer, cohort_id, 
                     employer = excluded.employer,
                     cohort_id = excluded.cohort_id,
                     start_date = excluded.start_date,
+                    end_date = excluded.end_date,
                     skills_coach = excluded.skills_coach,
                     updated_at = excluded.updated_at;
                 """, learner)
