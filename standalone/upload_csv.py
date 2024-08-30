@@ -19,7 +19,7 @@ def csv_to_couchdb(file_name, dbname=None):
         df['_id'] = ""
     #if not '_rev' in df.columns:
     #    df['_rev'] = ""
-    new_df = df.query('_id == ""').drop(['_id'], axis=1)
+    new_df = df.query('_rev == ""').drop(['_id', '_rev'], axis=1)
     print(new_df)
     changed_df = df.query('_id != ""')
     print(changed_df)
