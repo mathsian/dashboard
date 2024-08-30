@@ -11,6 +11,9 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
 from urllib.parse import parse_qs, urlencode
+
+from dateutil.utils import today
+
 from app import app
 import data
 import plotly.graph_objects as go
@@ -219,8 +222,9 @@ def update_student_report(store_data):
     assessment_docs = data.get_data("assessment", "student_id", student_id)
     assessment_children = []
     if len(assessment_docs) > 0:
+        tdy = today().isoformat()
         assessment_df = pd.DataFrame.from_records(assessment_docs).set_index(
-            ['subject_name', 'assessment']).query("report != 2")
+            ['subject_name', 'assessment']).query("report != 2 and date <= @tdy")
         for subject_name in assessment_df.index.unique(level=0):
             assessment_children.append(html.H4(subject_name))
             for assessment in assessment_df.loc[subject_name].index.unique():
@@ -238,17 +242,21 @@ def update_student_report(store_data):
     kudos_table = dbc.Table.from_dataframe(kudos_df.sort_values(['Date', 'Ada Value'], ascending=[False, True]))
     # concern_docs = data.get_data("concern", "student_id", student_id)
     attendance_docs = data.get_data("attendance", "student_id", student_id)
-    attendance_df = pd.DataFrame.from_records(attendance_docs).query(
-        "subtype == 'weekly'")
-    attendance_df['percent'] = round(100 * attendance_df['actual'] /
-                                     attendance_df['possible'])
-    attendance_year = round(100 * attendance_df['actual'].sum() /
-                            attendance_df['possible'].sum())
-    attendance_figure = go.Figure()
-    attendance_figure.add_trace(
-        go.Bar(x=attendance_df["date"],
-               y=attendance_df["percent"],
-               name="Weekly attendance"))
+    if len(attendance_docs):
+        attendance_df = pd.DataFrame.from_records(attendance_docs).query(
+            "subtype == 'weekly'")
+        attendance_df['percent'] = round(100 * attendance_df['actual'] /
+                                         attendance_df['possible'])
+        attendance_year = round(100 * attendance_df['actual'].sum() /
+                                attendance_df['possible'].sum())
+        attendance_figure = go.Figure()
+        attendance_figure.add_trace(
+            go.Bar(x=attendance_df["date"],
+                   y=attendance_df["percent"],
+                   name="Weekly attendance"))
+    else:
+        attendance_year = "No attendance recorded yet."
+        attendance_figure = {}
     notes_docs = data.get_data("note", "student_id", student_id)
     notes_df = pd.DataFrame.from_records(notes_docs, columns=['date', 'category', 'comment'])
     notes_df = notes_df.rename({'date': 'Date', 'category': 'Category', 'comment': 'Comment'},
