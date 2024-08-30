@@ -5,6 +5,7 @@ import pandas as pd
 import calendar
 import os
 import jinja2
+from dateutil.utils import today
 
 APPRENTICE_SCHEMA = ['_id', 'type', 'given_name', 'family_name', 'email', 'status', 'company', 'cohort', 'intake']
 RESULT_SCHEMA = ['type', 'student_id', 'moduleCode', 'moduleName', 'module', 'level', 'credits', 'total', 'breakdown', 'week1FirstDay', 'week2FirstDay']
@@ -180,6 +181,14 @@ def get_assessments(cohort, subject, db_name=None):
         result = db.get_view_result('assessment', 'unique_cohort_subject_assessments',
                                     group=True, descending=True)[[cohort, subject, '3000-01-01', 'ZZZ']:[cohort, subject, '2000-01-01', None]]
     return [r['key'][3] for r in result]
+
+
+def get_past_assessments(cohort, subject, db_name=None):
+    with Connection(db_name) as db:
+        result = db.get_view_result('assessment', 'unique_cohort_subject_assessments',
+                                    group=True, descending=True)[
+                 [cohort, subject, '3000-01-01', 'ZZZ']:[cohort, subject, '2000-01-01', None]]
+    return [r['key'][3] for r in result if r['key'][2] <= today().isoformat()]
 
 
 def get_doc(id, db_name=None):

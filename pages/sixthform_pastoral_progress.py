@@ -5,6 +5,7 @@ from dash import html
 from dash.dependencies import Input, Output, State
 import dash_tabulator
 import pandas as pd
+from dateutil.utils import today
 
 from app import app
 import data
@@ -58,7 +59,8 @@ def update_progress_content(store_data):
     enrolment_docs = store_data.get('enrolment_docs')
     enrolment_df = pd.DataFrame.from_records(enrolment_docs)[['_id', 'given_name', 'family_name']].sort_values(['family_name', 'given_name'])
     assessment_docs = data.get_data("assessment", "student_id", student_ids)
-    assessment_df = pd.DataFrame.from_records(assessment_docs).sort_values(['student_id', 'subject_name', 'assessment'])[['student_id', 'subject_code', 'assessment', 'grade']]
+    tdy = today().isoformat()
+    assessment_df = pd.DataFrame.from_records(assessment_docs).query('date <= @tdy').sort_values(['student_id', 'subject_name', 'assessment'])[['student_id', 'subject_code', 'assessment', 'grade']]
     assessment_df['category'] = assessment_df['subject_code'].apply(subject_category)
     cs_df = assessment_df.query('category == "Computer Science"').rename({'subject_code': 'Computer Science'}, axis=1).pivot(index=['student_id', 'Computer Science'], columns='assessment', values='grade').add_suffix("_cs").reset_index()
     ss_df = assessment_df.query('category == "Second subject"').rename({'subject_code': 'Second subject'}, axis=1).pivot(index=['student_id', 'Second subject'], columns='assessment', values='grade').add_suffix("_ss").reset_index()
