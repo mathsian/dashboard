@@ -204,7 +204,7 @@ def get_enrolment_by_cohort_team(cohort, team, db_name=None):
     elif cohort != 'All':
         enrolment_docs = get_data("enrolment", "cohort", cohort)
     else:
-        enrolment_docs = get_data("enrolment", "cohort", ["2224", "2325"])
+        enrolment_docs = get_data("enrolment", "cohort", ["2325", "2426"])
     return enrolment_docs
 
 
