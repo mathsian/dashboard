@@ -11,6 +11,9 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
 from urllib.parse import parse_qs, urlencode
+
+from dateutil.utils import today
+
 from app import app
 import data
 import plotly.graph_objects as go
@@ -79,7 +82,8 @@ def update_assessments(pathname, search, subject):
     if not subjects:
         return cohort, cohort_items, "", [], [], []
     subject = search_dict.get("subject", subjects)[0]
-    assessments = data.get_assessments(cohort, subject)
+    assessments = data.get_past_assessments(cohort, subject)
+    print(assessments)
     if assessments:
         assessment = search_dict.get("assessment",
                                  assessments)[0].replace('+', ' ')
