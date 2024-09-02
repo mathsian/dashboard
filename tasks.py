@@ -12,6 +12,7 @@ import app_data
 import app_admin
 from configparser import ConfigParser
 import admin
+import sf_sync
 
 config_object = ConfigParser()
 config_file = 'config.ini'
@@ -51,9 +52,35 @@ app.conf.beat_schedule = {
     "sync modules": {
         "task": "tasks.sync_modules",
         "schedule": crontab(minute='*/20', hour='8-17', day_of_week='mon-fri')
+    },
+    "sync sf enrolment": {
+        "task": "tasks.sync_enrolment",
+        "schedule": crontab(minute='16', hour='8,12', day_of_week='mon-fri')
+    },
+    "sync sf groups": {
+        "tasks": "tasks.sync_groups",
+        "schedule": crontab(minute='32', hour='8,12', day_of_week='mon-fri')
+    },
+    "sync sf week 2 assessment": {
+        "tasks": "tasks.sync_week2",
+        "schedule": crontab(minute='16', hour='9,13', day_of_week='mon-fri')
     }
 }
 
+@app.task
+def sync_enrolment():
+    sf_sync.sync_enrolment('ada')
+    return 'Enrolment synced'
+
+@app.task
+def sync_groups():
+    sf_sync.sync_groups('ada')
+    return 'Groups synced'
+
+@app.task
+def sync_week2():
+    sf_sync.sync_assessments('ada')
+    return 'Week 2 assessment synced lol'
 
 @app.task
 def sync_attendance():
