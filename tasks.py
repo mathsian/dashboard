@@ -58,12 +58,8 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute='16', hour='8,12', day_of_week='mon-fri')
     },
     "sync sf groups": {
-        "tasks": "tasks.sync_groups",
+        "task": "tasks.sync_groups",
         "schedule": crontab(minute='32', hour='8,12', day_of_week='mon-fri')
-    },
-    "sync sf week 2 assessment": {
-        "tasks": "tasks.sync_week2",
-        "schedule": crontab(minute='16', hour='9,13', day_of_week='mon-fri')
     }
 }
 
@@ -76,11 +72,6 @@ def sync_enrolment():
 def sync_groups():
     sf_sync.sync_groups('ada')
     return 'Groups synced'
-
-@app.task
-def sync_week2():
-    sf_sync.sync_assessments('ada')
-    return 'Week 2 assessment synced lol'
 
 @app.task
 def sync_attendance():
