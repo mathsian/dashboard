@@ -19,8 +19,7 @@ with enrolments as (
                                                           and STEM.STEM_Provision_Instance = STEN.STEN_Provision_Instance
                                                         order by sten_year desc)
     where STEM_Aim_Type = 1
-      and STEN_Funding_Stream = 36
-      and sten_reason_ended <> '40')
+      and STEN_Funding_Stream = 36)
 select
     cast(student_id as integer) student_id
     , trim(case
