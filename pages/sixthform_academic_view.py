@@ -56,7 +56,8 @@ assessment_colour_dropdown = dcc.Dropdown(id={
                                                   "value": "gc-comp.sci"
                                               },
                                           ],
-                                          value="gc-ma")
+                                          value="gc-ma",
+                                          clearable=False)
 
 layout = dbc.Container([
             dbc.Row([dbc.Col([assessment_colour_dropdown], width=3)], justify='end'),
@@ -103,6 +104,12 @@ def update_subject_graph(store_data, colour_code, subject_code):
         }
     subtype = assessment_df.iloc[0]["subtype"]
     enrolment_df = pd.DataFrame.from_records(store_data.get("enrolment_docs"))
+    # Need a number for GCSE: use -1 for missing ''
+    enrolment_df['gc-comp.sci'].where(enrolment_df['gc-comp.sci'] != '', -1, inplace=True)
+    enrolment_df['gc-ma'].where(enrolment_df['gc-ma'] != '', -1, inplace=True)
+    enrolment_df['gc-en'].where(enrolment_df['gc-en'] != '', -1, inplace=True)
+    enrolment_df['aps'].where(enrolment_df['aps'] != '', -1, inplace=True)
+
     merged_df = assessment_df.merge(enrolment_df,
                                     left_on="student_id",
                                     right_on="_id",
