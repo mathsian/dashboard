@@ -77,7 +77,7 @@ def update_pastoral_attendance(store_data):
                                          merged_df['possible'])
     # Pivot to bring dates to columns
     attendance_pivot_a = merged_df.set_index(
-        ["student_id", "given_name", "family_name",
+        ["student_id", "student_email", "given_name", "family_name",
          "date"])["percent_present"].unstack().reset_index()
     # Add the term cumulative column
     attendance_pivot_b = pd.merge(
@@ -96,6 +96,20 @@ def update_pastoral_attendance(store_data):
         right_on="student_id",
         suffixes=("", "_y"))
     columns = [
+        {
+            "title": "Student ID",
+            "field": "student_id",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
+        },
+        {
+            "title": "Email",
+            "field": "student_email",
+            "visible": False,
+            "clipboard": "true",
+            "download": "true"
+        },
         {
             "title": "Given name",
             "field": "given_name",
@@ -117,7 +131,7 @@ def update_pastoral_attendance(store_data):
             "headerFilter": True,
             "headerFilterFunc": "<",
             "headerFilterPlaceholder": "Less than",
-        } for d in attendance_pivot.columns[3:-2]
+        } for d in attendance_pivot.columns[4:-2]
     ])
     columns.append({
         "title": "This term",
