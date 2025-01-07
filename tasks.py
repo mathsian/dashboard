@@ -187,7 +187,7 @@ def build_results_table(student_id):
     return results_df
 
 
-@app.task
+@app.task(rate_limit='1/s')
 def send_result(student_id, instance_code, update=False):
     # Student details
     student_dict = app_data.get_student_by_id(student_id)
