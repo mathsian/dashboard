@@ -7,6 +7,6 @@ inner join remslive.dbo.REGTrgstudt on REGT_Student_ID = STEN_Student_ID and REG
 inner join remslive.dbo.REGHrghdr on REGT_REGH_ISN = REGH_ISN
 inner join remslive.dbo.TTGPTimetableGroups on regh_group_isn = TTGP_ISN
 inner join remslive.dbo.REGSrgsessn on REGH_ISN = REGS_REGH_ISN
-where sten_year = iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate())) and STEN_Funding_Stream = '36' and STEN_Completion_Stat = '1'
+where sten_year = iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate())) and STEN_Funding_Stream in ('36', '99') and STEN_Completion_Stat = '1'
 group by TTGP_Group_Code, REGT_Student_ID
 having min(REGS_Session_Date) > DATEADD(day, -90, getdate());
