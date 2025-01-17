@@ -237,6 +237,12 @@ def get_upcoming_students_from_rems():
 def merge_from_rems():
     # add new instances
     instances_rems_df = get_upcoming_instances_from_rems().set_index('code')
+    our_instances = app_data.get_future_instances()
+    # Remove any instances we have that aren't in REMS
+    for i in our_instances:
+        if not i in instances_rems_df.index:
+            print(f'Remove our {i}')
+            print(app_data.delete_instance(i))
     # all upcoming class lists
     upcoming_rems_df = get_upcoming_students_from_rems()
     upcoming_rems_df['student_id'] = pd.to_numeric(upcoming_rems_df['student_id'])

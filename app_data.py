@@ -1,3 +1,4 @@
+from datetime import date
 from configparser import ConfigParser
 import pyodbc
 import psycopg
@@ -289,6 +290,17 @@ def get_instances_from_cohort_name(cohort_name):
             result = cur.fetchall()
     return result
 
+
+def get_future_instances():
+    with psycopg.connect(f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+            select distinct code from instances
+            where start_date > %(today)s;
+            """, {"today": date.today().isoformat()})
+            result = [i[0] for i in cur.fetchall()]
+    return result
 
 def get_results_for_instance_code(instance_code):
     with psycopg.connect(
@@ -989,6 +1001,55 @@ def delete_student_from_instance(student_id, code):
     return return_value
 
 
+def delete_instance_results(code):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                delete from results where
+                component_id in (select id from components where instance_id = (select id from instances where code = %(code)s)) and value is null;
+                    """, {
+                    "code": code
+                })
+            return_value = cur.rowcount
+    return return_value
+
+def delete_instance_components(code):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                delete from components
+                where instance_id = (select id from instances where code = %(code)s);
+                    """, {
+                    "code": code
+                })
+            return_value = cur.rowcount
+    return return_value
+
+def delete_instance_by_code(code):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                delete from instances
+                where code = %(code)s;
+                    """, {
+                    "code": code
+                })
+            return_value = cur.rowcount
+    return return_value
+
+
+def delete_instance(code):
+    results_deleted = delete_instance_results(code)
+    components_deleted = delete_instance_components(code)
+    instances_deleted = delete_instance_by_code(code)
+    return [results_deleted, components_deleted, instances_deleted]
+
 def round_normal(x):
     if x is None or np.isnan(x):
         result = '-'
@@ -1078,5 +1139,6 @@ def graph_learner_volumes(learners_df):
 
 if __name__ == "__main__":
     pass
+
 
 
