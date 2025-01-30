@@ -20,6 +20,10 @@ from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
 
+COLUMNS = {'student_id': 'Student ID','student_email': 'Email','given_name': 'Given name','family_name': 'Family name','grade': 'Grade','comment': 'Comment'}
+
+clipboard = dcc.Clipboard(id={"type": "clipboard", "page": "academic", "tab": "edit"}, style={'display': 'inline-block'})
+
 subject_table = dash_tabulator.DashTabulator(
     id={
         "type": "table",
@@ -38,14 +42,14 @@ subject_table = dash_tabulator.DashTabulator(
         "clipboardCopySelector": "table",
         "clipboardPasted": ns("clipboardPasted")
     },
-    downloadButtonType={
-        "css": "btn btn-primary",
-        "text": "Download",
-        "type": "csv"
-    },
     theme='bootstrap/tabulator_bootstrap4',
 )
-layout=dbc.Row(dbc.Col([subject_table]))
+layout=[
+    dbc.Row([
+        dbc.Col(["Copy to clipboard ", clipboard])
+    ]),
+    dbc.Row(dbc.Col([subject_table]))
+]
 
 @app.callback([
     Output({
@@ -170,3 +174,15 @@ def update_subject_table(store_data, changed, row_data, cohort):
     ]
     return merged_df.to_dict(orient='records'), columns
 
+@app.callback(
+        Output({"type": "clipboard", "page": "academic", "tab": "edit"}, 'content'),
+        Input({"type": "clipboard", "page": "academic", "tab": "edit"}, 'n_clicks'),
+        State({
+        "type": "table",
+        "page": "academic",
+        "tab": "edit"
+    }, 'data')
+)
+def copy_data_to_clipboard(n_clicks, table_data):
+    df = pd.DataFrame(table_data, columns=COLUMNS.keys()).rename(columns=COLUMNS)
+    return df.to_csv(index=False, sep='\t')
