@@ -45,12 +45,22 @@ def populate_template(student_id, levels=(4, 5, 6)):
     results_df['Class'] = results_df['Mark'].apply(lambda t: get_class(t))
     results_df.sort_values(by=['Level', 'Module'], inplace=True)
     top_up = student_dict.get("top_up")
+    degree = student_dict.get("degree")
     if top_up:
         overall = app_data.round_normal(results_df.query('Level == 6')['Mark'].mean())
     else:
         overall = app_data.round_normal(results_df['Mark'].mean())
     overall_class = get_class(overall)
     overall_credits = results_df['Credits'].sum()
+    if degree == 'Foundation Degree' and overall_credits >= 240:
+        degree_status = 'Completed'
+    elif degree == 'BSc' and overall_credits >= 360:
+        degree_status = 'Completed'
+    elif topup and overall_credits >= 120:
+        degree_status = 'Completed'
+    else:
+        degree_status = 'Not completed'
+
     template = latex_jinja_env.get_template('ap_transcript.tex')
     full_name = student_dict.get('transcript_name') or f'{student_dict.get("given_name")} {student_dict.get("family_name")}'
     programme = f'{student_dict.get("degree")} {student_dict.get("title")}'
@@ -59,7 +69,7 @@ def populate_template(student_id, levels=(4, 5, 6)):
                          "student_id": student_id,
                          "issued": date.today(),
                          "programme": programme,
-                         "status": student_dict.get("status"),
+                         "status": status,
                          "modules": results_df.to_dict(orient='records'),
                          "top_up": top_up,
                          "start_date": student_dict.get("start_date"),
