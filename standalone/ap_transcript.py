@@ -52,7 +52,7 @@ def populate_template(student_id, levels=(4, 5, 6)):
     overall_class = get_class(overall)
     overall_credits = results_df['Credits'].sum()
     template = latex_jinja_env.get_template('ap_transcript.tex')
-    full_name = f'{student_dict.get("given_name")} {student_dict.get("family_name")}'
+    full_name = student_dict.get('transcript_name') or f'{student_dict.get("given_name")} {student_dict.get("family_name")}'
     programme = f'{student_dict.get("degree")} {student_dict.get("title")}'
     with open("latex/{} {}.tex".format(student_id, full_name), 'w') as f:
         template_data = {"student_name": full_name,
