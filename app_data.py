@@ -572,7 +572,7 @@ def get_student_by_id(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, students.start_date, students.end_date,
+            select family_name, given_name, transcript_name, status, employer, cohorts.name cohort_name, college_email, students.start_date, students.end_date,
                 cohorts.top_up or students.top_up top_up, programmes.degree, programmes.title, programmes.pathway
             from students
             left join cohorts on cohort_id = cohorts.id
