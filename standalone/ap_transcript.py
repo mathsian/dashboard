@@ -50,13 +50,16 @@ def populate_template(student_id, levels=(4, 5, 6)):
         overall = app_data.round_normal(results_df.query('Level == 6')['Mark'].mean())
     else:
         overall = app_data.round_normal(results_df['Mark'].mean())
-    overall_class = get_class(overall)
+    if overall == '-':
+        overall_class = ''
+    else:
+        overall_class = get_class(overall)
     overall_credits = results_df['Credits'].sum()
     if degree == 'Foundation Degree' and overall_credits >= 240:
         degree_status = 'Completed'
     elif degree == 'BSc' and overall_credits >= 360:
         degree_status = 'Completed'
-    elif topup and overall_credits >= 120:
+    elif top_up and overall_credits >= 120:
         degree_status = 'Completed'
     else:
         degree_status = 'Not completed'
@@ -69,7 +72,7 @@ def populate_template(student_id, levels=(4, 5, 6)):
                          "student_id": student_id,
                          "issued": date.today(),
                          "programme": programme,
-                         "status": status,
+                         "status": degree_status,
                          "modules": results_df.to_dict(orient='records'),
                          "top_up": top_up,
                          "start_date": student_dict.get("start_date"),
