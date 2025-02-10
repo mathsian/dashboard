@@ -5,8 +5,9 @@ select
     , [Family name] family_name
     , [Cohort] cohort
     , [Employer] employer
+    , [Skills coach] skills_coach
     , [Start date] start_date
-    , [Hybrid end date] end_date
+    , isnull([Actual end date], [Planned end date]) end_date
     , [Status] status
     , dense_rank() over (partition by [Student ID] order by [Enrolment year] desc, case Status
         when 'Continuing' then 0
@@ -30,8 +31,6 @@ select
     , earliest_outcome.start_date
     , latest_outcomes.end_date
     , latest_outcomes.status
-    , trim(STYR_Personal_Tutor) skills_coach
 from outcomes as latest_outcomes
-left join remslive.dbo.STYRstudentYR on STYR_Year = iif(month(getdate()) < 8, year(getdate()) - 1, year(getdate())) and STYR_Student_ID = student_id
 left join outcomes as earliest_outcome on latest_outcomes.student_id = earliest_outcome.student_id and earliest_outcome.earliest = 1
 where latest_outcomes.latest = 1;
