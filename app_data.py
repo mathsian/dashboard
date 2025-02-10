@@ -499,6 +499,23 @@ def get_passing_results_for_student(student_id):
     return result
 
 
+def get_rpl_for_student(student_id):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                select
+                    level "Level"
+                    , credits "Credits"
+                    , 'Recognition of prior learning' "Module"
+                from rpl
+                where student_id = %(student_id)s
+                """, {"student_id": student_id})
+            result = cur.fetchall()
+    return result
+
+
 def get_result_for_instance(student_id, instance_code):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
