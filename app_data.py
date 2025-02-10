@@ -499,6 +499,23 @@ def get_passing_results_for_student(student_id):
     return result
 
 
+def get_rpl_for_student(student_id):
+    with psycopg.connect(
+            f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                select
+                    level "Level"
+                    , credits "Credits"
+                    , 'Recognition of prior learning' "Module"
+                from rpl
+                where student_id = %(student_id)s
+                """, {"student_id": student_id})
+            result = cur.fetchall()
+    return result
+
+
 def get_result_for_instance(student_id, instance_code):
     with psycopg.connect(
             f'dbname={pg_db} user={pg_uid} password={pg_pwd}') as conn:
@@ -572,7 +589,7 @@ def get_student_by_id(student_id):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-            select family_name, given_name, status, employer, cohorts.name cohort_name, college_email, students.start_date, students.end_date,
+            select family_name, given_name, transcript_name, status, employer, cohorts.name cohort_name, college_email, students.start_date, students.end_date,
                 cohorts.top_up or students.top_up top_up, programmes.degree, programmes.title, programmes.pathway
             from students
             left join cohorts on cohort_id = cohorts.id
