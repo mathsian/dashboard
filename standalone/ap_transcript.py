@@ -33,7 +33,7 @@ def get_class(mark):
     elif mark >= 39.5:
         return 'Pass'
     else:
-        return 'Fail'
+        return ''
 
 
 def populate_template(student_id, levels=(4, 5, 6)):
@@ -41,9 +41,13 @@ def populate_template(student_id, levels=(4, 5, 6)):
         student_id = int(student_id)
     student_dict = app_data.get_student_by_id(student_id)
     results_dict = app_data.get_passing_results_for_student(student_id)
+    rpl = app_data.get_rpl_for_student(student_id)
+    if rpl:
+        results_dict.extend(rpl)
     results_df = pd.DataFrame.from_records(results_dict).query('Level in @levels')
     results_df['Class'] = results_df['Mark'].apply(lambda t: get_class(t))
-    results_df.sort_values(by=['Level', 'Module'], inplace=True)
+    results_df['Mark'] = results_df['Mark'].fillna('')
+    results_df = results_df.sort_values(by=['Level', 'Module'])
     top_up = student_dict.get("top_up")
     degree = student_dict.get("degree")
     overall_credits = results_df['Credits'].sum()
