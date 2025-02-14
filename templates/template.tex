@@ -101,7 +101,7 @@
 % non-table style
 %% if 2 > 1
 %% for assessment_name, assessment_details in assessment.items()
-%% if assessment_details['grade']|length > 0
+% %% if assessment_details['grade']|length > 0
 \subsubsection*{\VAR{assessment_name}: \VAR{assessment_details['grade']}}
 
 %% if assessment_details['comment']|length > 0 and assessment_details['report'] == 0
@@ -109,7 +109,7 @@
 {\em \VAR{assessment_details['comment']}}
 \end{quotation}
 %% endif
-%% endif
+% %% endif
 %% endfor
 %% endif
 
