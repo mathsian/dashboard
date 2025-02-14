@@ -64,6 +64,8 @@ def populate_template(student_id, levels=(4, 5, 6)):
     template = latex_jinja_env.get_template('ap_transcript.tex')
     full_name = student_dict.get('transcript_name') or f'{student_dict.get("given_name")} {student_dict.get("family_name")}'
     programme = f'{student_dict.get("degree")} {student_dict.get("title")}'
+    end_date = student_dict.get("end_date") if student_dict.get("end_date") < date.today() else "-"
+
     with open("latex/{} {}.tex".format(student_id, full_name), 'w') as f:
         template_data = {"student_name": full_name,
                          "student_id": student_id,
@@ -73,7 +75,7 @@ def populate_template(student_id, levels=(4, 5, 6)):
                          "modules": results_df.to_dict(orient='records'),
                          "top_up": top_up,
                          "start_date": student_dict.get("start_date"),
-                         "end_date": student_dict.get("end_date"),
+                         "end_date": end_date, 
                          "overall_credits": overall_credits
                          }
         f.write(template.render(template_data))

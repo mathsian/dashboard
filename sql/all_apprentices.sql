@@ -31,6 +31,7 @@ select
     , earliest_outcome.start_date
     , latest_outcomes.end_date
     , latest_outcomes.status
+	, latest_outcomes.skills_coach
 from outcomes as latest_outcomes
 left join outcomes as earliest_outcome on latest_outcomes.student_id = earliest_outcome.student_id and earliest_outcome.earliest = 1
 where latest_outcomes.latest = 1;
