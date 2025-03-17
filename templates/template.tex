@@ -3,6 +3,7 @@
 \usepackage{etoolbox}
 % for flexible tables
 \usepackage{tabularx}
+
 \newcolumntype{b}{X}
 \newcolumntype{m}{>{\hsize=.4\hsize}X}
 \newcolumntype{s}{>{\hsize=.2\hsize}X}
@@ -74,47 +75,9 @@
     {\rmfamily\uppercase{
         {\large \VAR{name}}\\
         \VAR{date}\\
-        Team \VAR{team}}}
+        \VAR{team}}}
 \tikz[remember picture,overlay,shift=(current page.north east)] \node[inner sep=0pt] at (-2,-2) {\includegraphics[height=2cm]{NCDS.jpg}};
 \end{center}
-% Attendance bar chart
-\section*{Attendance}
-\noindent \begin{tabular}{r l r l}
-Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
-\end{tabular}
-
-
-% \begin{tikzpicture}[scale=1]
-%   \begin{axis}[
-%   width=10cm,
-%   height=5cm,
-%   ybar stacked,
-%   legend style={{at=(1.2,0.5)},anchor=west},
-%   legend cell align={left},
-%   axis y line*=left,
-%   axis x line*=bottom,
-%   symbolic x coords={0,\VAR{attendance_dates},1},
-%   xtick ={\VAR{attendance_dates}},
-%   tick align=outside,
-%   x tick label style={rotate=90,anchor=east},
-%   y tick label style={anchor=east},
-%   ymin = 0,
-%   ymax = 100,
-%   ytick = {95, 100},
-%   yticklabels = {},
-%   xticklabels = {\VAR{attendance_dates}},
-%   xmin = 0,
-%   xmax = 1,
-%   ylabel = \% sessions attended,
-%   grid=major,
-%   clip=false,
-%   ]
-%   \addplot[adaBlue, bar width=14pt, fill=adaBlue] coordinates {\VAR{attendance_zip}};
-%   \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{punctuality_zip}};
-%   \node at (axis cs:1,95) [anchor=west] {{\sffamily Target 95\%}};
-%   \legend{Present,Present but late}
-% \end{axis}
-% \end{tikzpicture}
 % Academic
 \section*{Academic}
 %% for subject, assessment in academic.items()
@@ -124,12 +87,12 @@ Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
 %% if 0 > 1
 \noindent\begin{tabularx}{\linewidth}{l l X}
 %% for assessment_name, assessment_details in assessment.items()
-            \VAR{assessment_name} & \VAR{assessment_details['grade']} \\
-            %% if assessment_details['subtitle']
-            \multicolumn{3}{p{\hsize}}{\VAR{assessment_details['subtitle']}}\\
-            %% endif
-            %% if assessment_details['date'] > '2021-08-30'
-            \multicolumn{3}{p{\hsize}}{\em \VAR{assessment_details['comment']}}\\
+            %% if assessment_details['grade']|length > 0
+                \VAR{assessment_name} & \VAR{assessment_details['grade']} \\
+                %% if assessment_details['subtitle']
+                    \multicolumn{3}{p{\hsize}}{\VAR{assessment_details['subtitle']}}\\
+                %% endif
+                \multicolumn{3}{p{\hsize}}{\em \VAR{assessment_details['comment']}}\\
             %% endif
 %% endfor
 \end{tabularx}
@@ -138,7 +101,7 @@ Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
 % non-table style
 %% if 2 > 1
 %% for assessment_name, assessment_details in assessment.items()
-
+% %% if assessment_details['grade']|length > 0
 \subsubsection*{\VAR{assessment_name}: \VAR{assessment_details['grade']}}
 
 %% if assessment_details['comment']|length > 0 and assessment_details['report'] == 0
@@ -146,11 +109,67 @@ Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
 {\em \VAR{assessment_details['comment']}}
 \end{quotation}
 %% endif
-
+% %% endif
 %% endfor
 %% endif
 
 %% endfor
+
+% Attendance bar chart
+\section*{Attendance}
+\noindent \begin{tabular}{r l r l}
+Attendance & \VAR{attendance}\% & Punctuality & \VAR{punctuality}\%
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tikzpicture}[scale=1]
+  \begin{axis}[
+  width=10cm,
+  height=5cm,
+  ybar stacked,
+  legend style={{at=(1.2,0.5)},anchor=west},
+  legend cell align={left},
+  axis y line*=left,
+  axis x line*=bottom,
+  symbolic x coords={0,\VAR{attendance_dates},1},
+  xtick ={\VAR{attendance_dates}},
+  tick align=outside,
+  x tick label style={rotate=90,anchor=east},
+  y tick label style={anchor=east},
+  ymin = 0,
+  ymax = 100,
+  ytick = {95, 100},
+  yticklabels = {},
+  xticklabels = {\VAR{attendance_dates}},
+  xmin = 0,
+  xmax = 1,
+  ylabel = \% sessions attended,
+  xlabel = Week beginning,
+  grid=major,
+  clip=false,
+  ]
+  \addplot[adaBlue, bar width=14pt, fill=adaBlue] coordinates {\VAR{attendance_zip}};
+  \addplot[adaPurple, bar width=14pt, fill=adaPurple] coordinates {\VAR{punctuality_zip}};
+  \node at (axis cs:1,95) [anchor=west] {{\sffamily Target 95\%}};
+  \legend{Present,Present but late}
+\end{axis}
+\end{tikzpicture}
+
+% Notes
+%% if 0 > 1
+\vspace{1em}
+%% if notes|length > 0
+\subsection* {Attendance notes}
+\vspace{1em}
+%% for note in notes
+ \subsubsection* {\VAR{note.date}: \VAR{note.category}}
+ \begin{quotation}
+ {\em \VAR{note.comment}}
+ \end{quotation}
+%% endfor
+%% endif
+%% endif
 
 % Kudos start
 %% if 2 > 1
@@ -170,7 +189,7 @@ values of curiosity, creativity, collaboration, rigour and resilience
 %% endfor
     \end{tabularx}
 %% else
-\noindent No kudos points have been recorded this term
+\noindent No kudos points have been recorded this half term
 %% endif
 
 %% endif

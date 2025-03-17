@@ -47,6 +47,8 @@ def generate_report(student_id):
     term_dates = data.get_term_date_from_rems()
     year_start = term_dates['year_start']
     term_start = term_dates['term_start']
+    half_term_start = term_dates['half_term_start']
+
     student = data.get_student(student_id, "ada")
     group_data = data.get_data("group", "student_id", [student_id], "ada")
     group_list = [g.get("subject_name") for g in group_data]
@@ -69,26 +71,36 @@ def generate_report(student_id):
         data.get_data("kudos", "student_id", [student_id], "ada"),
         columns=["ada_value", "points", "date", "from",
                  "description"]).sort_values(
-        "date", ascending=False).query("date >= @term_start")
+        "date", ascending=False).query("date >= @half_term_start")
     kudos_df['description'] = kudos_df['description'].apply(tex_escape)
     kudos_df["date"] = kudos_df["date"].apply(data.format_date)
     kudos_df['points'] = pd.to_numeric(kudos_df['points'], downcast='integer')
     kudos_total = kudos_df['points'].sum()
     kudos = kudos_df.to_dict(orient='records')
-    concern_df = pd.DataFrame(
-        data.get_data("concern", "student_id", [student_id], "ada"),
-        columns=["category", "date", "description", "from"]).sort_values(
-        "date", ascending=False).query("date >= @term_start")
-    concern_df["date"] = concern_df["date"].apply(data.format_date)
-    concern_df['description'] = concern_df['description'].apply(tex_escape)
-    concern_total = len(concern_df)
-    concerns = concern_df.to_dict(orient='records')
+    # concern_df = pd.DataFrame(
+    #     data.get_data("concern", "student_id", [student_id], "ada"),
+    #     columns=["category", "date", "description", "from"]).sort_values(
+    #     "date", ascending=False).query("date >= @term_start")
+    # concern_df["date"] = concern_df["date"].apply(data.format_date)
+    # concern_df['description'] = concern_df['description'].apply(tex_escape)
+    # concern_total = len(concern_df)
+    # concerns = concern_df.to_dict(orient='records')
+
+    notes_df = pd.DataFrame(
+        data.get_data('note', 'student_id', [student_id], 'ada'),
+        columns=['category', 'comment', 'date', 'report']
+    ).sort_values('date', ascending=False).query("date >= @half_term_start")
+    notes_df['date'] = notes_df['date'].apply(data.format_date)
+    notes_df['comment'] = notes_df['comment'].apply(tex_escape)
+    notes_total = len(notes_df)
+    notes = notes_df.to_dict(orient='records')
+
     attendance_df = pd.DataFrame.from_records(
         data.get_data("attendance", "student_id", [student_id],
-                      "ada")).query("subtype == 'monthly'").sort_values(
+                      "ada")).query("subtype == 'weekly'").sort_values(
         by='date',
-        ascending=True).query("date >= @year_start")
-    # attendance_df['date'] = attendance_df['date'].apply(data.format_date)
+        ascending=True).query("date >= @half_term_start")
+    attendance_df['date'] = attendance_df['date'].apply(data.format_date)
     attendance_totals = attendance_df.sum()
     attendance = round(100 * attendance_totals['actual'] /
                        attendance_totals['possible'])
@@ -104,41 +116,46 @@ def generate_report(student_id):
     #     elif ucas_status == "Returned":
     #         message = {"title": "UCAS application", "message": f"{student.get('given_name')} has had their UCAS form returned to them to correct an error. Please take a look at the form with them and help them complete and resubmit it. If further support is required please email mumtaz@ada.ac.uk"}
     #         messages.append(message)
-    # attendance_df['percent'] = round(
-    #     100 * (attendance_df['actual'] - attendance_df['late']) /
-    #     attendance_df['possible'])
-    # attendance_df['late'] = round(100 * attendance_df['late'] /
-    #                               attendance_df['possible'])
-    # cumulative = int(100 * attendance_df['actual'].sum() /
-    #                  attendance_df['possible'].sum())
-    # attendance_min = attendance_df['date'].tolist()[0]
-    # attendance_max = attendance_df['date'].tolist()[-1]
-    # attendance_dates = ",".join(f"{d}" for d in attendance_df["date"].tolist())
-    # attendance_zip = " ".join(f"({d}, {p})" for d, p in zip(
-    #     attendance_df["date"].tolist(), attendance_df['percent'].tolist()))
-    # punctuality_zip = " ".join(f"({d}, {p})" for d, p in zip(
-    #     attendance_df["date"].tolist(), attendance_df['late'].tolist()))
+    attendance_df['percent'] = round(
+        100 * (attendance_df['actual'] - attendance_df['late']) /
+        attendance_df['possible'])
+    attendance_df['late'] = round(100 * attendance_df['late'] /
+                                  attendance_df['possible'])
+    cumulative = int(100 * attendance_df['actual'].sum() /
+                     attendance_df['possible'].sum())
+    attendance_min = attendance_df['date'].tolist()[0]
+    attendance_max = attendance_df['date'].tolist()[-1]
+    attendance_dates = ",".join(f"{d}" for d in attendance_df["date"].tolist())
+    attendance_zip = " ".join(f"({d}, {p})" for d, p in zip(
+        attendance_df["date"].tolist(), attendance_df['percent'].tolist()))
+    punctuality_zip = " ".join(f"({d}, {p})" for d, p in zip(
+        attendance_df["date"].tolist(), attendance_df['late'].tolist()))
 
     date_string = datetime.now().strftime("%B %Y")
 
     ic(date_string)
 
-    student_name = f"{student.get('given_name')} {student.get('family_name')}"
+    student_name = f"{student.get('given_name').strip()} {student.get('family_name').strip()}"
+    team = student.get("team").strip()
+    if team:
+        team = "Team " + team
     with open(path.join(latex_directory, f"{student.get('_id')} {student_name}.tex"), 'w') as f:
         template_data = {
             "name": student_name,
             "date": date_string,
-            "team": student.get("team"),
-            # "attendance_dates": attendance_dates,
-            # "attendance_zip": attendance_zip,
-            # "punctuality_zip": punctuality_zip,
+            "team": team,
+            "attendance_dates": attendance_dates,
+            "attendance_zip": attendance_zip,
+            "punctuality_zip": punctuality_zip,
             "attendance": attendance,
             "punctuality": punctuality,
             "academic": academic,
             "kudos": kudos,
             "kudos_total": kudos_total,
-            "concerns": concerns,
-            "concern_total": concern_total,
+            # "concerns": concerns,
+            # "concern_total": concern_total,
+            'notes': notes,
+            'notes_total': notes_total,
             "messages": messages
         }
         f.write(template.render(template_data))
@@ -158,3 +175,4 @@ def cohort_reports(cohort):
 
 if __name__ == "__main__":
     pass
+    # cohort_reports('2426')

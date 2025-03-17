@@ -194,34 +194,39 @@ def send_result(student_id, instance_code, update=False):
     # don't email if learner not continuing
     if student_dict['status'] != 'Continuing':
         return f"{student_id} {instance_code} not sent as learner {student_dict['status']}"
-    # Mark table for this instance
-    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code),
-                                                index='Component')
-    # don't email if missing component marks
-    if components_df['Mark'].isnull().values.any():
-        return f"{student_id} {instance_code} not sent as missing marks"
-    # don't email if any component marks are zero
-    if sum((components_df['Mark'] == 0)) > 0:
-        return f"{student_id} {instance_code} not sent as zeros"
     # Instance details
     instance_dict = app_data.get_instance_by_instance_code(instance_code)
     # Results table
     results_df = build_results_table(student_id)
-    # Email
+    # Mark table for this instance
+    components_df = pd.DataFrame().from_records(app_data.get_result_for_instance(student_id, instance_code),
+                                                columns=['Component', 'Weighting', 'Mark'],
+                                                index='Component')
+    # Email body start
     html = f"<p>Dear {student_dict.get('given_name')} {student_dict.get('family_name')},</p>"
-    if update:
-        html += f"<p>Your marks for {instance_dict.get('name')} have been updated.</p>"
+    subject = f"{instance_dict.get('name')} {'update' if update else 'result'}"
+    if not components_df:
+        # No result
+        html += f"<p>{'Correction: ' if update else ''}You have no result for this module.</p>"
+    elif components_df['Mark'].isnull().values.any():
+        # missing component marks
+        html += f"<p>{'Correction: ' if update else ''}Your result for {instance_dict.get('name')} is pending.</p>"
+    elif sum((components_df['Mark'] == 0)) > 0:
+        # don't email if any component marks are zero
+        return f"{student_id} {instance_code} not sent as zeros"
     else:
-        html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
-    html += f"<h4>{instance_dict.get('name')}</h4>"
-    html += "<p>{{ marks_table }}</p>"
-    html += "<p>For detailed feedback see the classroom for this module.</p>"
+        if update:
+            html += f"<p>Your marks for {instance_dict.get('name')} have been updated.</p>"
+        else:
+            html += f"<p>Your marks for {instance_dict.get('name')} have now been released.</p>"
+        html += f"<h4>{instance_dict.get('name')}</h4>"
+        html += "<p>{{ marks_table }}</p>"
+        html += "<p>For detailed feedback see the classroom for this module.</p>"
     html += "<h4>Your modules</h4>"
     html += "<p>Your moderated results so far are as follows<p>"
     html += "<p>{{ results_table }}<p>"
     html += ("<p>This email is not monitored. If you have any queries about any of your results please raise a ticket "
-             "with your apprenticeships helpdesk.</p>")
-    subject = f"{instance_dict.get('name')} result"
+                 "with your apprenticeships helpdesk.</p>")
     receivers = [student_dict.get('college_email', 'ian@ada.ac.uk')]
     # receivers = ['ian@ada.ac.uk']
     msg = gmail.send(
