@@ -205,7 +205,7 @@ def send_result(student_id, instance_code, update=False):
     # Email body start
     html = f"<p>Dear {student_dict.get('given_name')} {student_dict.get('family_name')},</p>"
     subject = f"{instance_dict.get('name')} {'update' if update else 'result'}"
-    if not components_df:
+    if components_df.empty:
         # No result
         html += f"<p>{'Correction: ' if update else ''}You have no result for this module.</p>"
     elif components_df['Mark'].isnull().values.any():
