@@ -33,11 +33,6 @@ result_table = dash_tabulator.DashTabulator(
         "clipboardPasted": ns("clipboardPasted"),
         "clipboardCopyConfig": {"formatCells": False},
     },
-    downloadButtonType={
-        "css": "btn btn-primary",
-        "text": "Download",
-        "type": "csv"
-    },
     theme='bootstrap/tabulator_bootstrap4',
 )
 #layout = dbc.Row(dbc.Col([result_table]))

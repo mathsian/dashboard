@@ -21,7 +21,7 @@ cohort_dropdown = dbc.Select(id={
     "tab": "summary",
     "type": "dropdown",
     "name": "cohort"
-}, )
+}, persistence=True, persistence_type='memory')
 
 results_table = html.Div(
     id={
