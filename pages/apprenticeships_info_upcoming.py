@@ -1,5 +1,5 @@
 import dash_tabulator
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
@@ -12,6 +12,29 @@ from dash.exceptions import PreventUpdate
 import dash_mantine_components as dmc
 
 ns = Namespace("myNameSpace", "tabulator")
+
+COLUMNS = [{
+            "title": "Given name",
+            "field": "given_name",
+        }, {
+            "title": "Family name",
+            "field": "family_name",
+        }, {
+            "title": "Student ID",
+            "field": "student_id",
+        }, {
+            "title": "Email",
+            "field": "email",
+        }, {
+            "title": "Employer",
+            "field": "employer"
+        }, {
+            "title": "Cohort",
+            "field": "cohort"
+        }]
+FIELDS = [c.get('field') for c in COLUMNS]
+TITLES = [c.get('title') for c in COLUMNS]
+RENAMER = {f:t for (f, t) in zip(FIELDS, TITLES)}
 
 layout = dmc.Accordion(
     id={
@@ -50,7 +73,11 @@ def update_upcoming_table(n_clicks):
     for code in upcoming_codes:
         accordion_title = code
         # accordion_content = dbc.Table.from_dataframe(upcoming_df.loc[[code], :])
-        accordion_content = create_class_table(upcoming_df.loc[[code], :])
+        classlist_df = upcoming_df.loc[[code], :]
+        accordion_table = create_class_table(classlist_df)
+        accordion_clipboard = dcc.Clipboard(content=classlist_df[FIELDS].rename(columns=RENAMER).to_csv(sep='\t', index=False))
+        accordion_content = [dbc.Row(dbc.Col(accordion_clipboard)),
+                             dbc.Row(dbc.Col(accordion_table))]
         accordion_items.append(dmc.AccordionItem(children=[dmc.AccordionControl(accordion_title), dmc.AccordionPanel(accordion_content)], value=accordion_title))
     return accordion_items
 
@@ -64,25 +91,7 @@ def create_class_table(class_df):
             "clipboardCopySelector": "table",
             "clipboardCopyConfig": {"formatCells": False},
         },
-        columns=[{
-            "title": "Given name",
-            "field": "given_name",
-        }, {
-            "title": "Family name",
-            "field": "family_name",
-        }, {
-            "title": "Student ID",
-            "field": "student_id",
-        }, {
-            "title": "Email",
-            "field": "email",
-        }, {
-            "title": "Employer",
-            "field": "employer"
-        }, {
-            "title": "Cohort",
-            "field": "cohort"
-        }],
+        columns=COLUMNS,
         data=class_df.to_dict(orient='records'))
     return class_table 
 

@@ -4,7 +4,7 @@ select
     , [Given name] given_name
     , [Family name] family_name
     , [Cohort] cohort
-    , [Employer] employer
+    , isnull([Employer], 'No employer') employer
     , [Skills coach] skills_coach
     , [Start date] start_date
     , isnull([Actual end date], [Planned end date]) end_date
