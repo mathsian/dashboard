@@ -7,11 +7,14 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State, ALL
 import pandas as pd
 import numpy as np
+from icecream import ic
+
 from app import app
 import app_data
 from dash_extensions.javascript import Namespace
 
 ns = Namespace("myNameSpace", "tabulator")
+
 
 result_table = dash_tabulator.DashTabulator(
     id={
@@ -35,11 +38,55 @@ result_table = dash_tabulator.DashTabulator(
     },
     theme='bootstrap/tabulator_bootstrap4',
 )
+clipboard = dcc.Clipboard(id={"type": "clipboard", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}, style={'display': 'inline-block', 'margin-left': '10px'})
 #layout = dbc.Row(dbc.Col([result_table]))
 layout = dbc.Container([
     html.H4(id={"type": "text", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}),
+    html.Span(["Copy to clipboard", clipboard]),
     result_table])
 
+@app.callback(
+Output(
+    {"type": "clipboard", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}, 'content'
+),
+Input(
+    {"type": "clipboard", "page": "academic", "section": "apprenticeship", "tab": "edit", "name": "header"}, 'n_clicks'
+),
+State(
+        {
+            "type": "table",
+            "section": "apprenticeships",
+            "page": "academic",
+            "tab": "edit"
+        }, "data")
+)
+def update_clipboard(n_clicks, data):
+    if not data:
+        raise dash.exceptions.PreventUpdate
+    columns = [{
+        "title": "Given name",
+        "field": "given_name",
+    }, {
+        "title": "Family name",
+        "field": "family_name",
+    }, {
+        "title": "Student ID",
+        "field": "student_id",
+    }, {
+        "title": "Email",
+        "field": "college_email",
+    }]
+
+    df = pd.DataFrame(data)
+    components = [{'title': c.split(':')[0], 'field':c} for c in df.columns if ':value' in c]
+    columns = columns + components
+
+    fields = [c.get('field') for c in columns]
+    titles = [c.get('title') for c in columns]
+    renamer = {f: t for (f, t) in zip(fields, titles)}
+    renamed_df = df[fields].rename(renamer, axis='columns')
+    tsv = renamed_df.to_csv(sep='\t', index=False)
+    return tsv
 
 @app.callback([
     Output(
