@@ -627,7 +627,8 @@ def get_missing_results():
             left join modules m on i.module_id = m.id
             left join components c on c.instance_id = i.id
             left join results r on r.component_id = c.id
-            where r.value is null or r.value = 0 
+            left join students s on r.student_id = s.id
+            where r.value is null or r.value = 0 and s.status = 'Continuing'
             group by m.name, m.short, i.code, i.start_date
             order by i.start_date;
             """)
